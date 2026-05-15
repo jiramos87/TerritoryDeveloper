@@ -72,6 +72,18 @@ const planShape = z
       .boolean()
       .optional()
       .describe("Mark plan row as backfilled placeholder. Default false."),
+    priority: z
+      .enum(["P0", "P1", "P2", "P3"])
+      .optional()
+      .describe("Master-plan priority (mig 0158). Default 'P2'."),
+    design_id: z
+      .number()
+      .int()
+      .nullable()
+      .optional()
+      .describe(
+        "ia_plan_designs.id FK (mig 0158/0159). When set, the SQL fn auto-flips seed status='consumed' inside the same tx.",
+      ),
   })
   .passthrough();
 

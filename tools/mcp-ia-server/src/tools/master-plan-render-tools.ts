@@ -288,7 +288,7 @@ export function registerMasterPlanInsert(server: McpServer): void {
     "master_plan_insert",
     {
       description:
-        "DB-backed: create one new ia_master_plans row (slug + title + optional preamble + optional description). Used by master-plan-new at orchestrator authoring time. `description` is the short product overview (≤200 chars soft target) — required by skill convention for new plans. Errors on duplicate slug. Slug must be kebab-case.",
+        "DB-backed: create one new ia_master_plans row (slug + title + optional preamble + optional description + optional priority + optional design_id). Used by master-plan-new at orchestrator authoring time. `description` is the short product overview (≤200 chars soft target) — required by skill convention for new plans. `priority` is P0/P1/P2/P3 (default P2, mig 0158). `design_id` is the ia_plan_designs FK (mig 0158). Errors on duplicate slug. Slug must be kebab-case.",
       inputSchema: {
         slug: z.string().describe("Master-plan slug (kebab-case)."),
         title: z.string().describe("Master-plan title (display heading)."),
@@ -302,6 +302,16 @@ export function registerMasterPlanInsert(server: McpServer): void {
           .describe(
             "Short product-terminology overview + main goals (≤200 chars soft target). Required by master-plan-new skill convention.",
           ),
+        priority: z
+          .enum(["P0", "P1", "P2", "P3"])
+          .optional()
+          .describe("Master-plan priority (mig 0158). Default 'P2'."),
+        design_id: z
+          .number()
+          .int()
+          .nullable()
+          .optional()
+          .describe("ia_plan_designs.id FK (mig 0158). Default null."),
       },
     },
     async (args) =>
@@ -314,6 +324,8 @@ export function registerMasterPlanInsert(server: McpServer): void {
                   title?: string;
                   preamble?: string;
                   description?: string;
+                  priority?: "P0" | "P1" | "P2" | "P3";
+                  design_id?: number | null;
                 }
               | undefined,
           ) => {
@@ -331,6 +343,8 @@ export function registerMasterPlanInsert(server: McpServer): void {
                 title,
                 input?.preamble ?? null,
                 input?.description ?? null,
+                input?.priority ?? null,
+                input?.design_id ?? null,
               );
             } catch (e) {
               mapDbErrors(e);
@@ -343,6 +357,8 @@ export function registerMasterPlanInsert(server: McpServer): void {
                 title?: string;
                 preamble?: string;
                 description?: string;
+                priority?: "P0" | "P1" | "P2" | "P3";
+                design_id?: number | null;
               }
             | undefined,
         );

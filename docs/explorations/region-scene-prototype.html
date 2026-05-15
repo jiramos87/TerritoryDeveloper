@@ -3954,7 +3954,72 @@ const DECISIONS = [];
 const REFS = [];
 const PANELS = [];
 const VISUAL_GOALS = [];
-const PATTERNS = [];
+const PATTERNS = [
+  {
+    title: "✓ Status — 6/7 stages done (as of 2026-05-15)",
+    body: "Stage 1.0 / 1.1 / 1.2 / 2.0 / 3.0 / 4.0 archived. Only Stage 5.0 (create-city tool) pending. Map currently renders as **flat grass only** (h=1 every cell, water + cliff sprites removed) — original procedural noise + water + cliff art moved to **post-prototype expansion** scope per top-of-doc reminder. `Assets/Scenes/RegionScene.unity` built end-to-end via bridge mutations (no batchmode); ServiceRegistry GO + camera framing + grass sprite ref all wired."
+  },
+  {
+    title: "**PATTERN** — Bridge-aware TDD stage test gate (new protocol)",
+    body: "Every stage gets a runnable `tests/{slug}/stage{id}-{stage_slug}.test.mjs` file. `ship-plan` Phase A.2 scaffolds the skeleton (one stub `it()` per task); `ship-cycle` Pass A fills assertions via `BridgeClient` primitives (`findGameObject` / `getComponent` / `readPanelState` / `dispatchAction` / `captureScreenshot`); Pass B step 1.5 runs `node --test` against live Unity Editor — full green required before stage commit. Catches scene-wiring debt, asmdef gaps, runtime regressions that compile-clean batchmode misses. Source file: `tools/scripts/recipe-engine/bridge-client.mjs`."
+  },
+  {
+    title: "**PATTERN** — Scene mutations via bridge, not `-executeMethod` batchmode",
+    body: "Build whole scenes from scratch with `new_scene → create_gameobject → attach_component → assign_serialized_field → save_scene` mutation chain. Works with the live Editor open in any state; no Editor restart needed. Used to build `Assets/Scenes/RegionScene.unity` end-to-end without quitting Unity once. Bridge bypasses the batchmode-vs-live-editor project-lock collision class entirely."
+  },
+  {
+    title: "**PATTERN** — Static utilities live in the asmdef that holds their dependent types",
+    body: "When authoring a static utility class (e.g. `RegionUnlockGate`) that depends on types from another asmdef (`CityData` / `GameSaveData` in `TerritoryDeveloper.Game`), place the utility's `.cs` in the same asmdef as its dependencies, NOT the asmdef matching its semantic domain. Namespace alignment is independent of asmdef membership — keep the namespace (`Territory.RegionScene`) but move the file. Prevents the circular asmdef ref that Unity refuses to compile."
+  },
+  {
+    title: "**PATTERN** — Per-stage product-language bubble-up from `/ship-cycle` return",
+    body: "When the `ship-cycle` subagent returns, main-session must translate the technical output (file paths / anchor ids / boundary markers / TECH ids) into one product-language sentence per task plus a one-sentence preview of the next stage. Memory anchor: `memory/feedback_ship_cycle_summary_format.md`."
+  },
+  {
+    title: "**ANTIPATTERN** — Stage tests as phantom-import dead scaffolds",
+    body: "Original plan's `tests/region-scene-prototype/stage{N}.test.mjs` files imported `BridgeClient` from `tools/scripts/recipe-engine/bridge-client.mjs` — a module that did not exist. Tests never ran. Verify-loop never gated on them. `RegionScene.unity` gap, ServiceRegistry GO miss, asmdef-ref breakage all slipped through 4 consecutive stages. Closed by `ship-plan` Phase A.2 scaffold + real BridgeClient implementation + `ship-cycle` Pass B step 1.5 hard gate."
+  },
+  {
+    title: "**ANTIPATTERN** — Bridge kinds hardcoded for CityScene assumptions",
+    body: "`enter_play_mode` blocked 24s waiting for `GridManager.isInitialized` — never satisfied in RegionScene (no GridManager). `sorting_order_debug` returns `GridManager not found in scene`. Bridge kinds must be scene-agnostic from authoring: generic settle window fallbacks; scene-keyed readiness probes. Patched `enter_play_mode` / `get_play_mode_status` to fall back to a 2s settle when no GridManager; `sorting_order_debug` follow-up still pending."
+  },
+  {
+    title: "**ANTIPATTERN** — `asset_ref` loading the wrong sub-asset type",
+    body: "Bridge `assign_serialized_field` with `value_kind=asset_ref` originally called `AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path)` — returns `Texture2D` for a PNG path, never the `Sprite` sub-asset. `prop.objectReferenceValue = texture` silently assigns the wrong type → SpriteRenderer renders nothing. Patched to resolve the SerializedProperty field type via reflection, then load with that type (`LoadAssetAtPath(path, fieldType)`)."
+  },
+  {
+    title: "**ANTIPATTERN** — `save_scene` rejecting save-as for new untitled scenes",
+    body: "Original `RunSaveScene` required `SceneManager.GetSceneByPath(dto.scene_path).IsValid()` → returned `scene_not_found` for any new scene built via `new_scene` (no path yet). Patched to fall back to the active scene + treat `dto.scene_path` as destination. Also auto-creates the parent directory so `save_scene` to `Assets/Scenes/RegionScene.unity` works when `Scenes/` doesn't exist."
+  },
+  {
+    title: "**ANTIPATTERN** — Type-name ambiguity on bridge `attach_component`",
+    body: "Original short-name-only resolver matched `Camera` to BOTH `UnityEngine.Camera` AND `Domains.Camera.Camera` → `type_ambiguous` error with no fully-qualified-name disambiguation path. Patched to accept FQ names (`UnityEngine.Camera`) before short-name fallback. Short-name still works when unique."
+  },
+  {
+    title: "**ANTIPATTERN** — Live Editor in Play Mode masks asmdef compile errors",
+    body: "Pass B's `unity:compile-check` runs batchmode which fails on the project lock when Editor is open + playing; verify-loop reads stale-cache compilation status from the live Editor; broken stage commits land. Stage 4.0 shipped with 6 CS-errors against asmdef refs (`Persistence` namespace not visible to RegionScene asmdef; Game asmdef wanted RegionScene ref → circular). The B.7b SYNC gate is supposed to close this by enqueueing `refresh_asset_database` then polling `get_compilation_status` until terminal — only fires when stage diff touches `Assets/**` AND refresh actually triggers reparse."
+  },
+  {
+    title: "**ANTIPATTERN** — Procedural geo data in a prototype that only needs flat grass",
+    body: "Stage 2.0 originally generated Perlin-noise heightmap + procedural river drainage + cliff faces using the same logic as CityScene. Renderer drew the result with the wrong cell step (0.5/0.25 instead of 0.32/0.16 for 64px sprites at PPU 100) → visible gaps + cliffs as tall blue ledges. Prototype scope should ship flat-grass first (`h=1` everywhere, no water, no cliffs, one sprite), proving render plumbing + map dimensions before procedural data lands post-prototype."
+  },
+  {
+    title: "**DEFINITION** — Stage test gate (Pass B step 1.5)",
+    body: "Mandatory mid-Pass-B step inserted between verify-loop verdict and stage commit. Runs `node --test tests/{slug}/stage{id}-{stage_slug}.test.mjs` against the live Editor via BridgeClient. Any red `it()` → `STAGE_VERIFY_FAIL`, no commit, worktree stays dirty. Sentinel `throw new Error('red — not yet implemented')` left in any block → separate `STOPPED — stage_test_stub_unfilled` failure (Pass A spec-implementer omission)."
+  },
+  {
+    title: "**DEFINITION** — Scene-agnostic Play Mode readiness probe",
+    body: "`AgentBridgeCommandRunner.PlayMode.ResolvePlayModeReadiness()` decides readiness in order: (1) if a `GridManager` exists in scene → use `grid.isInitialized` (CityScene back-compat); (2) else → return ready after `EditorApplication.isPlaying == true` for ≥ 2 seconds (`GenericPlayModeSettleSeconds`). Lets non-City scenes complete `enter_play_mode` without GridManager dependency."
+  },
+  {
+    title: "**DEFINITION** — Typed `asset_ref` resolution",
+    body: "Bridge `assign_serialized_field` with `value_kind=asset_ref` now resolves the underlying field type via `ResolveSerializedPropertyFieldType()` (reflection walks `propertyPath` over the target object's type) and calls `AssetDatabase.LoadAssetAtPath(path, fieldType)`. Generic `Object`-load fallback preserved for legacy callers. Sprite-vs-Texture2D mismatches that previously silently hosed SpriteRenderers now resolve correctly."
+  },
+  {
+    title: "**DEFINITION** — Flat-grass prototype scope (current state)",
+    body: "Stage 2.0 terrain renders every cell as a single grass sprite (`Assets/Sprites/Region/Terrain/region-grass-64-1.png`) with elevation `h = 1` everywhere. `RegionHeightMap` Perlin noise removed; `RegionWaterMap.Seed` is a no-op; `RegionCliffMap` produces empty cliffs naturally (no height deltas). `RegionCellRenderer` cell step corrected to (0.32, 0.16) world units per cell so 64-pixel sprites at PPU 100 tile flush. **Post-prototype expansion** (separate plan, out of scope here) restores procedural terrain + brings region-specific geo logic, height definitions, water/cliff art."
+  }
+];
 const HANDOFF_TEMPLATE = "# Handoff — Stage {{STAGE_ID}} of {{SLUG}}\n\nYou are picking up Stage {{STAGE_ID}} — {{STAGE_TITLE}} — of the {{SLUG}}\nmaster plan. Read the stage card in this HTML doc end-to-end (scope, tasks,\nred-stage proof, edge cases, failure modes, checkpoint screenshots,\niteration log) before touching any file.\n\n## Read first (in order)\n  1. The §Latest state header at the top of this HTML doc.\n  2. The §Patterns observed callout — cross-stage lessons; do not repeat them.\n  3. This stage's card (Stage {{STAGE_ID}}) — full body, all tasks.\n  4. `MEMORY.md` at repo root + the user's personal MEMORY index — Javier's\n     preferences + project-specific rules + accumulated feedback.\n  5. The DB-backed master plan state: run `master_plan_state {{SLUG}}` MCP\n     to confirm stage status and unblock-on-deps before starting.\n\n## Stage scope (this run)\n{{SCOPE_SUMMARY}}\n\n## Hard rules\n  - **Main worktree only.** Single-developer single-stream project.\n  - No `git commit --amend`, no `git push`, no `--no-verify`.\n  - Close Unity Editor before `npm run unity:compile-check`.\n  - Simple product language in chat replies (caveman-tech in docs + code only).\n  - One commit per task on the active feature branch. Use Conventional Commits.\n\n## Workflow per task\n  Read task card → implement minimal diff → `npm run unity:compile-check`\n  → commit → append a row to this stage's iteration log (frontmatter\n  `stages[].iteration_log[]`) → re-render the HTML\n  (`npm run design-explore:render-html {{SLUG}}`) → await user verdict.\n\n## Completion signal\nWhen the user accepts this stage's visual + functional checkpoint, attach\ncheckpoint screenshots to `stages[].checkpoint_screenshots[]`, set the\nstage `status: done`, re-render the HTML, and surface the next-stage\nhandoff link from §Latest state.\n";
 
 // Title + chips

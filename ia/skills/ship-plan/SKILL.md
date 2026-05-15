@@ -21,6 +21,7 @@ description: >-
   Triggers: "/ship-plan {SLUG}", "ship plan", "bulk-author plan from handoff yaml".
 phases:
   - Phase A — recipe ship-plan-phase-a (parse + schema + invariants + task_bundle + spec_sections + drift-lint stash)
+  - Phase A.2 — Stage test scaffold (one bridge-aware .test.mjs per stage; spec-implementer fills bodies in ship-cycle Pass A)
   - Phase B — compose 3-section digest per task with inline anchor expansion (Opus only)
   - Phase B.5 — split-on-token-overflow guardrail (single bundle dispatch after last sub-pass)
   - Phase C — dispatch master_plan_bundle_apply (server-side body render via mig 0136; drift-lint stash promoted atomically)
@@ -46,6 +47,8 @@ tools_extra:
   - mcp__territory-ia__rule_content
   - mcp__territory-ia__master_plan_state
   - mcp__territory-ia__master_plan_bundle_apply
+  - mcp__territory-ia__plan_design_get
+  - mcp__territory-ia__plan_design_promote
   - mcp__territory-ia__task_bundle_batch
   - mcp__territory-ia__plan_digest_verify_paths
   - mcp__territory-ia__cron_journal_append_enqueue
@@ -72,6 +75,7 @@ hard_boundaries:
   - "Do NOT write task spec bodies to filesystem — bundle apply persists to DB only."
   - "Phase B enriched-subsection injection MUST be verbatim — no paraphrase, no compression. When source MD subsection absent → emit skip-clause body line, NEVER drop the `### §...` heading."
   - "Phase A.0 — when `docs/explorations/{slug}.html` exists, refresh `.md` sidecar via extract-md before recipe runs. HTML is canonical artifact post-uplift."
+  - "Phase A.2 — Stage test scaffold MUST be written to `tests/{SLUG}/stage{STAGE_ID}-{stage_slug}.test.mjs` for every stage with at least one `kind: code` task. File is the Pass B verify-loop gate. Re-runs preserve filled `it()` bodies (detect via stub-error sentinel)."
 caller_agent: ship-plan
 ---
 
@@ -131,6 +135,23 @@ Schema validated by `tools/scripts/validate-handoff-schema.mjs` (TECH-12634).
 ---
 
 ## Phase A.0 — Source resolution (HTML-first)
+
+**DB seed gate (mig 0158 — runs FIRST, before HTML/MD resolution):**
+
+Before resolving the on-disk source, fetch the DB seed row that owns the slug:
+
+```
+plan_design_get({slug: {SLUG}})
+  → null                      → STOPPED — plan_design_missing: {SLUG} (user must run /design-explore first)
+  → row.status='draft'        → STOPPED — plan_design_not_ready: {SLUG} (design-explore Phase 4 did not finalize; re-run /design-explore)
+  → row.status='ready'        → continue; read row.priority + row.id as working-memory tokens {priority, design_id}
+  → row.status='consumed'     → STOPPED — plan_design_already_consumed: {SLUG} (use --rerun-bundle to override, or version-bump via --resume)
+  → row.status='archived'     → STOPPED — plan_design_archived: {SLUG} (seed retired)
+```
+
+`{priority}` flows into Phase C as `bundle.plan.priority`. `{design_id}` flows into Phase C as `bundle.plan.design_id` — the SQL fn (mig 0159) auto-flips seed status to `consumed` inside the same tx.
+
+When `--rerun-bundle` flag is set: skip the `status='consumed'` halt; reuse `{priority}` + `{design_id}` verbatim. The SQL fn's `consumed→consumed` UPDATE is idempotent (returns `design_seed_promoted=false`).
 
 Resolve the canonical MD input for the recipe. Two cases:
 
@@ -194,6 +215,64 @@ After recipe returns `task_batch`, scan each task in `handoff_json.stages[].task
 
 No change — Phase B proceeds with standard 3-section digest template.
 
+### Phase A.2 — Stage test scaffold (bridge-aware TDD red/green)
+
+Per stage, scaffold a runnable bridge-aware test file at `tests/{SLUG}/stage{STAGE_ID}-{stage_slug}.test.mjs`. This file is the **Pass B verify-loop gate** — must be fully green at stage close for `/ship-cycle` to commit + close. spec-implementer fills each `it()` body during ship-cycle Pass A, one task at a time, building red→green incrementally.
+
+**Template:** `ia/templates/stage-test-scaffold.template.mjs`. Slots filled per stage:
+
+| Slot | Source |
+|---|---|
+| `{{SLUG}}` | handoff YAML `slug` |
+| `{{STAGE_ID}}` | `stages[].id` (e.g. `1.0`) |
+| `{{STAGE_TITLE}}` | `stages[].title` |
+| `{{SCENE_PATH}}` | derived from `stages[].red_stage_proof_block.proof_artifact_id` first `Assets/Scenes/` match; OR explicit `stages[].test_scene_path` handoff field; OR empty (test omits `openScene` precondition) |
+| `{{TEST_FILE_PATH}}` | computed: `tests/{slug}/stage{id}-{stage_slug}.test.mjs` |
+| `{{TASK_ASSERTION_BLOCKS}}` | one `it('{TASK_KEY}: {task_title}', async () => { /* TODO(spec-implementer): assert ... */ throw new Error('red — not yet implemented'); }, 30_000);` block per task in stage order |
+
+**Per-task stub** — assertion body is intentionally red:
+
+```js
+  it('TECH-12345: Stub RegionScene + RegionManager hub', async () => {
+    // TODO(spec-implementer): assert via bridge that RegionRoot GameObject exists
+    //   with RegionManager component attached. Hint: bridge.findGameObject('RegionRoot')
+    //   then bridge.getComponent('RegionRoot', 'RegionManager') — both via
+    //   debug_context_bundle scene walk.
+    throw new Error('red — not yet implemented');
+  }, 30_000);
+```
+
+**Available bridge primitives** (see `tools/scripts/recipe-engine/bridge-client.mjs`):
+
+- `bridge.findGameObject(name)` — walks `debug_context_bundle` scene state
+- `bridge.getComponent(goName, componentType)` — walks bundle for component on go
+- `bridge.enterPlayMode()` / `exitPlayMode()` / `getPlayModeStatus()` — Play Mode lifecycle
+- `bridge.getCompilationStatus()` — confirm clean compile before runtime assertions
+- `bridge.captureScreenshot({ include_ui: true })` — for UI/render assertions
+- `bridge.getConsoleLogs({ severity_filter: 'error' })` — assert zero errors
+- `bridge.debugContextBundle({ seed_cell: 'x,y' })` — full scene + anomaly export
+- `bridge.uiTreeWalk(opts)` — UI Toolkit hierarchy
+- `bridge.prefabInspect(opts)` — prefab structure
+- `bridge.dispatchAction({ action: 'id', payload: {} })` — fire registered UiActionRegistry
+- `bridge.command(kind, params)` — escape hatch for any bridge kind
+
+**Write semantics:**
+
+- File written to disk during Phase A.2 (before Phase B digest composition).
+- Idempotent: re-running ship-plan on same SLUG with same stages → file rewritten with same contents (no-op).
+- Resume-safe: if file already exists with non-stub `it()` bodies (spec-implementer has begun filling), preserve those bodies; only ADD missing `it()` stubs for new tasks. Detect via grep for `throw new Error('red — not yet implemented')` — stubs match, filled bodies don't.
+- File path is canonical — ship-cycle Pass B looks up by this convention, no DB lookup.
+
+**Skip conditions:**
+
+- `stages[].test_scaffold: skip` in handoff YAML → don't scaffold (rare; doc-only stages).
+- All tasks in stage are `kind: doc-only` or `kind: mcp-only` → log warning, scaffold anyway with stub bodies (assertions can verify DB rows / generated files via fs reads, no bridge needed).
+
+**Stop conditions:**
+
+- Cannot derive `{{SCENE_PATH}}` AND stage has any `kind: code` task AND no explicit `test_scene_path` → halt with `STOPPED — stage_test_scaffold_missing_scene_path: stages[{STAGE_ID}]`. Author adds `test_scene_path: Assets/Scenes/...` to handoff YAML.
+- File write fails (permissions) → halt with stderr capture.
+
 ---
 
 ## Phase B — Compose 3-section digest + 8 enriched subsections per task (Opus-owned)
@@ -251,7 +330,7 @@ Drift-lint runs synchronously inside Phase A recipe step 6 (`plan_digest_drift_l
 
 Mig 0136 extended `master_plan_bundle_apply` to render stage body server-side from `red_stage_proof_block`. Agent passes the 4-field jsonb verbatim from handoff YAML; SQL fn formats the markdown body. When `red_stage_proof_block` is absent, SQL fn seeds the skip-clause default (`target_kind=design_only` + `proof_status=not_applicable`).
 
-Bundle jsonb shape:
+Bundle jsonb shape (mig 0158/0159 — adds `priority` + `design_id` from Phase A.0 seed):
 
 ```json
 {
@@ -259,7 +338,9 @@ Bundle jsonb shape:
     "slug": "{slug}",
     "title": "{plan_title}",
     "parent_plan_id": {parent_plan_id_or_null},
-    "version": {target_version}
+    "version": {target_version},
+    "priority": "{priority from plan_design_get — P0/P1/P2/P3}",
+    "design_id": {design_id from plan_design_get}
   },
   "stages": [
     {
@@ -277,11 +358,12 @@ Bundle jsonb shape:
 
 Single call: `mcp__territory-ia__master_plan_bundle_apply({ bundle })`. Tx body:
 
-1. Insert plan + stages + tasks rows.
+1. Insert plan + stages + tasks rows. `priority` + `design_id` written on ia_master_plans (mig 0159).
 2. Render stage body from `red_stage_proof_block` (mig 0136 server-side fn).
 3. Call `promote_drift_lint_staged(plan_slug, version)` — flips `cron_drift_lint_findings_jobs` row from `staged` → `queued`. Drainer then writes to `ia_master_plan_change_log`.
+4. When `bundle.plan.design_id` is present, flip the linked `ia_plan_designs` row to `status='consumed'` (mig 0159; idempotent — no-op when already consumed).
 
-Whole tx commits atomically. Constraint failure → rollback; re-author offending field then re-dispatch once. Returns `{plan_slug, stages_inserted, tasks_inserted, drift_lint_promoted: true}`.
+Whole tx commits atomically. Constraint failure → rollback; re-author offending field then re-dispatch once. Returns `{plan_slug, apply_path, plan_version, priority, design_id_linked, design_seed_promoted, stages_inserted, tasks_inserted, drift_lint_promoted}`.
 
 `task_key` allocated by Postgres fn (per-prefix monotonic id from `ia_id_sequences`).
 
@@ -318,7 +400,8 @@ Per-task:
   {task_key}: §Plan Digest written ({n_work_items} work items); fold: {n_term_replacements}/{n_retired_refs_replaced}; glossary_warnings: {n_glossary_warnings}
   ...
 drift_lint_findings_job_id: {job_id} (status=queued, n_resolved={n_resolved}, n_unresolved={n_unresolved})
-DB writes: 1 master_plan_bundle_apply OK (incl. promote_drift_lint_staged); 3 Phase D async enqueues (glossary backlinks + anchor reindex + plan_filed audit).
+plan_design seed: id={design_id_linked} priority={priority} flipped_to_consumed={design_seed_promoted}
+DB writes: 1 master_plan_bundle_apply OK (incl. promote_drift_lint_staged + seed→consumed flip); 3 Phase D async enqueues (glossary backlinks + anchor reindex + plan_filed audit).
 next=ship-cycle Stage 1.0
 ```
 
@@ -361,4 +444,5 @@ Before issuing the first DB read, list every question needed for this phase. Bat
 - 2026-05-08 — fix: stage body emit drift (`/ship-final` Phase 4 plan-red-stage halt). Phase 7.0 added — composes stage `body` with 4-field §Red-Stage Proof block; defaults skip-clause (`target_kind=design_only`, `proof_status=not_applicable`) when handoff yaml omits `stages[].red_stage_proof_block`. Companion mig 0113 extends `master_plan_bundle_apply` SQL fn to accept `stages[].body`. Source: bug-log (large-file-atomization-cutover-refactor v1; 6 violations halted /ship-final).
 - 2026-05-09 — lesson: `cityscene-mainmenu-panel-rollout 2.0` Wave A0 → bake → runtime gap. Stage 1.0 task specs registered `UiActionRegistry` shell + `MainMenuRegistrySeed` canonical action ids but never gated **action-wire conformance** in §Red-Stage Proof — bake handler had no `UiActionTrigger` attach helper, controller-side action ids drifted from `panels.json` canonical (silent dispatch miss, compile-clean). For UI-bake stages, §Red-Stage Proof must include a runtime click-fires-handler assertion (Path A bridge or Play-Mode test), NOT just DB row + bake screenshot. Add handoff-yaml convention `stages[].action_wire_proof: required|skip` for any stage that emits `params_json.action`. Drift gates to mention in §Work Items: (a) `panels.json` action id ≡ controller register id (one source of truth = panels.json); (b) every button-kind switch case in `UiBakeHandler` includes `AttachUiActionTrigger` (validator stub `validate:bake-handler-action-coverage`). Pending stages of any UI-bake plan that ship visible buttons → flag the same gates upstream so handoff yaml carries them.
 - 2026-05-13 — feat: HTML-first uplift (design-explore-html-effectiveness-uplift plan). Phase A.0 added — source resolution: extracts canonical MD from `docs/explorations/{slug}.html` (when present) via `npm run design-explore:extract-md {SLUG}`, refreshing the on-disk `.md` sidecar before recipe Phase A reads it. Legacy `.md`-only explorations bypass extraction. Phase B prompt extended — composes 11 sub-sections per task (legacy 3 + 8 enriched per [`ia/rules/design-explore-output-schema.md`](../../rules/design-explore-output-schema.md)). Skip-clause: enriched subsection absent → `_skipped — source absent_` body; section heading always emitted. Hard boundary: Phase B injection MUST be verbatim (no paraphrase / compression / re-formatting); spec-implementer + verify-loop downstream rely on canonical content shape.
+- 2026-05-15 — feat: Phase A.2 added — Stage test scaffold (bridge-aware TDD red/green). Per stage, scaffolds runnable `tests/{slug}/stage{id}-{stage_slug}.test.mjs` from `ia/templates/stage-test-scaffold.template.mjs`. One `it()` stub per task (red on creation). spec-implementer fills bodies during ship-cycle Pass A — one task at a time, red→partial green→fully green at stage close. ship-cycle Pass B verify-loop runs the file as a hard gate before stage commit. Bridge primitives wrapped in `tools/scripts/recipe-engine/bridge-client.mjs` (new file): findGameObject/getComponent (via debug_context_bundle scene walk), Play Mode lifecycle, console + screenshot + dispatch_action passthroughs. Source: region-scene-prototype 2026-05-15 friction — stage tests existed as scaffolds but imported a non-existent BridgeClient, never ran, never gated anything; RegionScene.unity gap landed undetected through 4 stages.
 - 2026-05-10 — refactor: lifecycle skills mechanical-work move-out (Phase 5 of cheeky-growing-panda plan). Phases 1-4 + 6 collapsed to recipe `ship-plan-phase-a` (parse + schema + invariants + task_bundle + spec_sections batch + drift-lint stash). Phase 7.0 stage body composition dropped — mig 0136 server-side render owns it (agent passes `red_stage_proof_block` jsonb verbatim). Phase 7.5 collapsed to recipe `ship-plan-phase-c` (glossary backlinks + anchor reindex + plan_filed audit). Drift-lint findings buffer replaced with crash-safe `cron_drift_lint_findings_jobs` two-phase commit (staged → queued via `promote_drift_lint_staged()` SQL fn called atomically inside `master_plan_bundle_apply` tx). Agent prompt body shrinks ~60 % (parsing + lint + body composition removed). Companion migs 0132 (stage_id canonical) + 0135 (drift-lint queue) + 0136 (server-side body render).

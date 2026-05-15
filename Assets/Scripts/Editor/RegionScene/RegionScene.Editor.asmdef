@@ -1,0 +1,17 @@
+{
+    "name": "RegionScene.Editor",
+    "rootNamespace": "Territory.Editor.RegionScene",
+    "references": [
+        "GUID:61cec639f9964b089023c9d933555b05"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": false
+}

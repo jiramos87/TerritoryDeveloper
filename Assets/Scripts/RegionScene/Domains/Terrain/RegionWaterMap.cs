@@ -39,24 +39,12 @@ namespace Territory.RegionScene.Terrain
         }
 
         /// <summary>Procedural water seed: place river origins on grid edges, flow downhill. Prototype only.</summary>
+        /// <summary>Flat-grass prototype: no water cells. River generation lands post-prototype
+        /// alongside region-specific geo features (see plan top-of-doc reminder).</summary>
         public void Seed(RegionHeightMap heightMap, int deterministicSeed)
         {
             _heightMap = heightMap;
             ClearAll();
-
-            // Place a few river origins deterministically based on seed
-            var origins = new List<(int x, int y)>
-            {
-                (0, deterministicSeed % RegionHeightMap.RegionGridSize),
-                (deterministicSeed % RegionHeightMap.RegionGridSize, 0),
-                (RegionHeightMap.RegionGridSize - 1, (deterministicSeed * 3) % RegionHeightMap.RegionGridSize)
-            };
-
-            foreach (var (ox, oy) in origins)
-                FlowRiverDownhill(heightMap, ox, oy, 40);
-
-            // Compute slope directions for water cells (invariant #8: monotonic non-increasing)
-            ComputeSlopes(heightMap);
         }
 
         /// <summary>Flow river from origin downhill. Marks cells water=true. Invariant #8: river bed monotonic non-increasing.</summary>

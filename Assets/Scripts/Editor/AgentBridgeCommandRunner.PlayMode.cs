@@ -34,6 +34,25 @@ public static partial class AgentBridgeCommandRunner
         SessionState.EraseString(SessionExitRepoRootKey);
     }
 
+    // Scene-agnostic Play Mode readiness probe.
+    // Returns (ready, has_grid_dims, width, height). Order of precedence:
+    //   1. GridManager.isInitialized — CityScene + any scene with a GridManager.
+    //   2. Generic settle — Play Mode active for >= GenericPlayModeSettleSeconds (no grid metrics).
+    static (bool ready, bool hasGridDims, int width, int height) ResolvePlayModeReadiness(DateTime startedUtc)
+    {
+        GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
+        if (grid != null)
+        {
+            return (grid.isInitialized, grid.isInitialized, grid.isInitialized ? grid.width : 0, grid.isInitialized ? grid.height : 0);
+        }
+        // No GridManager in active scene → use generic settle window so MonoBehaviour.Start() can run.
+        double elapsed = (DateTime.UtcNow - startedUtc).TotalSeconds;
+        bool settled = EditorApplication.isPlaying && elapsed >= GenericPlayModeSettleSeconds;
+        return (settled, false, 0, 0);
+    }
+
+    const double GenericPlayModeSettleSeconds = 2.0;
+
     static void PumpEnterPlayModeWait()
     {
         string cmdId = SessionState.GetString(SessionEnterCommandIdKey, string.Empty);
@@ -43,21 +62,24 @@ public static partial class AgentBridgeCommandRunner
         string startedRaw = SessionState.GetString(SessionEnterStartedUtcKey, string.Empty);
         if (!DateTime.TryParse(startedRaw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime startedUtc))
             startedUtc = DateTime.UtcNow;
-        if ((DateTime.UtcNow - startedUtc).TotalSeconds > EnterPlayModeGridWaitMaxSeconds)
-        {
-            string failJson = BridgeCommandService.BuildPlayModeBridgeResponseJson(cmdId, false, "play_mode", "GridManager did not finish initializing within 24 seconds; check Play Mode / scene load errors and retry enter_play_mode.", "play_mode_loading", false, false, false, false, 0, 0);
-            ClearEnterPlaySessionState(); CompleteOrFail(repoRoot, cmdId, failJson); return;
-        }
         if (!EditorApplication.isPlaying)
         {
-            string failJson = BridgeCommandService.BuildPlayModeBridgeResponseJson(cmdId, false, "play_mode", "Play Mode was not active before GridManager initialized; enter_play_mode was cancelled or failed.", "edit_mode", false, false, false, false, 0, 0);
+            string failJson = BridgeCommandService.BuildPlayModeBridgeResponseJson(cmdId, false, "play_mode", "Play Mode was not active before readiness probe completed; enter_play_mode was cancelled or failed.", "edit_mode", false, false, false, false, 0, 0);
             ClearEnterPlaySessionState(); CompleteOrFail(repoRoot, cmdId, failJson); return;
         }
-        GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
-        if (grid != null && grid.isInitialized)
+        var probe = ResolvePlayModeReadiness(startedUtc);
+        if (probe.ready)
         {
-            string okJson = BridgeCommandService.BuildPlayModeBridgeResponseJson(cmdId, true, "play_mode", string.Empty, "play_mode_ready", true, false, false, true, grid.width, grid.height);
-            ClearEnterPlaySessionState(); CompleteOrFail(repoRoot, cmdId, okJson);
+            string okJson = BridgeCommandService.BuildPlayModeBridgeResponseJson(cmdId, true, "play_mode", string.Empty, "play_mode_ready", true, false, false, probe.hasGridDims, probe.width, probe.height);
+            ClearEnterPlaySessionState(); CompleteOrFail(repoRoot, cmdId, okJson); return;
+        }
+        if ((DateTime.UtcNow - startedUtc).TotalSeconds > EnterPlayModeGridWaitMaxSeconds)
+        {
+            string reason = probe.hasGridDims
+                ? "GridManager did not finish initializing within 24 seconds; check Play Mode / scene load errors and retry enter_play_mode."
+                : $"Play Mode did not reach readiness within {EnterPlayModeGridWaitMaxSeconds}s (no GridManager + generic {GenericPlayModeSettleSeconds}s settle did not fire); check Play Mode / scene load errors.";
+            string failJson = BridgeCommandService.BuildPlayModeBridgeResponseJson(cmdId, false, "play_mode", reason, "play_mode_loading", false, false, false, false, 0, 0);
+            ClearEnterPlaySessionState(); CompleteOrFail(repoRoot, cmdId, failJson); return;
         }
     }
 
@@ -87,10 +109,11 @@ public static partial class AgentBridgeCommandRunner
         }
         if (EditorApplication.isPlaying)
         {
-            GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
-            if (grid != null && grid.isInitialized)
+            // Already playing — if grid scene already ready, return immediately; otherwise queue the pump.
+            var probe = ResolvePlayModeReadiness(DateTime.UtcNow);
+            if (probe.ready)
             {
-                string json = BridgeCommandService.BuildPlayModeBridgeResponseJson(commandId, true, "play_mode", string.Empty, "play_mode_ready", true, true, false, true, grid.width, grid.height);
+                string json = BridgeCommandService.BuildPlayModeBridgeResponseJson(commandId, true, "play_mode", string.Empty, "play_mode_ready", true, true, false, probe.hasGridDims, probe.width, probe.height);
                 CompleteOrFail(repoRoot, commandId, json); return;
             }
             SessionState.SetString(SessionEnterCommandIdKey, commandId);
@@ -130,9 +153,14 @@ public static partial class AgentBridgeCommandRunner
             CompleteOrFail(repoRoot, commandId, BridgeCommandService.BuildPlayModeBridgeResponseJson(commandId, true, "play_mode", string.Empty, "edit_mode", false, false, false, false, 0, 0));
             return;
         }
-        GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
-        bool init = grid != null && grid.isInitialized;
-        string state = init ? "play_mode_ready" : "play_mode_loading";
-        CompleteOrFail(repoRoot, commandId, BridgeCommandService.BuildPlayModeBridgeResponseJson(commandId, true, "play_mode", string.Empty, state, init, false, false, init, init ? grid.width : 0, init ? grid.height : 0));
+        // Status probe uses started_utc when available so a non-grid scene's ready window is computed
+        // relative to the most recent enter_play_mode (best effort; falls back to "now" which means
+        // settle window starts now — caller may need to retry once to observe ready).
+        string startedRaw = SessionState.GetString(SessionEnterStartedUtcKey, string.Empty);
+        if (!DateTime.TryParse(startedRaw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime startedUtc))
+            startedUtc = DateTime.UtcNow;
+        var probe = ResolvePlayModeReadiness(startedUtc);
+        string state = probe.ready ? "play_mode_ready" : "play_mode_loading";
+        CompleteOrFail(repoRoot, commandId, BridgeCommandService.BuildPlayModeBridgeResponseJson(commandId, true, "play_mode", string.Empty, state, probe.ready, false, false, probe.hasGridDims, probe.width, probe.height));
     }
 }

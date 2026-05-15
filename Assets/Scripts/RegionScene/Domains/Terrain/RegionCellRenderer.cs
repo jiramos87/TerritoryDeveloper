@@ -35,6 +35,19 @@ namespace Territory.RegionScene.Terrain
             _culler.OnVisibleSetChanged += OnVisibleSetChanged;
         }
 
+        /// <summary>Inject the single grass sprite from RegionManager (Inspector-wired). Flat-grass prototype:
+        /// water/cliff sprite slots removed; post-prototype expansion re-introduces them.</summary>
+        public void WireSprites(Sprite grass)
+        {
+            if (grass != null)
+            {
+                grassSprite = grass;
+                waterSlopeSprite = grass;
+                cliffSouthSprite = grass;
+                cliffEastSprite = grass;
+            }
+        }
+
         private void OnDestroy()
         {
             if (_culler != null)
@@ -79,11 +92,12 @@ namespace Territory.RegionScene.Terrain
                 go.transform.SetParent(transform);
                 var sr = go.AddComponent<SpriteRenderer>();
                 _renderers[x, y] = sr;
-                // Isometric world position
-                float wx = (x - y) * 0.5f;
-                float wy = (x + y) * 0.25f + _heightMap.HeightAt(x, y) * 0.125f;
+                // Isometric world position — tile step matches 64px iso diamond at PPU 100
+                // (32px half-width / 16px half-height → 0.32/0.16 world units per cell step).
+                float wx = (x - y) * 0.32f;
+                float wy = (x + y) * 0.16f + _heightMap.HeightAt(x, y) * 0.08f;
                 go.transform.position = new Vector3(wx, wy, 0f);
-                // Sort order: depth = y-based iso depth so back cliffs don't paint over front grass
+                // Sort order: y-based iso depth so back cells paint behind front cells
                 sr.sortingOrder = -(x + y) * 2 + _heightMap.HeightAt(x, y);
                 sr.sprite = sprite;
             }

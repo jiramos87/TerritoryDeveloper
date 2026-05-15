@@ -21,18 +21,15 @@ namespace Territory.RegionScene.Terrain
             return _height[x, y];
         }
 
-        /// <summary>Procedural Perlin seed. Prototype only — region-specific generation replaces post-prototype.</summary>
+        /// <summary>Flat-grass prototype: every cell elevation = 1. Procedural noise generation
+        /// + region-specific terrain logic land post-prototype (see plan top-of-doc reminder).</summary>
         public void Seed(int deterministicSeed)
         {
-            float offsetX = deterministicSeed * 0.1f;
-            float offsetY = deterministicSeed * 0.17f;
-            float scale = 0.12f;
             for (int x = 0; x < RegionGridSize; x++)
             {
                 for (int y = 0; y < RegionGridSize; y++)
                 {
-                    float noise = Mathf.PerlinNoise(x * scale + offsetX, y * scale + offsetY);
-                    _height[x, y] = Mathf.Clamp(Mathf.RoundToInt(noise * MaxHeight), MinHeight, MaxHeight);
+                    _height[x, y] = 1;
                 }
             }
         }

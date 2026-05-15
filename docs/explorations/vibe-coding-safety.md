@@ -1,3 +1,581 @@
+---
+slug: vibe-coding-safety
+parent_plan_id: null
+target_version: 1
+notes: |
+  7-proposal vibe-coding safety bundle. Ship order A→B→C→D→E. Proposal #6 dropped
+  (parallel-carcass overlap — see docs/parallel-carcass-exploration.md shipped 2026-04-29).
+  Critic pipeline (#3) fires ONLY at /ship-final Pass B — never per-Task or per-Stage.
+  Feature flags DB-primary (ia_feature_flags table) with interchange JSON boot hydration
+  and bridge OnFlagFlipped signal. Plan-scoped arch decisions: plan-vibe-coding-safety-boundaries,
+  plan-vibe-coding-safety-end-state-contract, plan-vibe-coding-safety-shared-seams.
+  Stage 1.0 = hook-layer tracer (carcass). Stages 2.0-6.0 = section waves per Design Expansion.
+stages:
+  - id: '1.0'
+    title: 'Hook-layer tracer — stop hook + test-write denylist live'
+    exit: |
+      Stop hook exits 2 with reason on stderr when session touched Assets/**/*.cs (or tools/mcp-ia-server/**, Domains/**)
+      AND emitting response lacks Verification block. Test-write denylist exits 2 on Write/MultiEdit to
+      tests/** or tools/fixtures/scenarios/** unless TD_ALLOW_TEST_EDIT={ISSUE_ID} env var set. Smoke fixtures
+      under tests/hooks/ green.
+    red_stage_proof: |
+      # tests/hooks/stage1-stop-verification.test.mjs — red on 1.0.1..1.0.3 stub, green on 1.0.5 fixture
+      it('exits 2 when session touched Assets/** without Verification block', async () => {
+        const ctx = { touched: ['Assets/Scripts/Foo.cs'], response: 'ok done' };
+        const { code, stderr } = await runHook('stop-verification-required.sh', ctx);
+        assert.equal(code, 2);
+        assert.match(stderr, /Verification block required/);
+      });
+      it('exits 0 on docs-only session', async () => {
+        const ctx = { touched: ['docs/foo.md'], response: 'ok' };
+        const { code } = await runHook('stop-verification-required.sh', ctx);
+        assert.equal(code, 0);
+      });
+    red_stage_proof_block:
+      red_test_anchor: 'tracer-verb-test:tests/hooks/stage1-stop-verification.test.mjs::StopHookBlocksMissingVerification'
+      target_kind: tracer_verb
+      proof_artifact_id: 'tests/hooks/stage1-stop-verification.test.mjs'
+      proof_status: failed_as_expected
+    tasks:
+      - id: '1.0.1'
+        title: 'Write stop-verification-required.sh hook script'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          Bash script under tools/scripts/claude-hooks/. Reads $CLAUDE_SESSION_CONTEXT JSON.
+          Greps emitting response for Verification block JSON header regex.
+          Exit 2 + stderr reason when touched-files regex matches ^(Assets/Scripts/.*\.cs|tools/mcp-ia-server/.*|Domains/.*)
+          AND emitting response lacks Verification block header. Otherwise exit 0.
+        touched_paths: ['tools/scripts/claude-hooks/stop-verification-required.sh']
+        kind: code
+      - id: '1.0.2'
+        title: 'Extend skill-surface-guard.sh with tests/scenarios denylist branch'
+        prefix: TECH
+        depends_on: ['1.0.1']
+        digest_outline: |
+          Add regex branch to existing skill-surface-guard.sh: deny Write/MultiEdit on
+          ^(tests|tools/fixtures/scenarios)/.* unless TD_ALLOW_TEST_EDIT={ISSUE_ID} env var set.
+          For Edit: parse old_string/new_string; deny if removing [Test] / it( / test( declaration tokens
+          without env var override.
+        touched_paths: ['tools/scripts/claude-hooks/skill-surface-guard.sh']
+        kind: code
+      - id: '1.0.3'
+        title: 'Wire hooks.Stop[] matcher in .claude/settings.json'
+        prefix: TECH
+        depends_on: ['1.0.1']
+        digest_outline: |
+          Append entry to hooks.Stop[] invoking tools/scripts/claude-hooks/stop-verification-required.sh.
+          Format mirrors existing PreToolUse hook entries.
+        touched_paths: ['.claude/settings.json']
+        kind: code
+      - id: '1.0.4'
+        title: 'Wire hooks.PreToolUse[] chain in .claude/settings.json'
+        prefix: TECH
+        depends_on: ['1.0.2']
+        digest_outline: |
+          Update Edit|Write|MultiEdit matcher to chain skill-surface-guard.sh denylist branch
+          after existing skill-surface-guard.sh entry. Sequential execution.
+        touched_paths: ['.claude/settings.json']
+        kind: code
+      - id: '1.0.5'
+        title: 'Hook smoke test — stop verification required'
+        prefix: TECH
+        depends_on: ['1.0.3']
+        digest_outline: |
+          Assert exit 2 on Assets/** touch without Verification block; exit 0 with block;
+          exit 0 on docs-only sessions. Fixture under tests/hooks/.
+        touched_paths: ['tests/hooks/stage1-stop-verification.test.mjs']
+        kind: code
+      - id: '1.0.6'
+        title: 'Hook smoke test — test-write denylist'
+        prefix: TECH
+        depends_on: ['1.0.4']
+        digest_outline: |
+          Assert exit 2 on Write to tests/foo.test.mjs; exit 0 with TD_ALLOW_TEST_EDIT=BUG-1234;
+          assert exit 2 on Edit removing [Test] without env override.
+        touched_paths: ['tests/hooks/stage1-test-denylist.test.mjs']
+        kind: code
+  - id: '2.0'
+    title: 'Wave A finalization — docs cross-links + rule prose'
+    exit: |
+      ia/rules/agent-principles.md Testing+verification section links to new hook scripts with exit-code semantics.
+      docs/agent-led-verification-policy.md cross-refs Stop hook as enforcement layer for Verification block requirement.
+    red_stage_proof: |
+      # design_only — validator checks doc cross-refs exist
+      grep -q "stop-verification-required.sh" ia/rules/agent-principles.md
+      grep -q "Stop hook" docs/agent-led-verification-policy.md
+    red_stage_proof_block:
+      red_test_anchor: 'design-only-test:ia/rules/agent-principles.md::HookCrossRef'
+      target_kind: design_only
+      proof_artifact_id: 'ia/rules/agent-principles.md'
+      proof_status: not_applicable
+    tasks:
+      - id: '2.0.1'
+        title: 'Cross-ref hooks in agent-principles.md Testing+verification section'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          Replace existing policy prose pointing to enforcement strategy with link to new hook scripts.
+          Mention exit codes (0 allow, 2 deny). Cross-ref tools/scripts/claude-hooks/{stop-verification-required,skill-surface-guard}.sh.
+        touched_paths: ['ia/rules/agent-principles.md']
+        kind: doc-only
+      - id: '2.0.2'
+        title: 'Cross-ref Stop hook in agent-led-verification-policy.md'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          Add subsection naming the Stop hook as the enforcement layer for Verification block requirement.
+          Link to tools/scripts/claude-hooks/stop-verification-required.sh.
+        touched_paths: ['docs/agent-led-verification-policy.md']
+        kind: doc-only
+  - id: '3.0'
+    title: 'Wave B — EARS rubric rule 11 + /spec-freeze gate'
+    exit: |
+      ia_master_plan_specs table live with (slug, version) unique key. master_plan_spec_freeze MCP tool registered.
+      /spec-freeze skill+slash command authored. /ship-plan refuses non-frozen specs unless --skip-freeze
+      (bypass logged to arch_changelog kind=spec_freeze_bypass). validate:plan-digest-coverage enforces EARS prefix
+      on each §Acceptance row unless plan.ears_grandfathered=TRUE.
+    red_stage_proof: |
+      # tests/vibe-coding-safety/stage2-spec-freeze.test.mjs — red until 3.0.7 + 3.0.8 land
+      it('refuses /ship-plan when spec not frozen', async () => {
+        await db.query("INSERT INTO ia_master_plans (slug, ears_grandfathered) VALUES ('test-plan', FALSE)");
+        // no row in ia_master_plan_specs
+        const { code, stderr } = await runShipPlan('test-plan');
+        assert.equal(code, 1);
+        assert.match(stderr, /spec_freeze_required/);
+      });
+      it('rejects digest §Acceptance row without EARS prefix', async () => {
+        const result = await runValidator('validate:plan-digest-coverage', {
+          digest: '§Acceptance:\n- The system updates the score.'  // no WHEN/WHILE/IF/WHERE/THE prefix
+        });
+        assert.equal(result.code, 1);
+      });
+    red_stage_proof_block:
+      red_test_anchor: 'visibility-delta-test:tests/vibe-coding-safety/stage2-spec-freeze.test.mjs::ShipPlanRefusesNonFrozen'
+      target_kind: visibility_delta
+      proof_artifact_id: 'tests/vibe-coding-safety/stage2-spec-freeze.test.mjs'
+      proof_status: failed_as_expected
+    tasks:
+      - id: '3.0.1'
+        title: 'Migration — ia_master_plans add ears_grandfathered column + backfill'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          ALTER TABLE ia_master_plans ADD COLUMN ears_grandfathered BOOLEAN NOT NULL DEFAULT FALSE.
+          Backfill UPDATE SET TRUE WHERE created_at < $WAVE_B_SHIP_TS (recorded at migration apply).
+          Mirrors existing tdd_red_green_grandfathered column pattern.
+        touched_paths: ['db/migrations/']
+        kind: code
+      - id: '3.0.2'
+        title: 'Migration — ia_master_plan_specs table'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          CREATE TABLE ia_master_plan_specs (id SERIAL PK, slug TEXT NOT NULL, version INTEGER NOT NULL,
+          frozen_at TIMESTAMP, body TEXT NOT NULL, open_questions_count INTEGER NOT NULL DEFAULT 0,
+          UNIQUE(slug, version)).
+        touched_paths: ['db/migrations/']
+        kind: code
+      - id: '3.0.3'
+        title: 'Register MCP tool master_plan_spec_freeze'
+        prefix: TECH
+        depends_on: ['3.0.2']
+        digest_outline: |
+          Input {slug, source_doc_path}. Reads Design Expansion section, parses Open Questions count,
+          INSERTs ia_master_plan_specs row with frozen_at=NOW(). Emits arch_changelog kind=spec_frozen.
+          Fails if open_questions_count > 0.
+        touched_paths: ['tools/mcp-ia-server/src/index.ts', 'tools/mcp-ia-server/src/tools/']
+        kind: mcp-only
+      - id: '3.0.4'
+        title: 'Author /spec-freeze skill'
+        prefix: TECH
+        depends_on: ['3.0.3']
+        digest_outline: |
+          ia/skills/spec-freeze/SKILL.md + agent-body.md + command-body.md per skill conventions.
+          Invokes master_plan_spec_freeze MCP. Emits frozen artifact path to user.
+          Slash command + subagent generation via npm run skill:sync:all.
+        touched_paths: ['ia/skills/spec-freeze/']
+        kind: doc-only
+      - id: '3.0.5'
+        title: 'Rubric rule 11 in plan-digest-contract.md'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          Add hard rule 11 to ia/rules/plan-digest-contract.md. Reference 5 EARS patterns
+          (ubiquitous WHEN/THE, event-driven WHEN/IF, state-driven WHILE, unwanted-behavior IF...THEN,
+          optional-feature WHERE). Each §Acceptance row must start with one prefix (case-insensitive).
+        touched_paths: ['ia/rules/plan-digest-contract.md']
+        kind: doc-only
+      - id: '3.0.6'
+        title: 'Inject rubric rule 11 into /stage-authoring Phase 4 prompt'
+        prefix: TECH
+        depends_on: ['3.0.5']
+        digest_outline: |
+          Update ia/skills/stage-authoring/agent-body.md or SKILL.md — Phase 4 prompt template gets
+          rule 11 verbatim. Cross-ref the 5 EARS prefixes.
+        touched_paths: ['ia/skills/stage-authoring/']
+        kind: doc-only
+      - id: '3.0.7'
+        title: 'Extend validate:plan-digest-coverage to enforce EARS'
+        prefix: TECH
+        depends_on: ['3.0.5', '3.0.1']
+        digest_outline: |
+          Skip if plan.ears_grandfathered=TRUE. Else assert each §Acceptance row begins with one of
+          5 EARS prefixes (case-insensitive). Exit 1 on violation.
+        touched_paths: ['tools/scripts/validate-plan-digest-coverage.mjs']
+        kind: code
+      - id: '3.0.8'
+        title: 'Gate /ship-plan on frozen spec'
+        prefix: TECH
+        depends_on: ['3.0.3']
+        digest_outline: |
+          ship-plan SKILL Phase A queries ia_master_plan_specs WHERE slug=$slug ORDER BY version DESC LIMIT 1.
+          Reject if frozen_at IS NULL OR open_questions_count > 0. --skip-freeze flag logs to arch_changelog
+          kind=spec_freeze_bypass (hotfix escape).
+        touched_paths: ['ia/skills/ship-plan/']
+        kind: doc-only
+      - id: '3.0.9'
+        title: 'Stage test — spec-freeze + ship-plan gate + EARS rubric'
+        prefix: TECH
+        depends_on: ['3.0.7', '3.0.8']
+        digest_outline: |
+          Single test file asserts: (a) /spec-freeze inserts row + emits arch_changelog;
+          (b) /ship-plan refuses non-frozen; (c) validate:plan-digest-coverage rejects non-EARS rows;
+          (d) ears_grandfathered=TRUE bypass.
+        touched_paths: ['tests/vibe-coding-safety/stage2-spec-freeze.test.mjs']
+        kind: code
+      - id: '3.0.10'
+        title: 'Regenerate skill catalog + IA indexes'
+        prefix: TECH
+        depends_on: ['3.0.4', '3.0.6']
+        digest_outline: |
+          npm run skill:sync:all (regenerates .claude/{agents,commands}/spec-freeze.md +
+          .cursor/rules/cursor-skill-spec-freeze.mdc). npm run generate:ia-indexes (refreshes indexes).
+        touched_paths: []
+        kind: code
+  - id: '4.0'
+    title: 'Wave C — Adaptive MAX_ITERATIONS by gap_reason in /verify-loop'
+    exit: |
+      verify-loop SKILL.md carries MAX_ITERATIONS_BY_GAP_REASON table. Transient gap_reasons
+      (bridge_timeout, lease_unavailable, unity_lock_stale) → 5 retries with exponential backoff.
+      Deterministic (compile_error, test_assertion, validator_violation) → 2 retries.
+      Escalate-now (unity_api_limit, human_judgment_required) → 0 retries (immediate human poll).
+      Hard cap = 5. Backoff helper inline or under tools/scripts/.
+    red_stage_proof: |
+      # tests/vibe-coding-safety/stage3-adaptive-iterations.test.mjs — red until 4.0.3 lands
+      it('grants transient gap_reason 5 retries with exponential backoff', async () => {
+        const trace = await runVerifyLoop({ gapReason: 'bridge_timeout', simulateFlap: 4 });
+        assert.equal(trace.attempts.length, 5);
+        const delays = trace.attempts.slice(1).map((a, i) => a.startedAt - trace.attempts[i].endedAt);
+        // base=500, max=8000 → delays grow until cap
+        assert(delays[0] < delays[1] && delays[1] < delays[2]);
+      });
+      it('grants deterministic gap_reason 2 retries', async () => {
+        const trace = await runVerifyLoop({ gapReason: 'compile_error', simulateFlap: 5 });
+        assert.equal(trace.attempts.length, 2);
+      });
+      it('skips retry on escalate-now gap_reason', async () => {
+        const trace = await runVerifyLoop({ gapReason: 'human_judgment_required' });
+        assert.equal(trace.attempts.length, 1);
+        assert(trace.escalated);
+      });
+    red_stage_proof_block:
+      red_test_anchor: 'visibility-delta-test:tests/vibe-coding-safety/stage3-adaptive-iterations.test.mjs::TransientGapGets5Retries'
+      target_kind: visibility_delta
+      proof_artifact_id: 'tests/vibe-coding-safety/stage3-adaptive-iterations.test.mjs'
+      proof_status: failed_as_expected
+    tasks:
+      - id: '4.0.1'
+        title: 'Add MAX_ITERATIONS_BY_GAP_REASON canonical table to verify-loop SKILL.md'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          Markdown table in ia/skills/verify-loop/SKILL.md mapping gap_reason → max_iterations.
+          Transient → 5; deterministic → 2; escalate-now → 0. Hard cap 5.
+        touched_paths: ['ia/skills/verify-loop/SKILL.md']
+        kind: doc-only
+      - id: '4.0.2'
+        title: 'Implement exponential-backoff helper'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          delay_ms = base * 2^attempt (base=500, max=8000). Helper at tools/scripts/exponential-backoff.mjs.
+          Pure function exported for verify-loop body inline use.
+        touched_paths: ['tools/scripts/exponential-backoff.mjs']
+        kind: code
+      - id: '4.0.3'
+        title: 'Replace fixed MAX_ITERATIONS=2 with classifier lookup'
+        prefix: TECH
+        depends_on: ['4.0.1', '4.0.2']
+        digest_outline: |
+          Update ia/skills/verify-loop/agent-body.md — classifier reads gap_reason →
+          MAX_ITERATIONS_BY_GAP_REASON. Insert backoff helper invocation between retries on
+          transient gap_reasons. Preserve hard cap = 5.
+        touched_paths: ['ia/skills/verify-loop/']
+        kind: doc-only
+      - id: '4.0.4'
+        title: 'Update verify-loop validator / rule prose to new shape'
+        prefix: TECH
+        depends_on: ['4.0.3']
+        digest_outline: |
+          Update any validators expecting fixed iter count. Update rule prose mentioning fixed cap
+          (ia/rules/agent-principles.md "Testing + verification" section if needed).
+        touched_paths: ['ia/rules/', 'tools/scripts/']
+        kind: doc-only
+      - id: '4.0.5'
+        title: 'Stage test — adaptive iterations'
+        prefix: TECH
+        depends_on: ['4.0.3']
+        digest_outline: |
+          Asserts transient gap_reason gets 5 retries with growing backoff delays;
+          deterministic gets 2; escalate-now gets 0 and triggers human poll.
+        touched_paths: ['tests/vibe-coding-safety/stage3-adaptive-iterations.test.mjs']
+        kind: code
+      - id: '4.0.6'
+        title: 'Regenerate skill catalog'
+        prefix: TECH
+        depends_on: ['4.0.3']
+        digest_outline: |
+          npm run skill:sync:all to regenerate .claude/commands/verify-loop.md from updated SKILL.md.
+        touched_paths: []
+        kind: code
+  - id: '5.0'
+    title: 'Wave D — Feature flag DB table + Unity runtime + interchange JSON + bridge'
+    exit: |
+      ia_feature_flags table live (slug, stage_id, enabled, default_value, owner). ia_stages.flag_slug column added.
+      Assets/Scripts/Core/FeatureFlags.cs static class boot-hydrates from tools/interchange/feature-flags-snapshot.json
+      at Awake. Bridge command kind=flag_flip triggers FeatureFlags.InvalidateCache() + re-hydrate.
+      Web dashboard renders flag state from ia_feature_flags. Interchange JSON artifact registered in interchange.md.
+    red_stage_proof: |
+      # tests/vibe-coding-safety/stage4-flags.test.mjs — red until 5.0.4 + 5.0.7 land
+      it('FeatureFlags.IsEnabled returns table value after boot hydration', async () => {
+        await db.query("INSERT INTO ia_feature_flags (slug, enabled) VALUES ('test-flag', TRUE)");
+        await exportSnapshot();
+        await unityBridge.send({ kind: 'load_scene', scene: 'MainScene' });
+        const result = await unityBridge.eval('FeatureFlags.IsEnabled("test-flag")');
+        assert.equal(result, true);
+      });
+      it('flag_flip bridge command invalidates cache + re-hydrates', async () => {
+        await db.query("UPDATE ia_feature_flags SET enabled=FALSE WHERE slug='test-flag'");
+        await exportSnapshot();
+        await unityBridge.send({ kind: 'flag_flip', slug: 'test-flag' });
+        const result = await unityBridge.eval('FeatureFlags.IsEnabled("test-flag")');
+        assert.equal(result, false);
+      });
+    red_stage_proof_block:
+      red_test_anchor: 'visibility-delta-test:tests/vibe-coding-safety/stage4-flags.test.mjs::BootHydrationFromInterchangeJson'
+      target_kind: visibility_delta
+      proof_artifact_id: 'tests/vibe-coding-safety/stage4-flags.test.mjs'
+      proof_status: failed_as_expected
+    tasks:
+      - id: '5.0.1'
+        title: 'Migration — ia_feature_flags table'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          CREATE TABLE ia_feature_flags (slug TEXT PK, stage_id INTEGER REFERENCES ia_stages(id) ON DELETE SET NULL,
+          enabled BOOLEAN NOT NULL DEFAULT FALSE, default_value BOOLEAN NOT NULL DEFAULT FALSE,
+          owner TEXT, created_at TIMESTAMP NOT NULL DEFAULT NOW()).
+        touched_paths: ['db/migrations/']
+        kind: code
+      - id: '5.0.2'
+        title: 'Migration — ia_stages.flag_slug column'
+        prefix: TECH
+        depends_on: ['5.0.1']
+        digest_outline: |
+          ALTER TABLE ia_stages ADD COLUMN flag_slug TEXT NULL REFERENCES ia_feature_flags(slug).
+          Optional pointer from Stage row to flag slug.
+        touched_paths: ['db/migrations/']
+        kind: code
+      - id: '5.0.3'
+        title: 'Author FeatureFlags.cs static class'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          public static class FeatureFlags. IsEnabled(string slug)→bool. private static Dictionary<string,bool> _cache.
+          public static void HydrateFromJson(string path) — reads snapshot, populates cache.
+          public static void InvalidateCache() — clears cache; next IsEnabled forces re-read.
+          Located at Assets/Scripts/Core/.
+        touched_paths: ['Assets/Scripts/Core/FeatureFlags.cs']
+        kind: code
+      - id: '5.0.4'
+        title: 'Boot hook — bootstrap MonoBehaviour Awake invokes hydration'
+        prefix: TECH
+        depends_on: ['5.0.3']
+        digest_outline: |
+          On existing bootstrap MonoBehaviour (e.g. GameManager or scene-root hub), Awake() invokes
+          FeatureFlags.HydrateFromJson("tools/interchange/feature-flags-snapshot.json"). Inspector-wired hub
+          preserved (no rename/move per CLAUDE.md memory).
+        touched_paths: ['Assets/Scripts/']
+        kind: code
+      - id: '5.0.5'
+        title: 'Register interchange JSON artifact schema'
+        prefix: TECH
+        depends_on: ['5.0.1']
+        digest_outline: |
+          Add `feature-flags-snapshot` artifact entry to ia/specs/architecture/interchange.md. JSON schema:
+          { artifact: "feature-flags-snapshot", schema_version: 1, flags: [{slug, enabled, default_value}] }.
+          Path: tools/interchange/feature-flags-snapshot.json.
+        touched_paths: ['tools/interchange/', 'ia/specs/architecture/interchange.md']
+        kind: doc-only
+      - id: '5.0.6'
+        title: 'MCP tool / web export — ia_feature_flags → snapshot artifact'
+        prefix: TECH
+        depends_on: ['5.0.5']
+        digest_outline: |
+          Reads ia_feature_flags rows, writes tools/interchange/feature-flags-snapshot.json.
+          Register as MCP tool feature_flags_snapshot_write or as web build step.
+        touched_paths: ['tools/mcp-ia-server/src/', 'web/']
+        kind: mcp-only
+      - id: '5.0.7'
+        title: 'Bridge command kind flag_flip'
+        prefix: TECH
+        depends_on: ['5.0.3', '5.0.6']
+        digest_outline: |
+          Register `flag_flip` kind in tools/mcp-ia-server/src/. Payload {slug}.
+          Unity-side AgentBridgeCommandRunner handler invokes FeatureFlags.InvalidateCache() +
+          re-hydrate from latest interchange JSON.
+        touched_paths: ['tools/mcp-ia-server/src/', 'Assets/Scripts/']
+        kind: code
+      - id: '5.0.8'
+        title: 'Web dashboard read-only flag panel'
+        prefix: TECH
+        depends_on: ['5.0.1']
+        digest_outline: |
+          web/app/flags/page.tsx — server component reads ia_feature_flags via Postgres pool.
+          Renders flag state (slug, enabled, default_value, owner, stage_id). Read-only first cut.
+        touched_paths: ['web/app/flags/page.tsx']
+        kind: code
+      - id: '5.0.9'
+        title: 'Stage test — flag table + boot hydration + bridge flip'
+        prefix: TECH
+        depends_on: ['5.0.4', '5.0.7']
+        digest_outline: |
+          Asserts snapshot artifact shape; boot hydration populates FeatureFlags._cache from snapshot;
+          bridge flag_flip kind invalidates cache + re-hydrates from new snapshot.
+        touched_paths: ['tests/vibe-coding-safety/stage4-flags.test.mjs']
+        kind: code
+      - id: '5.0.10'
+        title: 'Glossary row — Feature flag (Stage-scoped)'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          Add row to ia/specs/glossary.md pointing to ia_feature_flags table + FeatureFlags.cs runtime.
+          Define Stage-scoped vs global flag semantics.
+        touched_paths: ['ia/specs/glossary.md']
+        kind: doc-only
+  - id: '6.0'
+    title: 'Wave E — Multi-agent critic at /ship-final Pass B'
+    exit: |
+      ia_review_findings table live. 3 critic subagents authored (/critic-style, /critic-logic, /critic-security).
+      ship-final SKILL Pass B dispatches all 3 in parallel via Agent tool; blocks plan close on any
+      severity=high row. AskUserQuestion override path logged to arch_changelog kind=critic_override.
+      review_findings_write MCP tool registered.
+    red_stage_proof: |
+      # tests/vibe-coding-safety/stage5-critics.test.mjs — red until 6.0.6 lands
+      it('dispatches 3 critics in parallel and persists findings', async () => {
+        const result = await runShipFinal({ slug: 'test-plan', cumulativeDiff: SAMPLE_DIFF });
+        const rows = await db.query("SELECT critic_kind FROM ia_review_findings WHERE plan_slug='test-plan'");
+        const kinds = new Set(rows.map(r => r.critic_kind));
+        assert.deepEqual(kinds, new Set(['style', 'logic', 'security']));
+      });
+      it('blocks plan close on severity=high without override', async () => {
+        await db.query("INSERT INTO ia_review_findings (plan_slug, critic_kind, severity, body) VALUES ('test-plan', 'security', 'high', 'leaked credential')");
+        const result = await runShipFinal({ slug: 'test-plan', userOverride: false });
+        assert.equal(result.code, 1);
+        assert.match(result.stderr, /critic_block/);
+      });
+      it('logs override to arch_changelog when operator confirms', async () => {
+        const result = await runShipFinal({ slug: 'test-plan', userOverride: true });
+        const log = await db.query("SELECT kind FROM arch_changelog WHERE kind='critic_override' AND payload->>'slug'='test-plan'");
+        assert.equal(log.length, 1);
+      });
+    red_stage_proof_block:
+      red_test_anchor: 'visibility-delta-test:tests/vibe-coding-safety/stage5-critics.test.mjs::CriticsParallelDispatchHighSeverityBlocks'
+      target_kind: visibility_delta
+      proof_artifact_id: 'tests/vibe-coding-safety/stage5-critics.test.mjs'
+      proof_status: failed_as_expected
+    tasks:
+      - id: '6.0.1'
+        title: 'Migration — ia_review_findings table'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          CREATE TABLE ia_review_findings (id SERIAL PK, plan_slug TEXT NOT NULL, stage_id INTEGER NULL,
+          critic_kind TEXT NOT NULL CHECK (critic_kind IN ('style','logic','security')),
+          severity TEXT NOT NULL CHECK (severity IN ('low','medium','high')), body TEXT NOT NULL,
+          file_path TEXT NULL, line_range TEXT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW()).
+        touched_paths: ['db/migrations/']
+        kind: code
+      - id: '6.0.2'
+        title: 'Author /critic-style skill'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          ia/skills/critic-style/SKILL.md + agent-body.md + command-body.md. Input: cumulative diff +
+          glossary + coding conventions. Output: findings JSON conforming to ia_review_findings shape.
+          Caveman tone scan + glossary-term consistency scan + naming-convention scan.
+        touched_paths: ['ia/skills/critic-style/']
+        kind: doc-only
+      - id: '6.0.3'
+        title: 'Author /critic-logic skill'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          ia/skills/critic-logic/SKILL.md + agent-body.md + command-body.md. Input: cumulative diff +
+          invariants summary. Output: findings JSON. Data-flow + invariant-touchpoint + control-flow scan.
+        touched_paths: ['ia/skills/critic-logic/']
+        kind: doc-only
+      - id: '6.0.4'
+        title: 'Author /critic-security skill'
+        prefix: TECH
+        depends_on: []
+        digest_outline: |
+          ia/skills/critic-security/SKILL.md + agent-body.md + command-body.md. Input: cumulative diff
+          filtered to Assets/** + tools/mcp-ia-server/** + web/** touched paths. Output: findings JSON.
+          Input-validation + path-traversal + secret-leak scan.
+        touched_paths: ['ia/skills/critic-security/']
+        kind: doc-only
+      - id: '6.0.5'
+        title: 'Register MCP tool review_findings_write'
+        prefix: TECH
+        depends_on: ['6.0.1']
+        digest_outline: |
+          Input {plan_slug, stage_id?, critic_kind, severity, body, file_path?, line_range?}.
+          INSERT ia_review_findings row. Register in tools/mcp-ia-server/src/index.ts.
+        touched_paths: ['tools/mcp-ia-server/src/index.ts', 'tools/mcp-ia-server/src/tools/']
+        kind: mcp-only
+      - id: '6.0.6'
+        title: 'Update /ship-final Pass B to dispatch 3 critics in parallel'
+        prefix: TECH
+        depends_on: ['6.0.2', '6.0.3', '6.0.4', '6.0.5']
+        digest_outline: |
+          Update ia/skills/ship-final/agent-body.md Pass B — dispatch /critic-style + /critic-logic +
+          /critic-security via parallel Agent tool calls (one message, multiple tool uses).
+          Each critic emits findings → review_findings_write MCP. Block plan close on severity=high;
+          emit AskUserQuestion override prompt; log override to arch_changelog kind=critic_override.
+        touched_paths: ['ia/skills/ship-final/']
+        kind: doc-only
+      - id: '6.0.7'
+        title: 'Stage test — critic parallel dispatch + high-severity block + override path'
+        prefix: TECH
+        depends_on: ['6.0.6']
+        digest_outline: |
+          Asserts 3 critics dispatched in parallel; findings persisted in ia_review_findings;
+          severity=high blocks plan close; operator AskUserQuestion override path persists arch_changelog entry.
+        touched_paths: ['tests/vibe-coding-safety/stage5-critics.test.mjs']
+        kind: code
+      - id: '6.0.8'
+        title: 'Regenerate skill catalog + IA indexes'
+        prefix: TECH
+        depends_on: ['6.0.2', '6.0.3', '6.0.4', '6.0.6']
+        digest_outline: |
+          npm run skill:sync:all (regenerates .claude/{agents,commands}/critic-{style,logic,security}.md +
+          .claude/{agents,commands}/ship-final.md). npm run generate:ia-indexes.
+        touched_paths: []
+        kind: code
+---
+
 # vibe-coding safety disciplines — research, audit, critique, improvement (as of 2026-05)
 
 ## Findings
@@ -238,3 +816,578 @@ Conflict scan via `arch_decision_conflict_scan` returned matches at score ≥3 a
 - Proposal #8 (`/spec-freeze` between design-explore and ship-plan) overlaps **DEC-A15** (`arch-authoring-via-design-explore` — arch decisions persisted inside `/design-explore`) and **DEC-A22** (prototype-first §Core Prototype mapping). Resolution: `/spec-freeze` consumes `§Design Expansion` *after* `/design-explore` Phase 4 arch-authoring; does not duplicate arch-decision authoring. Extends the handoff contract (`docs/agent-lifecycle.md` §3); operator must accept the extra seam. Tightens DEC-A22 by making the tracer-slice spec freezable, not replaces it.
 - Proposal #1 (Stop-hook) overlaps **DEC-A6** (`ide-agent-bridge-postgres`, agent stop conditions) at low score (=2). Resolution: hook lives in `.claude/settings.json` Stop matcher; does not touch bridge Postgres queue. No conflict.
 - Proposals #2, #7 score ≤2 against any active decision; treated as low-signal token overlap (shared vocabulary `unity`, `compile`, `stage`, `plan`). No structural conflict.
+
+---
+
+## Design Expansion
+
+**Mode.** 7-proposal bundle, ship order A→B→C→D→E. Proposal #6 dropped (parallel-carcass overlap — see Dropped subsection). Critic pipeline (#3) baked into `/ship-final` Pass B only. Feature flags = DB-primary (`ia_feature_flags` table + interchange JSON boot hydration).
+
+**Ship-order rationale.** Risk-first ordering: Wave A closes the highest-impact safety gaps (Verification block omission + test-deletion) via hooks before any structural refactor. Wave B raises spec quality before plans depend on it. Wave C trims inference cost in `/verify-loop`. Wave D adds player-visible rollback. Wave E adds out-of-band critic only after specs are freezable + flags are reversible.
+
+### Plan Shape
+
+**Carcass + section.** Bundle touches 6 surfaces across 5 subsystems (hook layer, validator chain, lifecycle skills, MCP server, DB schema, Unity runtime boot) with no hard dependency chain between Waves — Wave A ships independently of Wave D, Wave C independently of Wave E. Per `ia/rules/design-explore-carcass-alignment-gap-analysis.md` C2, emit ≥3 plan-scoped `arch_decisions`:
+
+1. `plan-vibe-coding-safety-boundaries` — Waves stay layer-scoped (A=hooks, B=spec validators, C=verify-loop skill body, D=DB+runtime, E=ship-final subagents). No Wave touches more than its declared layer.
+2. `plan-vibe-coding-safety-end-state-contract` — End state = (a) Stop hook gates Verification block, (b) tests/scenarios write-denied except via env-var exception, (c) §Plan Digest rule 11 EARS rubric live with `ears_grandfathered` mirror, (d) `/spec-freeze` gates `/ship-plan` via `ia_master_plan_specs`, (e) adaptive `MAX_ITERATIONS_BY_GAP_REASON` live, (f) `ia_feature_flags` table + `FeatureFlags.cs` boot-hydrated from interchange JSON + bridge `OnFlagFlipped` signal, (g) 3 critic subagents + `ia_review_findings` table fire at `/ship-final` Pass B only.
+3. `plan-vibe-coding-safety-shared-seams` — Shared seams: (a) hook script return-code convention (exit 0 allow / exit 2 deny + reason on stderr), (b) `ears_grandfathered` / `tdd_red_green_grandfathered` mirror column pattern on `ia_master_plans`, (c) interchange JSON `artifact` id pattern for feature-flag boot hydration, (d) `severity` enum on `ia_review_findings` mirrors `gap_reason` enum shape on verify-loop.
+
+### Architecture Decision
+
+**Slug.** `plan-vibe-coding-safety` (base decision) + 3 plan-scoped boundary decisions listed above.
+
+**Rationale (≤250 chars).** Five-Wave ship of safety disciplines surfaced by 2026 vibe-coding research; layered A→E so hook-layer reversibility lands before structural refactor; DB-primary flags + ship-final-only critics avoid Stage-chain inference inflation.
+
+**Alternatives considered (≤250 chars).** (1) Single mega-plan all 8 proposals — rejected (token overflow + entangled dep chain). (2) Per-proposal master plans — rejected (carcass overlap, shared seams duplicated). (3) Drop critics entirely — rejected (single-agent self-review documented weakness). (4) Per-Task fan-out (#6) — DROPPED (parallel-carcass overlap, shipped 2026-04-29).
+
+**Affected arch_surfaces[].**
+- `claude-settings-hooks` (Wave A — extends)
+- `validate-plan-digest-coverage` (Wave B — extends)
+- `ia-master-plan-specs-table` (Wave B — new)
+- `master-plan-spec-freeze-mcp` (Wave B — new)
+- `verify-loop-skill` (Wave C — extends)
+- `ia-feature-flags-table` (Wave D — new)
+- `feature-flags-cs-runtime` (Wave D — new)
+- `interchange-json-feature-flags-artifact` (Wave D — new)
+- `bridge-on-flag-flipped-signal` (Wave D — new)
+- `ia-review-findings-table` (Wave E — new)
+- `ship-final-critic-subagents` (Wave E — new)
+
+**Arch drift scan.** Expected against open master plans:
+- `plan-recipe-runner-phase-e-*` — additive seam slots in Waves B/D/E (no contract change).
+- `plan-master-plan-foldering-refactor-*` — flag table consistent with DB-primary end-state.
+- No active plan owns hook layer, `/spec-freeze`, `MAX_ITERATIONS_BY_GAP_REASON`, or `ia_review_findings` — net-new surfaces.
+
+**Grandfather pattern.** `ears_grandfathered=TRUE` column added to `ia_master_plans` (mirror of `tdd_red_green_grandfathered`). All plans whose `frozen_at IS NULL` at Wave B ship date are grandfathered out of rule 11. New plans authored post-ship default `FALSE`.
+
+### Components
+
+Grouped by Wave. One-line responsibility each.
+
+**Wave A — Risk-first hook layer.**
+
+| Component | Responsibility |
+|---|---|
+| `tools/scripts/claude-hooks/stop-verification-required.sh` | Scan emitting response for Verification block JSON header when session touched `Assets/**/*.cs` / `tools/mcp-ia-server/**` / `Domains/**`; exit 2 + reason on miss. |
+| `.claude/settings.json` `hooks.Stop[]` matcher | Wire stop hook into Claude Code lifecycle. |
+| `tools/scripts/claude-hooks/skill-surface-guard.sh` (extended) | Add tests/scenarios denylist regex `^(tests|tools/fixtures/scenarios)/.*` for Write/MultiEdit; check Edit `new_string` for `[Test]` / `it(` / `test(` removal vs `old_string`. |
+| `TD_ALLOW_TEST_EDIT={ISSUE_ID}` env-var exception | Per-session escape lifted by human after `AskUserQuestion` poll. |
+
+**Wave B — Spec-quality layer.**
+
+| Component | Responsibility |
+|---|---|
+| §Plan Digest rubric rule 11 | Hard rule: every §Acceptance row matches one of 5 EARS patterns. Injected into `/stage-authoring` Phase 4 prompt. |
+| `validate:plan-digest-coverage` (extended) | Grep each §Acceptance row for EARS prefix; skip if plan `ears_grandfathered=TRUE`. |
+| `ia_master_plans.ears_grandfathered BOOLEAN DEFAULT FALSE` | Mirror of existing `tdd_red_green_grandfathered`; backfilled TRUE for all rows where `frozen_at IS NULL` at ship date. |
+| `ia_master_plan_specs(slug, version, frozen_at, body, open_questions_count INTEGER)` table | Persists frozen spec body per (slug, version). |
+| `master_plan_spec_freeze` MCP tool | Reads §Design Expansion, emits Spec Kit-shape body (Intent · EARS Acceptance · Invariants · Non-Goals · Open Questions), writes row with `frozen_at=NOW()`, fails if Open Questions count > 0. |
+| `/spec-freeze` skill + slash command | Invokes `master_plan_spec_freeze`; emits frozen artifact to user. |
+| `/ship-plan` gate | Refuses authoring unless matching `(slug, version)` row exists with `frozen_at IS NOT NULL` and `open_questions_count=0`. `--skip-freeze` hotfix flag logged to `arch_changelog` (kind=`spec_freeze_bypass`). |
+
+**Wave C — Inference-economy layer.**
+
+| Component | Responsibility |
+|---|---|
+| `MAX_ITERATIONS_BY_GAP_REASON` table in `/verify-loop` SKILL.md | Maps existing `gap_reason` enum → retry budget. Transient (`bridge_timeout`, `lease_unavailable`, `unity_lock_stale`) → 5. Deterministic (`compile_error`, `test_assertion`, `validator_violation`) → 2. Escalate-now (`unity_api_limit`, `human_judgment_required`) → 0. Hard cap = 5. |
+| Exponential-backoff helper | `delay_ms = base * 2^attempt` (base=500, max=8000) inserted between retries on transient gap_reasons. |
+| `/verify-loop` body update | Replaces fixed `MAX_ITERATIONS=2` with classifier lookup. |
+
+**Wave D — Player-visible rollback layer.**
+
+| Component | Responsibility |
+|---|---|
+| `ia_feature_flags(slug TEXT PK, stage_id INTEGER FK ia_stages, enabled BOOLEAN, default_value BOOLEAN, owner TEXT)` table | Source of truth for flag state. |
+| `ia_stages.flag_slug TEXT NULL` column | Optional pointer from Stage row to flag slug; non-null when Stage has player-visible delta gated by flag. |
+| `Assets/Scripts/Core/FeatureFlags.cs` | Static `IsEnabled(slug) → bool` reading from in-memory cache hydrated at boot. |
+| Interchange JSON artifact `feature-flags-snapshot` | Exported by web/CI step from `ia_feature_flags` rows; consumed at Unity boot. Shape: `{ artifact: "feature-flags-snapshot", schema_version: 1, flags: [{slug, enabled, default_value}] }`. |
+| `OnFlagFlipped` bridge signal | `unity_bridge_command kind=flag_flip slug=...` triggers `FeatureFlags.InvalidateCache()` + re-hydrate from latest interchange JSON. |
+| Web dashboard flag panel | Renders flag state from `ia_feature_flags`; humans flip via Web → DB → next interchange export. |
+
+**Wave E — Closeout critic layer.**
+
+| Component | Responsibility |
+|---|---|
+| `/critic-style` subagent | Caveman + glossary + coding-conventions scan on Stage cumulative diff. Emits structured findings. |
+| `/critic-logic` subagent | Data-flow + invariant-touchpoint + control-flow scan on Stage cumulative diff. Emits findings. |
+| `/critic-security` subagent | Input-validation + path-traversal + secret-leak scan on `Assets/**` + `tools/mcp-ia-server/**` + `web/**` touched paths. Emits findings. |
+| `ia_review_findings(id, plan_slug, stage_id NULL, critic_kind, severity, body, created_at)` table | Persists findings. `severity ∈ {low, medium, high}` enum (mirrors `gap_reason` shape). |
+| `/ship-final` Pass B integration | Dispatches 3 critics in parallel; blocks plan close on any `severity=high` row. |
+| Operator appeal path | `AskUserQuestion` poll on `severity=high`; override decision logged to `arch_changelog` (kind=`critic_override`). |
+
+### Data Flow + Interfaces
+
+**Wave A — Stop hook trigger.**
+```
+Claude Code about to emit response
+  → Stop hook fires
+  → stop-verification-required.sh receives session JSON (env: CLAUDE_SESSION_CONTEXT)
+  → script scans tool-call log for Edit/Write on Assets/**, Domains/**, tools/mcp-ia-server/**
+  → if touched AND response body missing /^```json\n\{ \"verification_block_v\d/m
+      → exit 2 + stderr "Verification block missing — run /verify-loop {ISSUE_ID} first"
+      → Claude re-emits with block (or escalates)
+  → else exit 0 (allow)
+```
+
+**Wave A — Edit/Write denylist.**
+```
+PreToolUse Edit|Write|MultiEdit fires
+  → skill-surface-guard.sh receives tool input JSON
+  → extract file_path + tool kind
+  → if file_path =~ ^(tests|tools/fixtures/scenarios)/.* AND tool ∈ {Write, MultiEdit}
+      → check env $TD_ALLOW_TEST_EDIT
+      → if unset → exit 2 + reason "test-surface write blocked; set TD_ALLOW_TEST_EDIT={ISSUE_ID} after AskUserQuestion confirm"
+  → if tool == Edit AND file_path =~ ^tests/.*
+      → diff old_string vs new_string for removed [Test] / it( / test( blocks
+      → if removed AND $TD_ALLOW_TEST_EDIT unset → exit 2
+  → else exit 0
+```
+
+**Wave B — Spec-freeze flow.**
+```
+/design-explore completes (Design Expansion persisted)
+  → operator runs /spec-freeze {SLUG}
+  → master_plan_spec_freeze MCP reads Design Expansion + Open Questions section
+  → if Open Questions non-empty → error: "freeze blocked; resolve N open questions"
+  → emit Spec Kit body (Intent · EARS Acceptance · Invariants · Non-Goals · Open Questions=[])
+  → INSERT ia_master_plan_specs(slug, version=NEXT, frozen_at=NOW(), body, open_questions_count=0)
+  → arch_changelog row (kind=spec_freeze)
+  → operator runs /ship-plan {SLUG}
+  → ship-plan reads ia_master_plan_specs WHERE slug=$SLUG ORDER BY version DESC LIMIT 1
+  → if frozen_at IS NULL OR open_questions_count > 0 → REJECT
+  → else proceed
+```
+
+**Wave C — Adaptive retry.**
+```
+/verify-loop iteration N fails
+  → parse verdict JSON for gap_reason
+  → budget = MAX_ITERATIONS_BY_GAP_REASON[gap_reason] || 2
+  → if N >= budget → escalate with gap_reason
+  → if gap_reason ∈ TRANSIENT_SET → sleep(500 * 2^N ms, capped 8000)
+  → retry
+```
+
+**Wave D — Flag boot hydration.**
+```
+CI / web flag toggle
+  → UPDATE ia_feature_flags SET enabled = $new WHERE slug = $slug
+  → export interchange JSON artifact "feature-flags-snapshot"
+       { artifact: "feature-flags-snapshot",
+         schema_version: 1,
+         flags: [{slug, enabled, default_value}, ...] }
+  → write tools/interchange/feature-flags-snapshot.json
+  → bridge sends unity_bridge_command kind=flag_flip slug=$slug
+  → Unity Editor receives signal
+  → FeatureFlags.InvalidateCache()
+  → FeatureFlags.HydrateFromJson(tools/interchange/feature-flags-snapshot.json)
+  → cache populated; next FeatureFlags.IsEnabled(slug) returns new value
+```
+
+At boot (not bridge-triggered):
+```
+Unity Awake() → FeatureFlags.HydrateFromJson(default snapshot path)
+  → if file missing → all flags = default_value (FALSE for new flags)
+```
+
+**Wave E — Critic flow.**
+```
+/ship-final Pass B starts
+  → fetch Stage cumulative diff (git diff HEAD ranges per Stage)
+  → spawn 3 Agent calls in parallel: /critic-style, /critic-logic, /critic-security
+  → each critic receives: diff + invariants summary + glossary subset
+  → each critic emits JSON findings: [{severity, body, file_path?, line_range?}, ...]
+  → INSERT into ia_review_findings (plan_slug, stage_id NULL, critic_kind, severity, body)
+  → if any severity=high
+      → AskUserQuestion poll: "Critic found N high-severity finding(s); override?"
+      → if override → arch_changelog (kind=critic_override) + proceed
+      → else → block plan close, return findings to operator
+  → else → proceed to plan close
+```
+
+**Interface contracts.**
+
+- Hook return-code convention: exit 0 = allow, exit 2 = deny (stderr carries reason; Claude receives as tool output).
+- `ears_grandfathered` mirror pattern: column added with `DEFAULT FALSE`, backfill UPDATE sets TRUE WHERE `frozen_at IS NULL` at migration time.
+- Interchange JSON artifact contract: `artifact` (string id) + `schema_version` (integer) + payload. Per glossary "Interchange JSON (artifact)" — tooling/config, not Save data.
+- `severity` enum on `ia_review_findings`: `low` | `medium` | `high`. Mirrors shape of `gap_reason` enum (string check constraint).
+- `MAX_ITERATIONS_BY_GAP_REASON` table is skill-body-resident (markdown table in `/verify-loop` SKILL.md); validator reads SKILL.md, not a DB row. Hard cap = 5 enforced inline.
+
+### Architecture Diagram
+
+```mermaid
+flowchart LR
+    subgraph WaveA[Wave A — Hook layer]
+        StopHook[stop-verification-required.sh]
+        SkillGuard[skill-surface-guard.sh + tests denylist]
+        EnvExc[TD_ALLOW_TEST_EDIT env var]
+    end
+
+    subgraph WaveB[Wave B — Spec quality]
+        SpecFreeze[/spec-freeze/]
+        MasterPlanSpecFreezeMCP[master_plan_spec_freeze MCP]
+        SpecTable[(ia_master_plan_specs)]
+        EARSRubric[Rule 11 EARS rubric]
+        EARSValidator[validate:plan-digest-coverage]
+        GrandfatherCol[ears_grandfathered]
+    end
+
+    subgraph WaveC[Wave C — Inference economy]
+        VerifyLoop[/verify-loop SKILL.md]
+        IterTable[MAX_ITERATIONS_BY_GAP_REASON]
+        Backoff[Exponential backoff helper]
+    end
+
+    subgraph WaveD[Wave D — Player rollback]
+        FlagsTable[(ia_feature_flags)]
+        StagesFlagCol[ia_stages.flag_slug]
+        FlagsCS[FeatureFlags.cs]
+        InterchangeJSON[feature-flags-snapshot artifact]
+        BridgeSignal[OnFlagFlipped bridge signal]
+        WebDash[Web dashboard flag panel]
+    end
+
+    subgraph WaveE[Wave E — Closeout critics]
+        CriticStyle[/critic-style/]
+        CriticLogic[/critic-logic/]
+        CriticSec[/critic-security/]
+        FindingsTable[(ia_review_findings)]
+        ShipFinal[/ship-final Pass B]
+        AppealPoll[AskUserQuestion appeal]
+    end
+
+    ClaudeCode([Claude Code response emit]) --> StopHook
+    EditCall([Edit/Write tool call]) --> SkillGuard
+    SkillGuard -.exit 2.-> EditCall
+    EnvExc -.lifts.-> SkillGuard
+
+    DesignExplore([/design-explore output]) --> SpecFreeze
+    SpecFreeze --> MasterPlanSpecFreezeMCP
+    MasterPlanSpecFreezeMCP --> SpecTable
+    SpecTable --> ShipPlanGate{ship-plan gate}
+    ShipPlanGate -.frozen=NULL.-> ShipPlanReject([REJECT])
+    EARSRubric --> EARSValidator
+    GrandfatherCol -.skips.-> EARSValidator
+
+    VerifyLoop --> IterTable
+    IterTable --> Backoff
+    Backoff --> VerifyLoop
+
+    FlagsTable --> InterchangeJSON
+    InterchangeJSON --> FlagsCS
+    BridgeSignal --> FlagsCS
+    StagesFlagCol --> FlagsTable
+    WebDash --> FlagsTable
+
+    ShipFinal --> CriticStyle
+    ShipFinal --> CriticLogic
+    ShipFinal --> CriticSec
+    CriticStyle --> FindingsTable
+    CriticLogic --> FindingsTable
+    CriticSec --> FindingsTable
+    FindingsTable -.severity=high.-> AppealPoll
+    AppealPoll -.override.-> ShipFinalProceed([proceed close])
+    AppealPoll -.reject.-> ShipFinalBlock([block close])
+```
+
+**ASCII swimlane fallback (entry/exit emphasis).**
+
+```
+ENTRY                                   EXIT
+-----                                   ----
+Claude response emit ─→ Stop hook   ──→ exit 0 / exit 2 (Verification block gate)
+Edit/Write call       ─→ skill-guard──→ exit 0 / exit 2 (tests denylist)
+/spec-freeze          ─→ MCP write  ──→ ia_master_plan_specs row + arch_changelog
+/ship-plan invoke     ─→ freeze gate──→ proceed / REJECT
+/verify-loop iter N   ─→ classifier ──→ retry / escalate (per gap_reason)
+Unity boot            ─→ hydrate    ──→ FeatureFlags cache populated
+Bridge OnFlagFlipped  ─→ invalidate ──→ cache re-hydrated
+/ship-final Pass B    ─→ 3 critics  ──→ ia_review_findings rows; severity=high blocks close
+```
+
+### Subsystem Impact
+
+| Subsystem | Wave | Dependency nature | Invariant risk (by #) | Breaking vs additive | Mitigation |
+|---|---|---|---|---|---|
+| Claude Code hook layer (`.claude/settings.json`) | A | New Stop matcher + extended Edit/Write matcher | none | Additive | Hook denial reversible by env var (`TD_ALLOW_TEST_EDIT`); Stop hook scoped by file-touch regex. |
+| Plan-Digest validator chain | B | Extends `validate:plan-digest-coverage` | 13 (no hand-edit of `id:` field — n/a, validator-only) | Additive (rubric rule 11 + grandfather flag) | `ears_grandfathered=TRUE` backfill for all in-flight plans at ship date. |
+| MCP server (`tools/mcp-ia-server/`) | B + E | New tools `master_plan_spec_freeze`, finding writers; new tables `ia_master_plan_specs`, `ia_review_findings` | none | Additive | New tables; no migration on existing tables except 2 mirror columns (`ears_grandfathered`, `ia_stages.flag_slug`). |
+| DB schema | B + D + E | 3 new tables, 2 new columns | 13 (migrations follow `tools/scripts/reserve-id.sh` only for backlog ids — table DDL outside scope) | Additive | Per-Wave migration file; each Wave self-contained. |
+| `/verify-loop` skill body | C | Replace fixed budget with classifier table | none | Behaviorally additive (existing budget 2 preserved for deterministic gap_reasons) | Hard cap = 5 prevents runaway; escalate-now for `unity_api_limit` / `human_judgment_required` unchanged. |
+| Unity runtime (`Assets/Scripts/Core/`) | D | New `FeatureFlags.cs` + Awake() hydration | 1 (HeightMap immutability — n/a; flags read-only at runtime in C#), 11 (no `Find*` in Update — flags use static cache, no per-frame I/O) | Additive (new file + boot hook) | Cache hydrated once at Awake; bridge signal invalidates explicitly. No per-frame queries. |
+| Interchange JSON (tooling artifact) | D | New `feature-flags-snapshot` artifact | none (interchange ≠ Save per glossary) | Additive | New artifact id; schema_version=1; consumers ignore unknown artifacts. |
+| Bridge (`unity_bridge_command`) | D | New `kind=flag_flip` command | 13 (n/a — bridge protocol additive) | Additive | New kind; existing kinds untouched. |
+| Web dashboard | D | New flag panel reading `ia_feature_flags` | none | Additive | Read-only first ship; flip-from-web shipped in deferred follow-up. |
+| `/ship-final` skill (Pass B) | E | Adds 3 parallel subagent dispatch + findings table write | none | Additive (block-on-high only; current Pass B unchanged otherwise) | Critic findings persisted regardless of close decision; operator appeal logged. |
+
+**Invariants flagged:** 1 (HeightMap immutability — Wave D Unity component, mitigated by read-only cache pattern), 11 (no `Find*` in Update — Wave D Unity component, mitigated by Awake-only hydration), 13 (id-counter monotonicity — n/a; new table DDL does not touch `id:` field or counter). No invariants breached; all flagged are additive-with-mitigation.
+
+### Implementation Points
+
+Phased checklist ordered A→B→C→D→E. Per Wave: schema/migration → MCP tool → skill/script → validator → docs.
+
+**Wave A — Risk-first hook layer.**
+
+- [ ] A.1 — Write `tools/scripts/claude-hooks/stop-verification-required.sh` (bash; reads `$CLAUDE_SESSION_CONTEXT` JSON; greps emitting response for Verification block header regex; exit 2 + stderr on miss when touched-files regex matches).
+- [ ] A.2 — Extend `tools/scripts/claude-hooks/skill-surface-guard.sh` with tests/scenarios denylist branch + env-var bypass branch.
+- [ ] A.3 — Update `.claude/settings.json` `hooks.Stop[]` to invoke A.1 script.
+- [ ] A.4 — Update `.claude/settings.json` `hooks.PreToolUse[]` matcher `Edit|Write|MultiEdit` to chain A.2 after `skill-surface-guard.sh` (run sequentially).
+- [ ] A.5 — Add hook smoke fixture: `tests/hooks/stage1-stop-verification.test.mjs` (asserts exit 2 on Assets/** touch without block; exit 0 with block; exit 0 on docs-only sessions).
+- [ ] A.6 — Add hook smoke fixture: `tests/hooks/stage1-test-denylist.test.mjs` (asserts exit 2 on Write to `tests/foo.test.mjs`; exit 0 with `TD_ALLOW_TEST_EDIT=BUG-1234`).
+- [ ] A.7 — Update `ia/rules/agent-principles.md` Testing+verification section: link to new hooks instead of policy prose.
+- [ ] A.8 — Update `docs/agent-led-verification-policy.md`: cross-ref Stop hook as enforcement layer.
+
+**Wave B — Spec-quality layer.**
+
+- [ ] B.1 — DB migration: `ia_master_plans` ADD COLUMN `ears_grandfathered BOOLEAN NOT NULL DEFAULT FALSE`; backfill UPDATE SET TRUE WHERE `created_at < $WAVE_B_SHIP_TS`.
+- [ ] B.2 — DB migration: CREATE TABLE `ia_master_plan_specs (id SERIAL PK, slug TEXT NOT NULL, version INTEGER NOT NULL, frozen_at TIMESTAMP, body TEXT NOT NULL, open_questions_count INTEGER NOT NULL DEFAULT 0, UNIQUE(slug, version))`.
+- [ ] B.3 — Register MCP tool `master_plan_spec_freeze` in `tools/mcp-ia-server/src/index.ts` (input: `{slug, source_doc_path}`; reads Design Expansion, parses Open Questions count, INSERTs row, emits arch_changelog).
+- [ ] B.4 — Author `ia/skills/spec-freeze/SKILL.md` (frontmatter triggers `/spec-freeze` slash command + subagent generation via `npm run skill:sync:all`).
+- [ ] B.5 — Add rubric rule 11 to `ia/rules/plan-digest-contract.md` (hard rule; reference 5 EARS patterns).
+- [ ] B.6 — Update `/stage-authoring` Phase 4 prompt template with rule 11 verbatim.
+- [ ] B.7 — Extend `tools/scripts/validate-plan-digest-coverage.mjs`: skip if `ears_grandfathered=TRUE`; else assert each §Acceptance row starts with one of 5 EARS prefixes (case-insensitive).
+- [ ] B.8 — `/ship-plan` gate: query `ia_master_plan_specs WHERE slug=$slug ORDER BY version DESC LIMIT 1`; reject if `frozen_at IS NULL OR open_questions_count > 0`. `--skip-freeze` flag logs to `arch_changelog` kind=`spec_freeze_bypass`.
+- [ ] B.9 — Add stage-test file `tests/vibe-coding-safety/stage2-spec-freeze.test.mjs` (asserts freeze + ship-plan gate + rubric validator).
+- [ ] B.10 — Run `npm run skill:sync:all` + `npm run generate:ia-indexes`.
+
+**Wave C — Inference-economy layer.**
+
+- [ ] C.1 — Add `MAX_ITERATIONS_BY_GAP_REASON` markdown table to `ia/skills/verify-loop/SKILL.md` (canonical mapping per Components table).
+- [ ] C.2 — Implement exponential-backoff helper inline in skill body or as `tools/scripts/exponential-backoff.mjs`.
+- [ ] C.3 — Replace fixed `MAX_ITERATIONS=2` reference in skill body with classifier lookup; preserve hard cap = 5.
+- [ ] C.4 — Update `verify-loop` validator (if any) or rule prose to expect the new table.
+- [ ] C.5 — Stage test `tests/vibe-coding-safety/stage3-adaptive-iterations.test.mjs` (asserts transient gap_reason gets 5 retries; deterministic gets 2; escalate-now gets 0).
+- [ ] C.6 — Run `npm run skill:sync:all`.
+
+**Wave D — Player-visible rollback layer.**
+
+- [ ] D.1 — DB migration: CREATE TABLE `ia_feature_flags (slug TEXT PK, stage_id INTEGER REFERENCES ia_stages(id) ON DELETE SET NULL, enabled BOOLEAN NOT NULL DEFAULT FALSE, default_value BOOLEAN NOT NULL DEFAULT FALSE, owner TEXT, created_at TIMESTAMP NOT NULL DEFAULT NOW())`.
+- [ ] D.2 — DB migration: `ia_stages` ADD COLUMN `flag_slug TEXT NULL REFERENCES ia_feature_flags(slug)`.
+- [ ] D.3 — Add `Assets/Scripts/Core/FeatureFlags.cs` (static `IsEnabled(string slug) → bool`; private `Dictionary<string, bool> _cache`; `HydrateFromJson(string path)`; `InvalidateCache()`).
+- [ ] D.4 — Add boot hook: `Awake()` on bootstrap MonoBehaviour invokes `FeatureFlags.HydrateFromJson("tools/interchange/feature-flags-snapshot.json")`.
+- [ ] D.5 — Register interchange JSON artifact `feature-flags-snapshot` schema (path under `tools/interchange/` + JSON schema doc).
+- [ ] D.6 — Add MCP tool or web export step that reads `ia_feature_flags` and writes the snapshot artifact.
+- [ ] D.7 — Register bridge command kind `flag_flip` in `tools/mcp-ia-server/src/index.ts` (delegates to Unity bridge; payload `{slug}`); Unity-side handler calls `FeatureFlags.InvalidateCache()` + re-hydrate.
+- [ ] D.8 — Web dashboard read-only flag panel under `web/app/flags/page.tsx` (server component reading `ia_feature_flags`).
+- [ ] D.9 — Stage test `tests/vibe-coding-safety/stage4-flags.test.mjs` (asserts snapshot artifact shape, boot hydration, bridge flip cache invalidation).
+- [ ] D.10 — Update `ia/specs/architecture/interchange.md` with new artifact id.
+- [ ] D.11 — Glossary row: `Feature flag (Stage-scoped)` → `ia_feature_flags` table.
+
+**Wave E — Closeout critic layer.**
+
+- [ ] E.1 — DB migration: CREATE TABLE `ia_review_findings (id SERIAL PK, plan_slug TEXT NOT NULL, stage_id INTEGER NULL, critic_kind TEXT NOT NULL CHECK (critic_kind IN ('style','logic','security')), severity TEXT NOT NULL CHECK (severity IN ('low','medium','high')), body TEXT NOT NULL, file_path TEXT NULL, line_range TEXT NULL, created_at TIMESTAMP NOT NULL DEFAULT NOW())`.
+- [ ] E.2 — Author `ia/skills/critic-style/SKILL.md` (input: cumulative diff + glossary + invariants; output: findings JSON).
+- [ ] E.3 — Author `ia/skills/critic-logic/SKILL.md` (input: cumulative diff + invariants; output: findings JSON).
+- [ ] E.4 — Author `ia/skills/critic-security/SKILL.md` (input: cumulative diff filtered to security-sensitive paths; output: findings JSON).
+- [ ] E.5 — Update `ia/skills/ship-final/SKILL.md` Pass B: dispatch 3 critics via parallel Agent tool calls; persist findings via new MCP tool `review_findings_write`.
+- [ ] E.6 — Register MCP tool `review_findings_write` in `tools/mcp-ia-server/src/index.ts`.
+- [ ] E.7 — Block-on-high logic + `AskUserQuestion` appeal in `/ship-final` Pass B; log override to `arch_changelog` kind=`critic_override`.
+- [ ] E.8 — Stage test `tests/vibe-coding-safety/stage5-critics.test.mjs` (asserts 3 critics dispatched in parallel, findings persisted, severity=high blocks close, override path logged).
+- [ ] E.9 — Run `npm run skill:sync:all` + `npm run generate:ia-indexes`.
+
+**Dropped from bundle.**
+
+- **Proposal #6 — Per-Task isolated Pass A inference with shared context bundle.** Rationale: overlaps with the parallel-carcass section-claim model shipped 2026-04-29 (`docs/parallel-carcass-exploration.md`). The carcass model already provides per-section isolation with shared anchor context; layering Pass A fan-out on top would duplicate the seam-slot pattern under a different name (`per-task-implement`) without distinct value. Re-evaluate if a future master plan demonstrates carcass model fails for ship-cycle Pass A specifically.
+
+**Deferred / out of scope.**
+
+- Flag promotion-to-permanent workflow (when a flag has been TRUE long enough that the conditional should be removed from `Assets/**` source — manual cleanup PR, not automated).
+- Critic findings dashboard polish (read-only panel + filter UI on `web/app/findings/page.tsx`).
+- Multi-language EARS variants (current rubric is English-only; Spanish/Japanese variants out of scope).
+- Flip-from-web flag toggle UI (Wave D ships read-only panel; flip-from-web in follow-up).
+- CI integration of Unity compile + EditMode + bridge smoke (separate plan; current §Critique weakness on CI gap intentionally not addressed in this bundle).
+- Staging environment for Unity builds (no production exists; deferred until distribution model is set).
+
+### Examples
+
+**Stop-hook trigger logic (paths-touched gate).**
+
+Input — session touched only `docs/research/vibe-coding-safety.md`:
+```
+$ stop-verification-required.sh < session.json
+$ echo $?
+0
+```
+
+Input — session touched `Assets/Scripts/Managers/GameManagers/WaterManager.cs`, response body has no Verification block:
+```
+$ stop-verification-required.sh < session.json
+Verification block missing — run `/verify-loop {ISSUE_ID}` first
+$ echo $?
+2
+```
+
+Edge case — session touched `Assets/**` but response body contains `markdown json` fenced block with `verification_block_v1`:
+```
+$ stop-verification-required.sh < session.json
+$ echo $?
+0
+```
+
+**EARS row shape (§Plan Digest).**
+
+Input — `/stage-authoring` Phase 4 emits §Acceptance row:
+```
+- Water tile under flood mask flips to wet state on next tick.
+```
+Validator output (rubric rule 11 fail): `EARS prefix missing on row "Water tile under flood mask flips to wet state on next tick."`
+
+Output — same row, EARS-shaped (event-driven pattern):
+```
+- WHEN flood mask covers a water tile, THE SYSTEM SHALL flip that tile to wet state on the next tick.
+```
+Validator pass.
+
+Edge case — grandfathered plan (`ears_grandfathered=TRUE`):
+```
+- Water tile under flood mask flips to wet state on next tick.
+```
+Validator skips (grandfather flag honored).
+
+**Adaptive MAX_ITERATIONS triggering.**
+
+Input — `/verify-loop` iter 1 fails with `gap_reason=bridge_timeout`:
+```
+budget = MAX_ITERATIONS_BY_GAP_REASON["bridge_timeout"] = 5
+delay = 500 * 2^0 = 500 ms
+→ sleep 500ms, retry
+```
+
+Input — `/verify-loop` iter 3 fails with `gap_reason=compile_error`:
+```
+budget = MAX_ITERATIONS_BY_GAP_REASON["compile_error"] = 2
+3 >= 2 → escalate (gap_reason=compile_error)
+```
+
+Edge case — `gap_reason=unity_api_limit` on first fail:
+```
+budget = 0
+1 >= 0 → escalate immediately, no retry
+```
+
+**Feature-flag boot hydration (interchange JSON → C# cache).**
+
+Input — `tools/interchange/feature-flags-snapshot.json`:
+```json
+{
+  "artifact": "feature-flags-snapshot",
+  "schema_version": 1,
+  "flags": [
+    {"slug": "water-flood-v2-stage-2.1", "enabled": false, "default_value": false},
+    {"slug": "road-stroke-rebuild-stage-3.0", "enabled": true, "default_value": false}
+  ]
+}
+```
+
+Output — Unity Awake:
+```csharp
+FeatureFlags.HydrateFromJson("tools/interchange/feature-flags-snapshot.json");
+FeatureFlags.IsEnabled("water-flood-v2-stage-2.1"); // false
+FeatureFlags.IsEnabled("road-stroke-rebuild-stage-3.0"); // true
+FeatureFlags.IsEnabled("unknown-slug"); // false (default)
+```
+
+Edge case — snapshot file missing at boot:
+```csharp
+// FeatureFlags.HydrateFromJson silently no-ops on file-not-found;
+// cache stays empty; IsEnabled returns false for every slug (safe default).
+```
+
+Edge case — bridge flag flip:
+```
+operator updates ia_feature_flags SET enabled=TRUE WHERE slug='water-flood-v2-stage-2.1'
+→ web export step rewrites snapshot
+→ bridge sends unity_bridge_command kind=flag_flip slug=water-flood-v2-stage-2.1
+→ Unity calls FeatureFlags.InvalidateCache() + HydrateFromJson(snapshot)
+→ FeatureFlags.IsEnabled("water-flood-v2-stage-2.1") now returns true
+```
+
+**`/spec-freeze` validator (frozen + Open Questions=[] gate).**
+
+Input — `/ship-plan vibe-coding-safety` invoked, `ia_master_plan_specs` empty for slug:
+```
+ship-plan: REJECT — no frozen spec for slug 'vibe-coding-safety'. Run /spec-freeze first.
+```
+
+Input — `/ship-plan vibe-coding-safety` invoked, frozen row exists but `open_questions_count=2`:
+```
+ship-plan: REJECT — frozen spec has 2 open questions. Resolve in source doc + re-run /spec-freeze.
+```
+
+Input — `/ship-plan vibe-coding-safety --skip-freeze` (hotfix):
+```
+ship-plan: PROCEED with bypass logged to arch_changelog kind=spec_freeze_bypass
+```
+
+Edge case — Design Expansion has Open Questions section but body is empty (`- none`):
+```
+/spec-freeze parses open_questions_count=0 → row inserted with frozen_at=NOW()
+```
+
+**Critic findings flow (subagent emits → table row → severity-high blocks close).**
+
+Input — `/ship-final vibe-coding-safety` Pass B dispatches:
+```
+parallel: Task(/critic-style), Task(/critic-logic), Task(/critic-security)
+```
+
+Output — `/critic-security` finds hardcoded path:
+```json
+{
+  "critic_kind": "security",
+  "severity": "high",
+  "body": "Hardcoded interchange path 'tools/interchange/feature-flags-snapshot.json' without existence check; missing-file path returns silently.",
+  "file_path": "Assets/Scripts/Core/FeatureFlags.cs",
+  "line_range": "42-44"
+}
+```
+
+Database state:
+```sql
+INSERT INTO ia_review_findings (plan_slug, critic_kind, severity, body, file_path, line_range)
+VALUES ('vibe-coding-safety', 'security', 'high', '...', 'Assets/Scripts/Core/FeatureFlags.cs', '42-44');
+```
+
+Behavior:
+```
+ship-final detects severity=high → AskUserQuestion("Critic flagged 1 high-severity finding; override?")
+  → operator picks "Override" → arch_changelog kind=critic_override → proceed to close
+  → operator picks "Block + fix" → ship-final aborts close, returns findings to operator
+```
+
+Edge case — all 3 critics return zero findings:
+```
+no INSERT; ship-final proceeds to close without appeal poll.
+```
+
+### Review Notes
+
+Subagent review pass — outcome PASS, no BLOCKING items. NON-BLOCKING items + suggestions recorded below verbatim per Phase 8 contract.
+
+**Strongest design risk.** Wave D interchange-JSON hydration path is the most fragile seam: it crosses three subsystems (DB → web/CI export → Unity boot) and is silent on failure (missing file → empty cache → all flags FALSE). A flag that should default TRUE (e.g. a rolled-back feature gated by `enabled=TRUE`) will silently revert to OFF if the snapshot file is missing at boot. The `default_value` column mitigates partially but only if hydration successfully reads the row. Mitigation deferred: D.9 stage test must assert "snapshot missing → log warning + fall back to compiled defaults, not silent zero-fill".
+
+**Strongest design strength.** Risk-first ship order (Wave A before all structural work) is well-chosen — hook denials are reversible (toggle a matcher line, env-var escape) and produce no DB rows or schema migrations. Even if Waves B/C/D/E are deferred indefinitely, Wave A alone closes the two highest-impact §Critique weaknesses (Verification block omission + test-deletion) at the agent-tool layer rather than at policy prose. The `ears_grandfathered` / `tdd_red_green_grandfathered` mirror pattern in Wave B is also load-bearing: it makes the rubric strictly additive against in-flight plans, removing the "rule 11 retroactively reds all open plans" failure mode.
+
+**NON-BLOCKING items.**
+
+1. Wave D D.4 (Awake boot hook) leaves the bootstrap MonoBehaviour unnamed. Pick the existing bootstrap entrypoint (likely a Service hub under `Domains/`) before implementation; do not introduce a new hub (per `feedback_unity_hub_no_rename_move_delete.md`).
+2. Wave E E.5 (3 parallel critic dispatch) does not specify Agent tool concurrency limits. Anthropic API rate-limit risk at large plan close (50+ Stages cumulative diff). Add per-plan concurrency cap (e.g. 3 critics max, sequential if >3 plans run concurrently across sessions).
+3. Wave B B.3 (`master_plan_spec_freeze` MCP) does not specify what happens on re-freeze of an already-frozen `(slug, version)` row. Decision: re-freeze creates a NEW version row (version++); existing frozen row stays archived. Document explicitly in MCP descriptor.
+4. Wave C C.2 (exponential backoff helper) — sleep in skill body is awkward (skill is markdown). Implement as `tools/scripts/exponential-backoff.mjs` invoked from the verify-loop runtime, not inline in SKILL.md prose.
+5. Wave A A.1 (Stop hook) — regex for "session touched Assets/**" depends on `$CLAUDE_SESSION_CONTEXT` schema. Validate against current Claude Code Stop-hook payload before authoring; fallback to `git diff HEAD` if context schema doesn't surface tool-call log.
+
+**SUGGESTIONS.**
+
+1. Consider adding a `validate:feature-flag-coverage` validator post-Wave D: every Stage row with `flag_slug NOT NULL` must have a matching `ia_feature_flags` row, and the `Assets/**` source must reference `FeatureFlags.IsEnabled("{flag_slug}")` somewhere. Catches drift between DB and code.
+2. Consider promoting "Verification block" + "feature flag" + "stage closeout" + "verify loop" to glossary rows (currently missing per glossary lookup). Wave B/D/E author-time benefit.
+3. Wave E critic subagents could share a `_preamble/critic-base.md` skill body fragment to keep the 3 SKILL.mds DRY on shared input shape (diff + glossary + invariants).
+4. Wave A Stop hook could optionally enforce a "minimum 1 Verification row run" rather than just block-presence; defer to follow-up.
+5. The `severity=high` blocking gate in Wave E does not distinguish between false-positive-prone critics and high-precision critics. Consider per-`critic_kind` weighting (security findings always block; style findings block only on `severity=high AND signal_confidence > 0.7`). Defer to post-ship calibration.
+
+### Expansion metadata
+
+- Date ISO: 2026-05-15
+- Model: claude-opus-4-7[1m]
+- Approach selected: 7-proposal bundle (Waves A→B→C→D→E); proposal #6 dropped (parallel-carcass overlap); critics scoped to `/ship-final` Pass B only; feature flags = DB-primary with interchange JSON boot hydration.
+- Blocking items resolved: 0 (subagent review returned PASS; 5 NON-BLOCKING + 5 SUGGESTIONS carried).

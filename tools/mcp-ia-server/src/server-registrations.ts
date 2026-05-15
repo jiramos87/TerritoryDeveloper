@@ -64,6 +64,7 @@ import { registerCatalogReadTools, registerCatalogMutateTools } from "./tools/ca
 import { registerIaDbReadTools } from "./tools/ia-db-reads.js";
 import { registerIaDbWriteTools } from "./tools/ia-db-writes.js";
 import { registerMasterPlanRenderTools } from "./tools/master-plan-render-tools.js";
+import { registerPlanDesignTools } from "./tools/plan-design-tools.js";
 import { registerMasterPlanHealth } from "./tools/master-plan-health.js";
 import { registerMasterPlanNextActionable } from "./tools/master-plan-next-actionable.js";
 import { registerMasterPlanCrossImpactScan } from "./tools/master-plan-cross-impact-scan.js";
@@ -225,6 +226,7 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerIaDbReadTools(server);
   registerIaDbWriteTools(server);
   registerMasterPlanRenderTools(server);
+  registerPlanDesignTools(server);
   registerMasterPlanHealth(server);
   registerMasterPlanNextActionable(server);
   registerMasterPlanCrossImpactScan(server);

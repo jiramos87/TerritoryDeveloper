@@ -127,25 +127,34 @@ public static class MutationDispatchService
         type = null;
         error = null;
         if (string.IsNullOrWhiteSpace(typeName)) { error = "params_invalid:component_type_name (empty)"; return false; }
-        var candidates = new List<Type>();
+        var shortMatches = new List<Type>();
+        var fqMatch = (Type)null;
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
             foreach (var t in assembly.GetTypes())
             {
-                if (string.Equals(t.Name, typeName, StringComparison.OrdinalIgnoreCase) &&
-                    typeof(Component).IsAssignableFrom(t))
-                    candidates.Add(t);
+                if (!typeof(Component).IsAssignableFrom(t)) continue;
+                if (string.Equals(t.FullName, typeName, StringComparison.Ordinal) ||
+                    string.Equals(t.AssemblyQualifiedName, typeName, StringComparison.Ordinal))
+                {
+                    fqMatch = t;
+                }
+                if (string.Equals(t.Name, typeName, StringComparison.OrdinalIgnoreCase))
+                {
+                    shortMatches.Add(t);
+                }
             }
         }
-        if (candidates.Count == 0) { error = $"type_not_found:{typeName}"; return false; }
-        if (candidates.Count > 1)
+        if (fqMatch != null) { type = fqMatch; return true; }
+        if (shortMatches.Count == 0) { error = $"type_not_found:{typeName}"; return false; }
+        if (shortMatches.Count > 1)
         {
             var sb = new System.Text.StringBuilder();
-            for (int i = 0; i < candidates.Count; i++) { if (i > 0) sb.Append(','); sb.Append(candidates[i].FullName); }
+            for (int i = 0; i < shortMatches.Count; i++) { if (i > 0) sb.Append(','); sb.Append(shortMatches[i].FullName); }
             error = $"type_ambiguous:{typeName};candidates={sb}";
             return false;
         }
-        type = candidates[0];
+        type = shortMatches[0];
         return true;
     }
 
@@ -184,7 +193,19 @@ public static class MutationDispatchService
             case "asset_ref":
             {
                 if (string.IsNullOrWhiteSpace(valueObjectPath)) { error = "params_invalid:value_object_path (required for asset_ref)"; return false; }
-                UnityEngine.Object asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(valueObjectPath);
+                // Resolve the SerializedProperty's target field type to load the correct sub-asset
+                // (e.g. Sprite from a PNG path returns Sprite, not Texture2D).
+                Type fieldType = ResolveSerializedPropertyFieldType(prop);
+                UnityEngine.Object asset = null;
+                if (fieldType != null && typeof(UnityEngine.Object).IsAssignableFrom(fieldType))
+                {
+                    asset = AssetDatabase.LoadAssetAtPath(valueObjectPath, fieldType);
+                }
+                if (asset == null)
+                {
+                    // Fallback: generic load (legacy behavior).
+                    asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(valueObjectPath);
+                }
                 if (asset == null) { error = $"asset_not_found:{valueObjectPath}"; return false; }
                 prop.objectReferenceValue = asset;
                 return true;
@@ -230,6 +251,31 @@ public static class MutationDispatchService
                 error = $"params_invalid:value_kind (unsupported: {valueKind}). Supported: object_ref, component_ref, asset_ref, int, float, bool, string, vector3";
                 return false;
         }
+    }
+
+    // Resolve the C# field type behind a SerializedProperty so asset_ref can load the right
+    // sub-asset (Sprite vs Texture2D from same PNG path, etc.). Walks the `propertyPath` over
+    // the target object's type — supports nested struct/class fields via dot separator.
+    static Type ResolveSerializedPropertyFieldType(SerializedProperty prop)
+    {
+        try
+        {
+            if (prop == null || prop.serializedObject?.targetObject == null) return null;
+            Type t = prop.serializedObject.targetObject.GetType();
+            const System.Reflection.BindingFlags flags =
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic;
+            foreach (var part in prop.propertyPath.Split('.'))
+            {
+                if (t == null) return null;
+                var f = t.GetField(part, flags);
+                if (f == null) return null;
+                t = f.FieldType;
+            }
+            return t;
+        }
+        catch { return null; }
     }
 
     static bool TryParseParams<TDto>(string requestJson, out TDto dto, out string error) where TDto : class, new()
@@ -468,18 +514,34 @@ public static class MutationDispatchService
         if (!AssertEditMode(out string modeErr)) { Fail(ctx, modeErr); return; }
         if (!TryParseParams<SaveSceneParams>(requestJson, out var dto, out string parseErr)) { Fail(ctx, parseErr); return; }
         Scene scene;
+        string targetPath;
         if (!string.IsNullOrWhiteSpace(dto.scene_path))
         {
+            // Try to resolve scene by path; if not loaded under that path, fall back to active scene
+            // (supports save-as for new/untitled scenes that have no path yet).
             scene = SceneManager.GetSceneByPath(dto.scene_path);
-            if (!scene.IsValid()) { Fail(ctx, $"scene_not_found:{dto.scene_path}"); return; }
+            if (!scene.IsValid())
+            {
+                scene = SceneManager.GetActiveScene();
+                if (!scene.IsValid()) { Fail(ctx, $"scene_not_found:{dto.scene_path}"); return; }
+            }
+            targetPath = dto.scene_path;
         }
         else
         {
             scene = SceneManager.GetActiveScene();
+            if (string.IsNullOrEmpty(scene.path)) { Fail(ctx, "scene_unsaved:active scene has no path; pass scene_path to save_scene"); return; }
+            targetPath = scene.path;
+        }
+        // Ensure parent directory exists for new scenes.
+        var parentDir = System.IO.Path.GetDirectoryName(targetPath);
+        if (!string.IsNullOrEmpty(parentDir) && !System.IO.Directory.Exists(parentDir))
+        {
+            System.IO.Directory.CreateDirectory(parentDir);
         }
         EditorSceneManager.MarkSceneDirty(scene);
-        bool saved = EditorSceneManager.SaveScene(scene, scene.path);
-        if (!saved) { Fail(ctx, $"save_failed:{scene.path}"); return; }
+        bool saved = EditorSceneManager.SaveScene(scene, targetPath);
+        if (!saved) { Fail(ctx, $"save_failed:{targetPath}"); return; }
         Complete(ctx, "save_scene", $"{{\"scene_path\":\"{EscapeJson(scene.path)}\"}}");
     }
 

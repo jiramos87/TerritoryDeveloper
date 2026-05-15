@@ -31,9 +31,10 @@ description: >-
   STAGE_ID second.
 phases:
   - Phase 0 — recipe ship-cycle-preflight (parse + token-budget + resume gate via DB)
-  - Pass A — bulk emit task-batch body with boundary markers (Sonnet inference)
+  - Pass A — bulk emit task-batch body with boundary markers (Sonnet inference); per task, fill matching `it()` assertion in `tests/{slug}/stage{id}-{stage_slug}.test.mjs` (replaces stub-throw)
   - Pass A — aggregate Assets/**/*.cs across tasks → ONE unity:compile-check + task_status_flip_batch(implemented)
   - Pass B step 1 — verify-loop on cumulative git diff HEAD (verdict==pass required, verdict file written)
+  - Pass B step 1.5 — run stage test file via `node --test` / vitest; full green required, fails as STAGE_VERIFY_FAIL with no rollback
   - Pass B steps 2–12 — recipe ship-cycle-pass-b (verified→done batch flips + closeout + materialize-backlog + asset-db refresh + stage commit + 4 cron enqueues)
   - Phase 9 — chain digest + next-stage resolver
 triggers:
@@ -70,6 +71,8 @@ caveman_exceptions:
 hard_boundaries:
   - Do NOT bypass token-budget preflight — over cap → fallback /ship-stage-main-session.
   - Pass A NEVER commits per Task — single stage commit at Pass B end covers all Pass A diffs.
+  - Pass A spec-implementer MUST fill the corresponding `it('{TASK_KEY}: ...', ...)` block in `tests/{slug}/stage{id}-{stage_slug}.test.mjs` for each task it implements — replace the `throw new Error('red — not yet implemented')` stub with real bridge assertions. Skipping this is a Pass A failure.
+  - Pass B step 1.5 (stage test gate) — MUST run the stage test file via `node --test` (or vitest); red → `STAGE_VERIFY_FAIL` + no commit + worktree stays dirty. NEVER skip even on Path A/B green verify-loop.
   - Do NOT skip `unity:compile-check` per task on Assets/**/*.cs touched.
   - Do NOT cross stage boundary — strictly one Stage per invocation.
   - Pass A flips strictly `pending → implemented`; Pass B flips strictly `implemented → verified → done`.
@@ -127,6 +130,19 @@ Output JSON consumed by Pass A inference body: `{stage_id_db, tasks[], resume_bu
 
 Single Sonnet inference. Boundary markers per task: `<!-- TASK:{ISSUE_ID} START -->` ... `<!-- TASK:{ISSUE_ID} END -->`. Inside markers: full implementation diff body for that task. Greppable by validators / code-review subagents. Skip tasks already `implemented` (resume).
 
+**Per-task stage test fill-in (mandatory):** For each task implemented, the Pass A inference also edits `tests/{SLUG}/stage{STAGE_ID}-{stage_slug}.test.mjs` and REPLACES the corresponding `it('{TASK_KEY}: ...', async () => { throw new Error('red — not yet implemented'); }, 30_000);` stub with a real bridge-driven assertion body that proves the task's production code works at runtime. Use `BridgeClient` primitives:
+
+```js
+  it('TECH-12345: Stub RegionScene + RegionManager hub', async () => {
+    const go = await bridge.findGameObject('RegionRoot');
+    expect(go).toBeTruthy();
+    const comp = await bridge.getComponent('RegionRoot', 'RegionManager');
+    expect(comp).toBeTruthy();
+  }, 30_000);
+```
+
+Stub-not-filled at Pass A end → `STOPPED at {ISSUE_ID} — stage_test_stub_unfilled` (matches by sentinel `throw new Error('red — not yet implemented')` for that task's `it()`). Operator re-runs `/ship-cycle` after spec-implementer fills.
+
 After inference returns, BEFORE flipping any task status:
 
 0. **Asmdef pre-flight (TECH-30633)** — when `git diff --name-only HEAD -- 'Assets/**/*.asmdef'` is non-empty OR Pass A inference emitted new `.asmdef` files, run `node tools/scripts/ship-cycle-pass-a-preflight.mjs`. Validates forward GUID refs (every `GUID:xxx` in touched asmdef resolves to existing `*.asmdef.meta` in repo OR was external at HEAD) and reverse-edge GUID consistency. Sub-second. On failure → `STOPPED at preflight — asmdef-diff: {reason}` + `Next: /ship-cycle {SLUG} {STAGE_ID}` after manual fix. When this step runs, the subsequent step 2 `unity:compile-check` MUST pass `--cold` (wipes `Library/ScriptAssemblies/` + `Library/Bee/`) to defeat stale-DLL false-greens; warm compile can silently reuse cached assemblies even when asmdef graph just shifted.
@@ -147,8 +163,27 @@ Write verdict file `/tmp/ship-cycle-verify-{slug}-{stage_id}.json`:
 { "verdict": "pass" | "fail", "reason": "...", "duration_ms": <int> }
 ```
 
-- `verdict == pass` → continue Phase 3 (Pass B recipe consumes verdict file).
+- `verdict == pass` → continue Phase 2.5 (stage test gate) then Phase 3 (Pass B recipe).
 - `verdict == fail` → `STAGE_VERIFY_FAIL` + chain digest + worktree stays dirty + no rollback of Pass A flips. Operator fixes manually then re-invokes `/ship-cycle {SLUG} {STAGE_ID}` (resume gate sees `implemented` → re-runs Phase 2).
+
+### Phase 2.5 — Pass B step 1.5 — stage test gate (mandatory)
+
+Run the stage test file via node's built-in test runner:
+
+```bash
+node --test tests/{SLUG}/stage{STAGE_ID}-{stage_slug}.test.mjs
+```
+
+**Preconditions** — bridge preflight green (Pass B verify-loop step 0 covers this), Unity Editor live with the stage's primary scene open. Tests use `BridgeClient` (`tools/scripts/recipe-engine/bridge-client.mjs`) which enqueues `agent_bridge_job` rows and polls until terminal — Editor must be picking up jobs (`db:bridge-preflight` green = live runner).
+
+**Exit semantics:**
+
+- All `it()` blocks green → continue to Phase 3 (Pass B recipe step 2 onward).
+- ANY `it()` red OR test runner exits non-zero → `STAGE_VERIFY_FAIL` + chain digest + worktree dirty + no rollback. Sentinel error text "red — not yet implemented" indicates a Pass A spec-implementer omission (stub left unfilled) — separately reported as `STOPPED — stage_test_stub_unfilled: {TASK_KEY}`.
+
+**Resume:** re-running `/ship-cycle` after fix re-runs Phase 2 (verify-loop) AND Phase 2.5 (stage test gate). Both must be green to reach stage commit.
+
+**Skip conditions** — none. Stage test gate is mandatory. Stages without a scaffolded test file (rare; doc-only stages with `test_scaffold: skip` in handoff YAML) skip Phase 2.5 with explicit log `phase_2_5: skipped_doc_only_stage`.
 
 No code-review in chain — operator may run standalone `/code-review {ISSUE_ID}` per Task out-of-band (lifecycle row 9).
 
@@ -283,6 +318,7 @@ Phase 0 preflight resolves `STAGE_ID_DB` via `master_plan_state(slug).stages[]` 
 
 ## Changelog
 
+- 2026-05-15 — feat: Phase 2.5 stage-test gate added (bridge-aware TDD red/green). After Pass B verify-loop green, runs `node --test tests/{slug}/stage{id}-{stage_slug}.test.mjs` against live Unity Editor via BridgeClient. Hard gate — red `it()` blocks stage commit. Pass A spec-implementer now MUST fill each task's `it()` block (replacing `throw new Error('red — not yet implemented')` stub authored by ship-plan Phase A.2) using `bridge.findGameObject/getComponent/enterPlayMode/captureScreenshot/...`. Sentinel "red — not yet implemented" left in any block → `STOPPED — stage_test_stub_unfilled`. Closes the gap where region-scene-prototype Stages 1.0–2.0 shipped without runnable stage tests (BridgeClient missing from disk; tests imported a phantom module; verify-loop never executed them).
 - 2026-05-05 — Pass B absorbed (verify-loop + verified→done flips + closeout + stage commit + verification flip). Chain prose updated: `design-explore → ship-plan → ship-cycle → ship-final`. `/ship-stage-main-session` retained as legacy fallback for token-budget-exceeded path; not chained.
 - 2026-05-08 — `STAGE_PROGRESS={STAGE_INDEX}/{TOTAL_STAGES}` added to Phase 9 chain digest summary. Derived from `master_plan_state(slug).stages[]` — operator sees plan position at every handoff (e.g. `12/19`).
 - 2026-05-08 (BUG-63) — Phase 8 step 0 added: `unity_bridge_command(kind="refresh_asset_database")` runs before `git add -A` when stage diff touches `Assets/**`. Live Editor writes `.meta` siblings synchronously into stage commit; eliminates orphan `.meta` drift accumulated when batchmode `unity:compile-check` runs in second-instance mode (project lock held by user's Editor → AssetDatabase writes skipped). Recurrence evidence: large-file-atomization-refactor stages 2–15, 65 orphan `.meta` swept in chore commit `bd153cc3`.

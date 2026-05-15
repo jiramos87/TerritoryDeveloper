@@ -81,3 +81,21 @@ export {
   mutateFixPlanWrite,
   mutateFixPlanConsume,
 } from "./journal.js";
+
+// Plan-design cluster (mig 0158)
+export type {
+  PlanDesignRow,
+  PlanDesignInsertInput,
+  PlanDesignInsertResult,
+  PlanDesignUpdateInput,
+  PlanDesignUpdateResult,
+  PlanDesignListInput,
+  PlanDesignPromoteResult,
+} from "./plan-design.js";
+export {
+  mutatePlanDesignInsert,
+  mutatePlanDesignUpdate,
+  mutatePlanDesignPromote,
+  queryPlanDesignGet,
+  queryPlanDesignList,
+} from "./plan-design.js";

@@ -35,6 +35,9 @@ tools_extra:
   - mcp__territory-ia__spec_outline
   - mcp__territory-ia__list_specs
   - mcp__territory-ia__cron_arch_changelog_append_enqueue
+  - mcp__territory-ia__plan_design_get
+  - mcp__territory-ia__plan_design_insert
+  - mcp__territory-ia__plan_design_update
 caveman_exceptions:
   - code
   - commits
@@ -89,6 +92,24 @@ Read `{DOC_PATH}`. Extract and hold in working memory:
 - **Approaches list** — id, name, pros/cons/effort for each
 - **Existing recommendation** — if present
 - **Open questions** — if present
+- **`{slug}`** — final master-plan slug (kebab-case). Derive from `{DOC_PATH}` filename (`docs/explorations/{slug}.md`) when not provided.
+- **`{plan_title}`** — display heading. Derive from the doc's first H1 line or filename when absent.
+
+**DB seed reservation (mig 0158, end of Phase 0):**
+
+After `{slug}` + `{plan_title}` are resolved, reserve the design seed row in `ia_plan_designs` (DB source of truth):
+
+```
+plan_design_get({slug})
+  → null  → plan_design_insert({slug, title: {plan_title}, priority: 'P2'})
+                returns {id} → store as {design_id} working-memory token
+  → row.status='draft'    → continue (resume); reuse row.id as {design_id}
+  → row.status='ready'    → continue (resume); reuse row.id; Phase 4 will overwrite body_md / stages_yaml / status
+  → row.status='consumed' → STOP — seed already shipped via ship-plan; user must `--resume` with `target_version+1` or rename slug
+  → row.status='archived' → STOP — seed retired; rename slug or unarchive manually
+```
+
+`{design_id}` flows into Phase 0.5 (priority poll persists to this row), Phase 4 (body_md + stages_yaml writeback + status='ready'), and is later read by ship-plan Phase A.0 to pass `bundle.plan.design_id` into `master_plan_bundle_apply`. The YAML frontmatter (Phase 4) remains as a transient projection until the HTML renderer cutover lands.
 
 **Locked-doc detection (end of Phase 0):**
 
@@ -120,7 +141,24 @@ Capture result as working-memory token: `plan_shape ∈ {carcass+section, flat}`
 
 ### Phase 0.5 — Interview (user gate)
 
-**Skip this phase entirely** if the doc already has a `## Design Expansion` block with a completed Select section. Proceed directly to Phase 1 (compare) or Phase 3 (expand) as appropriate.
+**Priority poll (mandatory — runs ONCE per seed):**
+
+If the working-memory seed row was just inserted (Phase 0 = fresh draft) OR the seed row has `priority='P2'` (default), poll the user for the master-plan priority before the interview proper:
+
+```
+Plan priority — how urgent is this work relative to other open master plans?
+
+A. P0 — critical / blocking other work
+B. P1 — high (next ship cycle)
+C. P2 — medium (queued, default)
+D. P3 — nice-to-have / parking
+
+Recommended: P2 (queued — escalate only when the design unblocks a downstream commitment)
+```
+
+On answer, call `plan_design_update({slug, priority: {chosen}})`. Skip the poll if `priority` is already non-default (resume on a previously-graded seed).
+
+**Skip the rest of this phase entirely** if the doc already has a `## Design Expansion` block with a completed Select section. Proceed directly to Phase 1 (compare) or Phase 3 (expand) as appropriate.
 
 If the doc is a stub (no Design Expansion), run a short interview to surface hidden constraints and disambiguate open questions before building the criteria matrix.
 
@@ -334,6 +372,24 @@ tasks:
 ```
 
 All keys required. Each task entry carries: `prefix`, `depends_on`, `digest_outline`, `touched_paths`, `kind`.
+
+**DB seed finalization (mig 0158, runs after YAML emission):**
+
+After the YAML frontmatter is written to disk, persist the same payload to the DB seed row (DB source of truth from this point onward):
+
+```
+plan_design_update({
+  slug: {slug},
+  title: {plan_title},
+  body_md: {full_exploration_markdown},   # entire .md body (post-YAML)
+  stages_yaml: { stages: [...], tasks: [...] },  # parsed YAML payload as jsonb
+  parent_plan_slug: {parent_slug_or_null},
+  target_version: {target_version},
+  status: 'ready'
+})
+```
+
+YAML frontmatter on disk is retained as a transient projection for the HTML renderer (cutover deferred). Source of truth for `priority` + `status` + `body_md` + `stages_yaml` is the DB row from this point. ship-plan Phase A.0 reads `plan_design_get({slug})` and passes `bundle.plan.priority` + `bundle.plan.design_id` into `master_plan_bundle_apply` (mig 0159), which auto-flips seed `status='consumed'` inside the same tx.
 
 **`--resume {slug}` mode:**
 

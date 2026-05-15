@@ -218,11 +218,15 @@ export interface MasterPlanInsertResult {
   updated_at: string;
 }
 
+const MASTER_PLAN_PRIORITIES = ["P0", "P1", "P2", "P3"] as const;
+
 export async function mutateMasterPlanInsert(
   slug: string,
   title: string,
   preamble: string | null = null,
   description: string | null = null,
+  priority: string | null = null,
+  design_id: number | null = null,
 ): Promise<MasterPlanInsertResult> {
   const cleanSlug = (slug ?? "").trim();
   const cleanTitle = (title ?? "").trim();
@@ -233,6 +237,13 @@ export async function mutateMasterPlanInsert(
       `slug must be kebab-case [a-z0-9-]: ${cleanSlug}`,
     );
   }
+  const priorityClean: string =
+    priority === null || priority === undefined ? "P2" : priority;
+  if (!(MASTER_PLAN_PRIORITIES as readonly string[]).includes(priorityClean)) {
+    throw new IaDbValidationError(
+      `priority must be one of P0/P1/P2/P3 (got: ${priorityClean})`,
+    );
+  }
   return withTx(async (c) => {
     const exists = await c.query(
       `SELECT 1 FROM ia_master_plans WHERE slug = $1`,
@@ -241,11 +252,22 @@ export async function mutateMasterPlanInsert(
     if ((exists.rowCount ?? 0) > 0) {
       throw new IaDbValidationError(`master plan already exists: ${cleanSlug}`);
     }
+    if (design_id !== null && design_id !== undefined) {
+      const dg = await c.query(
+        `SELECT 1 FROM ia_plan_designs WHERE id = $1`,
+        [design_id],
+      );
+      if (dg.rowCount === 0) {
+        throw new IaDbValidationError(
+          `design_id not found in ia_plan_designs: ${design_id}`,
+        );
+      }
+    }
     const ins = await c.query<{ created_at: string; updated_at: string }>(
-      `INSERT INTO ia_master_plans (slug, title, preamble, description)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO ia_master_plans (slug, title, preamble, description, priority, design_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING created_at, updated_at`,
-      [cleanSlug, cleanTitle, preamble, description],
+      [cleanSlug, cleanTitle, preamble, description, priorityClean, design_id],
     );
     return {
       slug: cleanSlug,
