@@ -24,6 +24,27 @@ JSON Schema + **CI** **`validate:fixtures`**, **Geography initialization** / Edi
 
 **Not for CI.** Workflow notes: [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md), [`ia/skills/project-implementation-validation/SKILL.md`](../../skills/project-implementation-validation/SKILL.md).
 
+## Interchange artifacts registry
+
+| Artifact slug | Path | Schema version | Producer | Consumer |
+|---|---|---|---|---|
+| `feature-flags-snapshot` | `tools/interchange/feature-flags-snapshot.json` | 1 | MCP tool `feature_flags_snapshot_write` / web build step | `FeatureFlags.HydrateFromJson` (Unity runtime); bridge `flag_flip` re-triggers hydration |
+
+### `feature-flags-snapshot` schema (v1)
+
+```json
+{
+  "artifact": "feature-flags-snapshot",
+  "schema_version": 1,
+  "generated_at": "<ISO-8601 UTC>",
+  "flags": [
+    { "slug": "<kebab-slug>", "enabled": true, "default_value": false }
+  ]
+}
+```
+
+`flags[]` — one entry per `ia_feature_flags` row; `default_value` = fallback when Unity cannot read the file at boot.
+
 ## MCP tool catalog (Stage 1.3)
 
 _pending_ — Stage 1.3 populates rows for `arch_decision_get`, `arch_decision_list`, `arch_surface_resolve`, `arch_drift_scan`, `arch_changelog_since` once tools land under `tools/mcp-ia-server/src/tools/arch.ts`.

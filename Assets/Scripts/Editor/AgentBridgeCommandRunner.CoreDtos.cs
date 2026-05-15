@@ -35,6 +35,10 @@ public class AgentBridgeParamsPayloadDto
     public bool include_anomaly_scan;
     public string catalog_entry_id;
     public string panel_id;
+    /// <summary><c>flag_flip</c>: optional flag slug that was toggled upstream (Unity re-reads full snapshot).</summary>
+    public string slug;
+    /// <summary><c>read_panel_state</c>: panel slug to inspect.</summary>
+    public string panel_slug;
 }
 
 [Serializable]

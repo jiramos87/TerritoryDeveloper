@@ -133,6 +133,7 @@ import { registerUiToolkitSceneUidocValidate } from "./tools/ui-toolkit-scene-ui
 import { registerUiToolkitPanelPixelDiff } from "./tools/ui-toolkit-panel-pixel-diff.js";
 import { registerUiToolkitHostLint } from "./tools/ui-toolkit-host-lint.js";
 import { registerMasterPlanSpecFreeze } from "./tools/master-plan-spec-freeze.js";
+import { registerFeatureFlagsSnapshotWrite } from "./tools/feature-flags-snapshot-write.js";
 
 // Bridge + compute tools
 import {
@@ -316,6 +317,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerUiToolkitHostLint(server);
   // vibe-coding-safety Stage 3.0 (TECH-36117) — spec-freeze gate
   registerMasterPlanSpecFreeze(server);
+  // vibe-coding-safety Stage 5.0 (TECH-36136) — feature flags snapshot writer
+  registerFeatureFlagsSnapshotWrite(server);
 }
 
 /**
