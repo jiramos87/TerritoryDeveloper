@@ -1,6 +1,7 @@
 using UnityEngine;
 using Domains.Registry;
 using Territory.IsoSceneCore;
+using Territory.RegionScene.Terrain;
 
 namespace Territory.RegionScene
 {
@@ -9,25 +10,51 @@ namespace Territory.RegionScene
     {
         [SerializeField] private Camera mainCamera;
         [SerializeField] private float panSpeed = 5f;
+        [SerializeField] private int terrainSeed = 42;
 
         private ServiceRegistry _registry;
         private IsoSceneCamera _camera;
+        private IsoSceneChunkCuller _culler;
+        private RegionHeightMap _heightMap;
+        private RegionWaterMap _waterMap;
+        private RegionCliffMap _cliffMap;
+        private RegionCellRenderer _cellRenderer;
 
         private void Awake()
         {
             _registry = FindObjectOfType<ServiceRegistry>();
             if (_registry == null)
                 Debug.LogWarning("[RegionManager] ServiceRegistry not found in scene.");
-
-            SpawnPlaceholderSprite();
         }
 
         private void Start()
         {
             if (_registry == null) return;
+
+            // Camera
             _camera = new IsoSceneCamera();
             _camera.Configure(mainCamera, panSpeed);
             _registry.Register<IsoSceneCamera>(_camera);
+
+            // Terrain maps
+            _heightMap = new RegionHeightMap();
+            _heightMap.Seed(terrainSeed);
+            _waterMap = new RegionWaterMap();
+            _waterMap.Seed(_heightMap, terrainSeed);
+            _cliffMap = new RegionCliffMap();
+            _cliffMap.Compute(_heightMap, _waterMap);
+
+            // Chunk culler
+            _culler = new IsoSceneChunkCuller();
+            _culler.Configure(mainCamera, RegionHeightMap.RegionGridSize, RegionHeightMap.RegionGridSize);
+            _registry.Register<IsoSceneChunkCuller>(_culler);
+
+            // Cell renderer — replaces placeholder
+            DestroyPlaceholder();
+            var rendererGo = new GameObject("RegionCellRenderer");
+            rendererGo.transform.SetParent(transform);
+            _cellRenderer = rendererGo.AddComponent<RegionCellRenderer>();
+            _cellRenderer.Configure(_heightMap, _waterMap, _cliffMap, _culler);
         }
 
         private void Update()
@@ -35,14 +62,10 @@ namespace Territory.RegionScene
             _camera?.Tick(Time.deltaTime);
         }
 
-        private void SpawnPlaceholderSprite()
+        private void DestroyPlaceholder()
         {
-            var sprite = Resources.Load<Sprite>("region/placeholder");
-            var go = new GameObject("PlaceholderSprite");
-            go.transform.SetParent(transform);
-            go.transform.position = GridCenterWorld();
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = sprite;
+            var placeholder = transform.Find("PlaceholderSprite");
+            if (placeholder != null) Destroy(placeholder.gameObject);
         }
 
         /// <summary>World position of region grid center cell [31,31] in a 64x64 grid. Region cell scale = 1 unit per cell.</summary>
