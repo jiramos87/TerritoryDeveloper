@@ -129,6 +129,8 @@ import { registerUiToolkitPanelNodeRemove } from "./tools/ui-toolkit-panel-node-
 import { registerUiToolkitUssRuleUpsert } from "./tools/ui-toolkit-uss-rule-upsert.js";
 import { registerUiToolkitHostQBind } from "./tools/ui-toolkit-host-q-bind.js";
 import { registerUiToolkitSceneUidocValidate } from "./tools/ui-toolkit-scene-uidoc-validate.js";
+import { registerUiToolkitPanelPixelDiff } from "./tools/ui-toolkit-panel-pixel-diff.js";
+import { registerUiToolkitHostLint } from "./tools/ui-toolkit-host-lint.js";
 
 // Bridge + compute tools
 import {
@@ -306,6 +308,9 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   // ui-toolkit-authoring-mcp-slices Stage 3 (TECH-34922..34924) — wire surface
   registerUiToolkitHostQBind(server);
   registerUiToolkitSceneUidocValidate(server);
+  // ui-toolkit-authoring-mcp-slices Stage 4 (TECH-34925..34927) — pixel diff + lint surface
+  registerUiToolkitPanelPixelDiff(server);
+  registerUiToolkitHostLint(server);
 }
 
 /**
