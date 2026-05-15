@@ -43,15 +43,27 @@ namespace Territory.Terrain
                 && cell.transform.childCount > 0
                 && classificationForLegacyPath != WaterBodyType.River)
             {
-                cellComponent.waterBodyType = WaterBodyType.Sea;
-                cellComponent.waterBodyId = waterMap.GetWaterBodyId(x, y);
+                // Stale-Y guard: junction merge / lake-river fallback can mutate body
+                // SurfaceHeight between UpdateWaterVisuals passes. Without this check the
+                // legacy fast-path leaves the existing tile parked at the previous surface,
+                // producing patches of apparent different water height while hover panel
+                // (which reads live SurfaceHeight) reports the same value.
+                Vector2 desiredSurfaceWorld = gridManager.GetWorldPositionVector(x, y, visualSurfaceHeight);
+                float desiredHalfCellHeight = gridManager.tileHeight * 0.25f;
+                Vector2 desiredTileWorldPos = desiredSurfaceWorld + new Vector2(0f, desiredHalfCellHeight);
                 Transform first = cell.transform.GetChild(0);
-                if (first != null)
+                bool tileYStale = first == null
+                    || !Mathf.Approximately(first.position.x, desiredTileWorldPos.x)
+                    || !Mathf.Approximately(first.position.y, desiredTileWorldPos.y);
+                if (!tileYStale)
                 {
+                    cellComponent.waterBodyType = WaterBodyType.Sea;
+                    cellComponent.waterBodyId = waterMap.GetWaterBodyId(x, y);
                     string n = first.name.Replace("(Clone)", "").Trim();
                     if (!string.IsNullOrEmpty(n)) { cellComponent.prefabName = n; cellComponent.buildingType = n; }
+                    return;
                 }
-                return;
+                // tile world Y drifted from body SurfaceHeight → fall through to full re-render
             }
 
             foreach (Transform child in cell.transform) GameObject.Destroy(child.gameObject);
