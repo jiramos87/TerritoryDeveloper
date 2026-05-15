@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using Domains.Registry;
+using Territory.Persistence;
 using Territory.RegionScene.Evolution;
 
 namespace Territory.RegionScene.Persistence
@@ -11,6 +12,7 @@ namespace Territory.RegionScene.Persistence
     {
         private RegionData _regionData;
         private string _basePath;
+        private readonly List<CityData> _lazyCities = new();
 
         private void Start()
         {
@@ -50,14 +52,35 @@ namespace Territory.RegionScene.Persistence
             return file;
         }
 
+        /// <summary>
+        /// Atomic city-placement mutation. Links cell to city and stores the lazy CityData record.
+        /// Both operations happen before any write; caller must call WriteSave to persist.
+        /// </summary>
+        public void LinkCity(Vector2Int cell, CityData cityData)
+        {
+            if (_regionData == null || cityData == null) return;
+            var cellData = _regionData.GetCell(cell.x, cell.y);
+            if (cellData == null) return;
+
+            // Link cell → city
+            cellData.owningCityId = cityData.cityId;
+
+            // Record lazy CityData entry (avoid duplicates on re-placement)
+            if (!_lazyCities.Exists(c => c.cityId == cityData.cityId))
+                _lazyCities.Add(cityData);
+        }
+
+        /// <summary>Read-only snapshot of lazy-created cities in this session.</summary>
+        public IReadOnlyList<CityData> LazyCities => _lazyCities;
+
         /// <summary>Migration hook: bumps schema version; missing fields default-init.</summary>
         public static RegionSaveFile MigrateLoadedSaveData(RegionSaveFile file)
         {
             if (file == null) return null;
-            // Version 1 = current prototype; no migrations needed yet.
-            // Future: if (file.schemaVersion < 2) { /* migrate */ file.schemaVersion = 2; }
+            // v1 → v2: lazyCities list added in Stage 5.0
             if (file.cells == null) file.cells = System.Array.Empty<RegionCellData>();
             if (file.cityOwnership == null) file.cityOwnership = new List<CityOwnershipEntry>();
+            if (file.lazyCities == null) file.lazyCities = new List<CityData>();
             file.schemaVersion = RegionSaveFile.CurrentSchemaVersion;
             return file;
         }
@@ -72,6 +95,7 @@ namespace Territory.RegionScene.Persistence
                 gridSize       = gSize,
                 cells          = cells,
                 cityOwnership  = new List<CityOwnershipEntry>(),
+                lazyCities     = new List<CityData>(_lazyCities),
             };
 
             // Populate city ownership from cell owningCityId fields.
@@ -91,6 +115,14 @@ namespace Territory.RegionScene.Persistence
             {
                 if (file.cells[i] != null)
                     _regionData.AllCells[i] = file.cells[i];
+            }
+
+            // Restore lazy cities from save
+            _lazyCities.Clear();
+            if (file.lazyCities != null)
+            {
+                foreach (var c in file.lazyCities)
+                    if (c != null) _lazyCities.Add(CityData.MigrateLoaded(c));
             }
         }
 

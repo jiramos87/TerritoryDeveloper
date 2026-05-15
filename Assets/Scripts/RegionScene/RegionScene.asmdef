@@ -3,7 +3,8 @@
     "rootNamespace": "Territory.RegionScene",
     "references": [
         "GUID:1816056a6d934540a09c11d99d6672be",
-        "GUID:4ffbc615fcf34d01b4e7f2cc4f6d3062"
+        "GUID:4ffbc615fcf34d01b4e7f2cc4f6d3062",
+        "GUID:7d8f9e2a1b4c5d6e7f8a9b0c1d2e3f4a"
     ],
     "includePlatforms": [],
     "allowUnsafeCode": false,

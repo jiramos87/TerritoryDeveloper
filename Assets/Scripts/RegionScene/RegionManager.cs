@@ -1,8 +1,11 @@
 using UnityEngine;
 using Domains.Registry;
 using Territory.IsoSceneCore;
+using Territory.IsoSceneCore.Contracts;
 using Territory.RegionScene.Evolution;
+using Territory.RegionScene.Persistence;
 using Territory.RegionScene.Terrain;
+using Territory.RegionScene.Tools;
 using Territory.RegionScene.UI;
 
 namespace Territory.RegionScene
@@ -29,6 +32,7 @@ namespace Territory.RegionScene
         private RegionCliffMap _cliffMap;
         private RegionCellRenderer _cellRenderer;
         private RegionData _regionData;
+        private RegionToolCreateCity _createCityTool;
 
         private void Awake()
         {
@@ -80,6 +84,21 @@ namespace Territory.RegionScene
             // Stage 3.0 — wire click handler (Subscribe in Start per invariant #12)
             if (cellClickHandler != null)
                 cellClickHandler.Configure(_heightMap, _waterMap, _cliffMap);
+
+            // Stage 5.0 — register city-placement tool into IIsoSceneToolRegistry
+            var toolReg   = _registry.Resolve<IIsoSceneToolRegistry>();
+            var saveService = _registry.Resolve<RegionSaveService>();
+            if (toolReg != null)
+            {
+                toolReg.Register(RegionToolCreateCity.MakeDescriptor());
+                _createCityTool = new RegionToolCreateCity();
+                _createCityTool.Configure(_regionData, _heightMap, _waterMap, _cliffMap, cellClickHandler, saveService);
+                _registry.Register<RegionToolCreateCity>(_createCityTool);
+            }
+            else
+            {
+                Debug.LogWarning("[RegionManager] IIsoSceneToolRegistry not found — create-city tool not registered.");
+            }
         }
 
         private void Update()
