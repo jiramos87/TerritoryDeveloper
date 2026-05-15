@@ -38,6 +38,75 @@ fi
 
 input="$(cat)"
 
+# ── tests/scenarios denylist branch ──────────────────────────────────────────
+# Deny Write/MultiEdit on ^(tests|tools/fixtures/scenarios)/.* unless
+# TD_ALLOW_TEST_EDIT={ISSUE_ID} env var is set.
+# For Edit: also deny if old_string contains [Test] / it( / test( declaration
+# tokens AND new_string does NOT (i.e. the edit removes those tokens) — without
+# env var override.
+
+if command -v jq >/dev/null 2>&1; then
+  tool_name="$(printf '%s' "$input" | jq -r '.tool_name // ""' 2>/dev/null)"
+  file_path_guard="$(printf '%s' "$input" | jq -r '.tool_input.file_path // ""' 2>/dev/null)"
+  old_string="$(printf '%s' "$input" | jq -r '.tool_input.old_string // ""' 2>/dev/null)"
+  new_string="$(printf '%s' "$input" | jq -r '.tool_input.new_string // ""' 2>/dev/null)"
+else
+  tool_name=""
+  file_path_guard=""
+  old_string=""
+  new_string=""
+fi
+
+_is_test_path=0
+case "$file_path_guard" in
+  tests/*|*/tests/*|tools/fixtures/scenarios/*|*/tools/fixtures/scenarios/*)
+    _is_test_path=1 ;;
+esac
+
+if [ "$_is_test_path" -eq 1 ]; then
+  case "$tool_name" in
+    Write|MultiEdit)
+      if [ -z "${TD_ALLOW_TEST_EDIT}" ]; then
+        cat >&2 <<EOF
+[territory-developer · skill-surface-guard] BLOCKED: direct Write/MultiEdit on test path.
+  file_path: $file_path_guard
+  tool:      $tool_name
+  Why: Writing to tests/ or tools/fixtures/scenarios/ is gated to prevent
+  accidental deletion or replacement of test assertions during ship-cycle.
+  Fix: set TD_ALLOW_TEST_EDIT={ISSUE_ID} in the environment to override.
+    e.g. export TD_ALLOW_TEST_EDIT=TECH-36112
+EOF
+        exit 2
+      fi
+      ;;
+    Edit)
+      if [ -z "${TD_ALLOW_TEST_EDIT}" ]; then
+        # Deny if old_string contains declaration tokens but new_string does not.
+        _old_has_decl=0
+        _new_has_decl=0
+        if printf '%s' "$old_string" | grep -qE '\[Test\]|[[:space:]]it\(|[[:space:]]test\(|^it\(|^test\('; then
+          _old_has_decl=1
+        fi
+        if printf '%s' "$new_string" | grep -qE '\[Test\]|[[:space:]]it\(|[[:space:]]test\(|^it\(|^test\('; then
+          _new_has_decl=1
+        fi
+        if [ "$_old_has_decl" -eq 1 ] && [ "$_new_has_decl" -eq 0 ]; then
+          cat >&2 <<EOF
+[territory-developer · skill-surface-guard] BLOCKED: Edit removes test/it declaration token.
+  file_path: $file_path_guard
+  Why: The edit removes [Test], it(, or test( declaration tokens, which would
+  silently delete test coverage. Gate ensures test removal is intentional.
+  Fix: set TD_ALLOW_TEST_EDIT={ISSUE_ID} in the environment to override.
+    e.g. export TD_ALLOW_TEST_EDIT=TECH-36112
+EOF
+          exit 2
+        fi
+      fi
+      ;;
+  esac
+fi
+# ── end tests/scenarios denylist branch ──────────────────────────────────────
+
 # Extract file_path. jq when available; sed fallback (conservative-allow on
 # parse failure — never block on hook self-error).
 if command -v jq >/dev/null 2>&1; then

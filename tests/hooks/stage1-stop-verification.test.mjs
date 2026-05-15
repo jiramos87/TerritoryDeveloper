@@ -17,7 +17,7 @@
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -71,10 +71,7 @@ describe("stop-verification-required.sh — Stage 1.0 hook tracer", () => {
   it("settingsJsonWiresStopHook [task 1.0.3]", () => {
     const settingsPath = join(repoRoot, ".claude/settings.json");
     assert.ok(existsSync(settingsPath), `.claude/settings.json must exist`);
-    const settings = JSON.parse(
-      // eslint-disable-next-line no-undef
-      (await import("node:fs")).readFileSync(settingsPath, "utf8")
-    );
+    const settings = JSON.parse(readFileSync(settingsPath, "utf8"));
     const stopEntries = settings?.hooks?.Stop ?? [];
     const found = JSON.stringify(stopEntries).includes("stop-verification-required.sh");
     assert.ok(found, "hooks.Stop[] must reference stop-verification-required.sh");
