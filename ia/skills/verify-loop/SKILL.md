@@ -63,8 +63,8 @@ hard_boundaries:
   - Do NOT restate verification policy (timeout escalation, Path A lock release, Path B preflight). `docs/agent-led-verification-policy.md` is single canonical source.
   - Do NOT modify code outside Step 6 fix-iteration scope. No refactors, no scope creep, no unrelated cleanups.
   - Do NOT skip Path A / Path B for convenience — verification policy requires attempting both when tools allow.
-  - Do NOT exceed `MAX_ITERATIONS` (default 2). Escalate to human after cap.
-  - "Do NOT skip Path B \"because slow\". `timeout_ms: 40000` initial; escalate per policy (`unity:ensure-editor` → 60 s retry, ceiling 120 s)."
+  - Do NOT exceed `MAX_ITERATIONS_BY_GAP_REASON` for the classified `gap_reason` (transient → 5, deterministic/unknown → 2, escalate-now → 0 immediate poll; hard cap = 5). Escalate to human after cap.
+  - "Do NOT skip Path B \"because slow\". `timeout_ms: 40000` initial; escalate per policy (`unity:ensure-editor` → 60 s retry, ceiling 120 s). Do NOT treat `bridge_timeout` / `lease_unavailable` / `unity_lock_stale` as deterministic — transient gap_reasons get max 5 retries + exponential backoff via `MAX_ITERATIONS_BY_GAP_REASON`."
   - Do NOT bypass failures with `--no-verify`. Diagnose root cause, surface in JSON `verdict`.
   - "Do NOT touch stale `Temp/UnityLockfile` recovery without trying once: `rm -f Temp/UnityLockfile` + re-run when verify-local fails on stale lock."
   - Do NOT alter `.claude/settings.json` permissions or hooks.
@@ -97,9 +97,30 @@ Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once
 | `CHANGED_AREAS` | Git diff inspection | C#? Fixtures? IA? MCP? Indexes? — drives gate decisions |
 | `SCENARIO_ID` | Spec §7b OR user | Default `reference-flat-32x32` for Path A. `_pending_` if no test-mode gate fires |
 | `SEED_CELLS` | Spec §7b OR repro | 1–3 `"x,y"` for Path B `debug_context_bundle` + `close-dev-loop` |
-| `MAX_ITERATIONS` | Default 2 | Fix→verify cycles before escalation |
+| `MAX_ITERATIONS` | Default 2; overridden per `MAX_ITERATIONS_BY_GAP_REASON` when `gap_reason` known | Fix→verify cycles before escalation |
 | `--skip-path-b` | Flag (default off) | When set: Path A compile gate runs; Path B (IDE bridge hybrid, Step 4b) is skipped; JSON verdict records `path_b: skipped_batched`. Used by `/ship-stage` chain for batched stage-boundary Path B. NOT surfaced on `/verify` (single-pass, no batching consumer). |
 | `--tooling-only` | Flag (default off) | When set: Decision matrix bypassed; Steps 0, 1, 3, 4a, 4b, 5, 6 all skipped up-front; only Step 2 (Node CI-parity) + Step 7 (Verification block) run. JSON verdict records `mode: "tooling_only"` + `path_b: "skipped_not_required"`. Use ONLY when current git diff is pure tooling surface (MCP TypeScript under `tools/mcp-ia-server/`, web Next.js under `web/`, skills / agents / commands markdown under `ia/skills/` + `.claude/`, docs under `docs/` + `ia/rules/` + `ia/specs/`, scripts under `tools/scripts/`) — never when `Assets/**`, `Packages/**`, or `ProjectSettings/**` are dirty. Precondition guard: skill asserts no Unity-surface paths in `git status` before bypass; fails loud if asserted. |
+
+---
+
+## MAX_ITERATIONS_BY_GAP_REASON
+
+When a fix→verify loop surfaces a `gap_reason`, look up max iterations here **before** starting the loop. Overrides the flat `MAX_ITERATIONS` default. Hard cap = 5 regardless of category.
+
+| `gap_reason` | Category | `max_iterations` | Backoff |
+|---|---|---|---|
+| `bridge_timeout` | transient | 5 | exponential (base 500 ms, max 8 s) |
+| `lease_unavailable` | transient | 5 | exponential (base 500 ms, max 8 s) |
+| `unity_lock_stale` | transient | 5 | exponential (base 500 ms, max 8 s) |
+| `compile_error` | deterministic | 2 | none |
+| `test_assertion` | deterministic | 2 | none |
+| `validator_violation` | deterministic | 2 | none |
+| `unity_api_limit` | escalate-now | 0 | — (immediate human poll) |
+| `human_judgment_required` | escalate-now | 0 | — (immediate human poll) |
+
+**Lookup rule:** classify `gap_reason` → read `max_iterations` from table above → hard cap at 5. Unknown `gap_reason` → treat as deterministic (max 2). Hard cap always wins.
+
+**Backoff helper:** `tools/scripts/exponential-backoff.mjs` — `delay_ms(attempt)` = `min(base * 2^attempt, max_ms)` where `base=500`, `max_ms=8000`. Invoke between retries for transient categories only.
 
 ---
 
@@ -226,14 +247,16 @@ When spec §7b / §8 explicitly asks for screenshots or buffered Console:
 
 Full `kind` reference: [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) § MCP tools.
 
-### Step 6 — Fix iteration (bounded by `{MAX_ITERATIONS}`)
+### Step 6 — Fix iteration (bounded by `MAX_ITERATIONS_BY_GAP_REASON`)
 
 If Step 4 / Step 5 surface anomalies AND root cause clear:
 
+0. **Classify `gap_reason`** → look up `max_iterations` from §MAX_ITERATIONS_BY_GAP_REASON table. If escalate-now (0 retries) → immediately emit human poll; do NOT attempt fix loop.
 1. Edit C# / assets — minimal diff. English comments / logs.
 2. Step 1 (compile gate) → must be clean before re-entering Play Mode.
-3. Step 4b post-fix `debug_context_bundle` per cell → diff `anomaly_count` deltas, added/removed `anomalies`, height/child-name hints, screenshot diff.
-4. Verdict: anomalies cleared → continue to handoff. Anomalies remain + cause clear → repeat from 1. Iteration count == `{MAX_ITERATIONS}` (default 2) → escalate, do NOT loop.
+3. If `gap_reason` is transient (`bridge_timeout`, `lease_unavailable`, `unity_lock_stale`) → `await delayMs(attempt)` from `tools/scripts/exponential-backoff.mjs` before each retry.
+4. Step 4b post-fix `debug_context_bundle` per cell → diff `anomaly_count` deltas, added/removed `anomalies`, height/child-name hints, screenshot diff.
+5. Verdict: anomalies cleared → continue to handoff. Anomalies remain + cause clear → repeat from 1. Iteration count == `max_iterations` (from table; hard cap 5) → escalate, do NOT loop.
 
 Full diff structure: [`close-dev-loop`](../close-dev-loop/SKILL.md) §§ DIFF / VERDICT / ITERATE.
 
@@ -291,7 +314,7 @@ Markdown summary (caveman): verdict, paths run (A / B / both / none), artifact p
 | `{ISSUE_ID}` | Active BACKLOG id |
 | `{SCENARIO_ID}` | Kebab-case id under `tools/fixtures/scenarios/`; `reference-flat-32x32` default |
 | `{SEED_CELLS}` | 1–3 `"x,y"` from spec §7b or repro |
-| `{MAX_ITERATIONS}` | 2 |
+| `{MAX_ITERATIONS}` | Default 2 (deterministic/unknown); 5 (transient); 0 (escalate-now). Hard cap 5. Classified via `MAX_ITERATIONS_BY_GAP_REASON` table. |
 
 ---
 
@@ -306,7 +329,8 @@ Session maps to `{ISSUE_ID}` → `mcp__territory-ia__backlog_issue` for Files / 
 - IF Step 0 fails after one bounded repair → escalate; do NOT loop preflight.
 - IF Step 1 reports `compilation_failed` → fix before any Step 4 / Step 5 attempt; never `enter_play_mode` against a broken build.
 - IF Step 2 / Step 3 fail → stop, fix, re-run from Step 1; do NOT continue to Play Mode steps with red Node checks.
-- IF `{MAX_ITERATIONS}` exhausted → escalate to human; do NOT silently retry.
+- IF `MAX_ITERATIONS_BY_GAP_REASON` cap for the classified `gap_reason` is exhausted → escalate to human; do NOT silently retry. Hard cap = 5.
+- IF `gap_reason` is escalate-now (`unity_api_limit`, `human_judgment_required`) → 0 retries; emit human poll immediately without entering fix loop.
 - IF Step 4b times out → run escalation protocol (`unity:ensure-editor` → 60 s retry, ceiling 120 s); do NOT raise `timeout_ms` blindly.
 - Do NOT skip Path A/B for convenience — verification policy requires attempting both when tools allow.
 - Do NOT replace human normal-game QA — agent verification supplements, never substitutes (per `AGENTS.md`).

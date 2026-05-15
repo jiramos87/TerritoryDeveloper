@@ -21,7 +21,7 @@ Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, 
 
 Run integrated closed-loop verification on current branch + bounded fix iteration when anomalies surface. Output: structured JSON Verification block per `docs/agent-led-verification-policy.md` (extended with `fix_iterations` + `verdict` + `human_ask` fields per `ia/skills/verify-loop/SKILL.md` Step 7) + caveman markdown summary. Never restate verification policy — point at `docs/agent-led-verification-policy.md`.
 
-**Edit allowed** under one narrow scope: Step 6 fix iteration may apply minimal code edits to address anomalies surfaced by Step 4 / Step 5 when root cause is clear. All other steps are read-only / runner-only. Bounded by `MAX_ITERATIONS` (default 2) — escalate, do NOT loop.
+**Edit allowed** under one narrow scope: Step 6 fix iteration may apply minimal code edits to address anomalies surfaced by Step 4 / Step 5 when root cause is clear. All other steps are read-only / runner-only. Bounded by `MAX_ITERATIONS` (default 2; overridden by `MAX_ITERATIONS_BY_GAP_REASON` when `gap_reason` is known — see SKILL.md §MAX_ITERATIONS_BY_GAP_REASON; hard cap = 5) — escalate, do NOT loop.
 
 # Recipe
 
@@ -34,7 +34,7 @@ Follow `ia/skills/verify-loop/SKILL.md` end-to-end. IF `--tooling-only` flag set
 5. **Step 4a — Path A test-mode batch** — `npm run unity:testmode-batch -- --quit-editor-first --scenario-id {SCENARIO_ID}`. Default `reference-flat-32x32`.
 6. **Step 4b — Path B IDE bridge hybrid** — queue scenario id (`tools/fixtures/scenarios/.queued-test-scenario-id` + `runtime_state` `queued_test_scenario_id`) → `enter_play_mode` (`timeout_ms: 40000`) → `debug_context_bundle` per `{SEED_CELLS}` → `exit_play_mode`.
 7. **Step 5 — Bridge evidence** (optional) — `capture_screenshot include_ui: true`, `get_console_logs`, `export_agent_context` per spec §7b / §8 ask.
-8. **Step 6 — Fix iteration** (bounded `MAX_ITERATIONS`, default 2) — minimal code edit → Step 1 → Step 4b post-fix `debug_context_bundle` per cell → diff `anomaly_count` deltas. Iteration cap exhausted → escalate.
+8. **Step 6 — Fix iteration** (bounded by `MAX_ITERATIONS_BY_GAP_REASON` classifier; default 2 for unknown/deterministic `gap_reason`, 5 for transient, 0 for escalate-now; hard cap = 5) — classify `gap_reason` → look up max iterations from SKILL.md §MAX_ITERATIONS_BY_GAP_REASON table → if transient: invoke `delayMs(attempt)` from `tools/scripts/exponential-backoff.mjs` before each retry → minimal code edit → Step 1 → Step 4b post-fix `debug_context_bundle` per cell → diff `anomaly_count` deltas. Escalate-now `gap_reason` (e.g. `unity_api_limit`, `human_judgment_required`) → 0 retries, immediate human poll. Iteration cap exhausted → escalate.
 9. **Step 7 — Verification block + handoff** — emit single block (JSON header + caveman summary) per skill §"Step 7" + `docs/agent-led-verification-policy.md`.
 
 Both paths in one session → Path A first (`--quit-editor-first`), then `npm run unity:ensure-editor` before Path B.
@@ -69,7 +69,7 @@ Caveman markdown summary follows the JSON header — verdict, paths run (A / B /
 - Do NOT restate verification policy (timeout escalation, Path A lock release, Path B preflight). `docs/agent-led-verification-policy.md` is single canonical source.
 - Do NOT modify code outside Step 6 fix-iteration scope. No refactors, no scope creep, no unrelated cleanups.
 - Do NOT skip Path A / Path B for convenience — verification policy requires attempting both when tools allow.
-- Do NOT exceed `MAX_ITERATIONS` (default 2). Escalate to human after cap.
+- Do NOT exceed `MAX_ITERATIONS_BY_GAP_REASON` cap for the classified `gap_reason` (transient → 5, deterministic → 2, escalate-now → 0 immediate poll, unknown → 2; hard cap = 5). Escalate to human after cap.
 - Do NOT skip Path B "because slow". `timeout_ms: 40000` initial; escalate per policy (`unity:ensure-editor` → 60 s retry, ceiling 120 s).
 - Do NOT bypass failures with `--no-verify`. Diagnose root cause, surface in JSON `verdict`.
 - Do NOT touch stale `Temp/UnityLockfile` recovery without trying once: `rm -f Temp/UnityLockfile` + re-run when verify-local fails on stale lock.

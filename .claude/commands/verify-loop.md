@@ -20,7 +20,7 @@ Follow `caveman:caveman` for all output. Standard exceptions: code, commits, sec
 - agent-led verification end-to-end
 <!-- skill-tools:body-override -->
 
-`$ARGUMENTS` carries optional inputs: leading `ISSUE_ID` (active BACKLOG id), `--scenario {SCENARIO_ID}` (Path A / Path B gate; default `reference-flat-32x32`), `--seed-cells x,y[,x,y...]` (Path B `debug_context_bundle` seeds), `--max-iterations N` (fix loop cap; default 2), `--tooling-only` (pre-matrix bypass for pure tooling refactors — skill §"Pre-matrix mode gate" asserts no `Assets|Packages|ProjectSettings` dirty paths then runs Step 2 + Step 7 only). All optional — subagent infers from git diff + active spec §7b / §8 when omitted.
+`$ARGUMENTS` carries optional inputs: leading `ISSUE_ID` (active BACKLOG id), `--scenario {SCENARIO_ID}` (Path A / Path B gate; default `reference-flat-32x32`), `--seed-cells x,y[,x,y...]` (Path B `debug_context_bundle` seeds), `--max-iterations N` (fix loop hard cap override; default determined by `MAX_ITERATIONS_BY_GAP_REASON`: transient → 5, deterministic/unknown → 2, escalate-now → 0; skill hard cap = 5), `--tooling-only` (pre-matrix bypass for pure tooling refactors — skill §"Pre-matrix mode gate" asserts no `Assets|Packages|ProjectSettings` dirty paths then runs Step 2 + Step 7 only). All optional — subagent infers from git diff + active spec §7b / §8 when omitted.
 
 Distinct from `/verify`: `/verify` runs the lightweight `verifier` subagent (single pass, no code edits, policy-only reporting). `/verify-loop` runs the full closed-loop recipe with bounded fix iteration (Edit allowed narrowly for Step 6 fixes only).
 
@@ -57,7 +57,7 @@ Forward via Agent tool with `subagent_type: "verify-loop"` (when `--force-model 
 > - `ISSUE_ID` — active BACKLOG id (`BUG-` / `FEAT-` / `TECH-` / `ART-` / `AUDIO-`) for `backlog_issue` context.
 > - `SCENARIO_ID` — kebab-case id under `tools/fixtures/scenarios/`; default `reference-flat-32x32`.
 > - `SEED_CELLS` — 1–3 `"x,y"` for Path B `debug_context_bundle`; infer from spec §7b if omitted.
-> - `MAX_ITERATIONS` — default 2.
+> - `MAX_ITERATIONS` — default 2 (overridden by `MAX_ITERATIONS_BY_GAP_REASON` when `gap_reason` known; transient → 5, escalate-now → 0; hard cap 5).
 > - `FORCE_MODEL` — optional model override. When present as `--force-model {model}` in `$ARGUMENTS` (valid: `sonnet`, `opus`, `haiku`): already applied via Agent tool `model:` param at dispatch time; included here for documentation only.
 > - `TOOLING_ONLY` — flag (default false). When present as `--tooling-only` in `$ARGUMENTS`: apply skill §"Pre-matrix mode gate" — assert no `Assets|Packages|ProjectSettings` dirty paths, bypass Decision matrix, run Step 2 + Step 7 only. Use only for pure tooling surface refactors (MCP TypeScript / web Next.js / skills-agents-commands markdown / docs / scripts). Never on mixed diffs.
 >
@@ -72,7 +72,7 @@ Forward via Agent tool with `subagent_type: "verify-loop"` (when `--force-model 
 > 5. **Step 4a — Path A test-mode batch** — `npm run unity:testmode-batch -- --quit-editor-first --scenario-id {SCENARIO_ID}`.
 > 6. **Step 4b — Path B IDE bridge hybrid** — queue scenario (`tools/fixtures/scenarios/.queued-test-scenario-id` + `runtime_state` `queued_test_scenario_id`) → `enter_play_mode` (`timeout_ms: 40000`) → `debug_context_bundle` per `{SEED_CELLS}` → `exit_play_mode`.
 > 7. **Step 5 — Bridge evidence** (optional) — `capture_screenshot include_ui: true`, `get_console_logs`, `export_agent_context` per spec §7b / §8 ask.
-> 8. **Step 6 — Fix iteration** (bounded `MAX_ITERATIONS`) — minimal code edit → Step 1 → Step 4b post-fix `debug_context_bundle` per cell → diff `anomaly_count` deltas. Cap exhausted → escalate.
+> 8. **Step 6 — Fix iteration** (bounded by `MAX_ITERATIONS_BY_GAP_REASON`; classify `gap_reason` → transient: max 5 + exponential backoff via `tools/scripts/exponential-backoff.mjs`; deterministic/unknown: max 2; escalate-now: 0 retries immediate poll; hard cap 5) — minimal code edit → Step 1 → Step 4b post-fix `debug_context_bundle` per cell → diff `anomaly_count` deltas. Cap exhausted → escalate.
 > 9. **Step 7 — Verification block + handoff** — emit single block (JSON header + caveman summary).
 >
 > Both paths in one session → Path A first (`--quit-editor-first`), then `npm run unity:ensure-editor` before Path B.
@@ -82,7 +82,7 @@ Forward via Agent tool with `subagent_type: "verify-loop"` (when `--force-model 
 > - Do NOT restate verification policy (timeout escalation, Path A lock release, Path B preflight). `docs/agent-led-verification-policy.md` is single canonical source.
 > - Do NOT modify code outside Step 6 fix-iteration scope. No refactors, no scope creep, no unrelated cleanups.
 > - Do NOT skip Path A / Path B for convenience — policy requires attempting both when tools allow.
-> - Do NOT exceed `MAX_ITERATIONS` (default 2). Escalate to human after cap.
+> - Do NOT exceed `MAX_ITERATIONS_BY_GAP_REASON` for the classified `gap_reason` (transient → 5, deterministic/unknown → 2, escalate-now → 0; hard cap 5). Escalate to human after cap.
 > - Do NOT skip Path B "because slow". `timeout_ms: 40000` initial; escalate per policy (`unity:ensure-editor` → 60 s retry, ceiling 120 s).
 > - Do NOT bypass failures with `--no-verify`. Diagnose root cause, surface in JSON `verdict`.
 > - Do NOT alter `.claude/settings.json` permissions or hooks.
