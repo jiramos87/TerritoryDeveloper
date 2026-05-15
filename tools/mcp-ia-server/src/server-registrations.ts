@@ -132,6 +132,7 @@ import { registerUiToolkitHostQBind } from "./tools/ui-toolkit-host-q-bind.js";
 import { registerUiToolkitSceneUidocValidate } from "./tools/ui-toolkit-scene-uidoc-validate.js";
 import { registerUiToolkitPanelPixelDiff } from "./tools/ui-toolkit-panel-pixel-diff.js";
 import { registerUiToolkitHostLint } from "./tools/ui-toolkit-host-lint.js";
+import { registerMasterPlanSpecFreeze } from "./tools/master-plan-spec-freeze.js";
 
 // Bridge + compute tools
 import {
@@ -313,6 +314,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   // ui-toolkit-authoring-mcp-slices Stage 4 (TECH-34925..34927) — pixel diff + lint surface
   registerUiToolkitPanelPixelDiff(server);
   registerUiToolkitHostLint(server);
+  // vibe-coding-safety Stage 3.0 (TECH-36117) — spec-freeze gate
+  registerMasterPlanSpecFreeze(server);
 }
 
 /**

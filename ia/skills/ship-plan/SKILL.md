@@ -74,6 +74,7 @@ hard_boundaries:
   - "Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard."
   - "Do NOT write task spec bodies to filesystem — bundle apply persists to DB only."
   - "Phase B enriched-subsection injection MUST be verbatim — no paraphrase, no compression. When source MD subsection absent → emit skip-clause body line, NEVER drop the `### §...` heading."
+  - "Phase A.0 — spec-freeze gate runs before HTML/MD resolution: query ia_master_plan_specs; reject if frozen_at IS NULL or open_questions_count > 0; bypass requires explicit --skip-freeze flag + arch_changelog row."
   - "Phase A.0 — when `docs/explorations/{slug}.html` exists, refresh `.md` sidecar via extract-md before recipe runs. HTML is canonical artifact post-uplift."
   - "Phase A.2 — Stage test scaffold MUST be written to `tests/{SLUG}/stage{STAGE_ID}-{stage_slug}.test.mjs` for every stage with at least one `kind: code` task. File is the Pass B verify-loop gate. Re-runs preserve filled `it()` bodies (detect via stub-error sentinel)."
 caller_agent: ship-plan
@@ -86,6 +87,8 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 **Role.** Single-pass bulk plan-author skill that replaces the `stage-file` + `stage-authoring` chain. Reads lean handoff YAML, pre-fetches shared MCP context once, composes 3-section digests with inline anchor expansion, drift-lints, and dispatches one `master_plan_bundle_apply` Postgres tx.
 
 **Contract.** [`ia/rules/plan-digest-contract.md`](../../rules/plan-digest-contract.md) §3-section relaxed shape. Rubric injected verbatim into authoring prompt — no post-author lint MCP call, no retry loop.
+
+**EARS rubric (rule 10 — hard, unless ears_grandfathered=TRUE).** Every §Acceptance row MUST begin with one of 5 EARS prefixes (case-insensitive): `WHEN`/`THE` (ubiquitous), `WHEN ... IF` (event-driven), `WHILE` (state-driven), `IF ... THEN` (unwanted-behavior), `WHERE` (optional-feature). Non-EARS rows → `validate:plan-digest-coverage` exits 1. Grandfathered plans (pre-Wave-B; `ears_grandfathered=TRUE`) are exempted.
 
 **Upstream.** `design-explore` Phase 4 emits `docs/explorations/{slug}.md` carrying the lean handoff YAML frontmatter + Design Expansion body. **Downstream.** `/ship-cycle` (Sonnet 4.6 low-effort iterative implement) for new plans; legacy `/ship-stage` for grandfathered plans.
 
@@ -148,6 +151,19 @@ plan_design_get({slug: {SLUG}})
   → row.status='consumed'     → STOPPED — plan_design_already_consumed: {SLUG} (use --rerun-bundle to override, or version-bump via --resume)
   → row.status='archived'     → STOPPED — plan_design_archived: {SLUG} (seed retired)
 ```
+
+**Spec-freeze gate (mig 0161 — runs AFTER plan_design_get, BEFORE HTML/MD resolution):**
+
+Query `ia_master_plan_specs WHERE slug={SLUG} ORDER BY version DESC LIMIT 1`. Evaluate:
+
+```
+row absent                          → STOPPED — spec_not_frozen: {SLUG} (run /spec-freeze {SLUG} first)
+row.frozen_at IS NULL               → STOPPED — spec_not_frozen: {SLUG} (spec row exists but freeze not completed)
+row.open_questions_count > 0        → STOPPED — spec_has_open_questions: {SLUG} open_questions={N} (resolve open questions then re-run /spec-freeze {SLUG})
+row.frozen_at IS NOT NULL AND open_questions_count = 0 → continue
+```
+
+**`--skip-freeze` bypass:** when flag present, skip the spec-freeze gate entirely. Log bypass to `arch_changelog` via `cron_arch_changelog_append_enqueue({decision_slug: "plan-{slug}-skip-freeze", kind: "spec_freeze_bypass", body: "ship-plan invoked with --skip-freeze; spec_not_frozen bypass", plan_slug: "{slug}"})`. Then continue to HTML/MD resolution. Bypass is an escape hatch for hotfixes — operator must provide the flag explicitly; it is NOT a silent fallback.
 
 `{priority}` flows into Phase C as `bundle.plan.priority`. `{design_id}` flows into Phase C as `bundle.plan.design_id` — the SQL fn (mig 0159) auto-flips seed status to `consumed` inside the same tx.
 
@@ -422,7 +438,7 @@ Structured halt shape:
 
 Triggers:
 
-- Phase A: `handoff_yaml_missing` / `handoff_yaml_invalid_yaml` / `slug_mismatch` / `handoff_schema_invalid` / `mcp_unavailable` (recipe step exits non-zero).
+- Phase A: `handoff_yaml_missing` / `handoff_yaml_invalid_yaml` / `slug_mismatch` / `handoff_schema_invalid` / `mcp_unavailable` (recipe step exits non-zero) / `spec_not_frozen` / `spec_has_open_questions` (spec-freeze gate; bypass with `--skip-freeze`).
 - Phase B: `digest_compose_failed` after 2 retries / `anchor_resolution_failed` (Phase A `anchor_bundle` missing required ref).
 - Phase C: `bundle_apply_constraint_violation` after 1 retry (re-author offending field then re-dispatch once; second failure escalates). DB unavailable → escalate.
 - Phase D: enqueue failure → warning log, NOT a halt (non-blocking fan-out).

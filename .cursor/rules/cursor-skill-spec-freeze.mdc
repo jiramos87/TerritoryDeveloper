@@ -1,0 +1,8 @@
+---
+description: "Single-step skill: calls master_plan_spec_freeze MCP with {slug, source_doc_path}. Fails fast if open_questions_count > 0. Emits frozen artifact path + spec_id to user. Bypass via --skip-freeze logs arch_changelog kind=spec_freeze_bypass. Prerequisite for /ship-plan Phase A gate."
+alwaysApply: false
+---
+Read and follow: @ia/skills/spec-freeze/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "spec-freeze"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

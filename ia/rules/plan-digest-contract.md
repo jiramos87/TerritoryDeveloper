@@ -1,18 +1,18 @@
 ---
-purpose: "Canonical 10-point rubric for §Plan Digest (9 contract + per-section soft caps). Injected verbatim into stage-authoring Opus prompt as hard constraints. Relaxed shape — intent over verbatim code."
+purpose: "Canonical 11-point rubric for §Plan Digest (10 contract + per-section soft caps). Injected verbatim into stage-authoring Opus prompt as hard constraints. Relaxed shape — intent over verbatim code."
 audience: agent
 loaded_by: ondemand
 slices_via: none
 alwaysApply: false
 ---
 
-# Plan-Digest Contract — 10-point rubric (relaxed shape, rubric-in-prompt)
+# Plan-Digest Contract — 11-point rubric (relaxed shape, rubric-in-prompt)
 
 Applies to every §Plan Digest section (per-Task) authored by `/stage-authoring`.
 
 The digester's job is to resolve **decisions** — picks, paths, names, design pivots — and to pin **behavior** — §Acceptance + §Test Blueprint intents. The implementer's job is to translate decisions into byte-level edits against current HEAD. Verbatim before/after code blocks are NOT a digest deliverable.
 
-A plan is "digested" iff rules **1–9** hold (hard); rule **10** is soft (warn-only):
+A plan is "digested" iff rules **1–10** hold (hard); rule **11** is soft (warn-only):
 
 1. **Zero open picks.** No "user decides", "user picks", "likely", "probably", "we could", "might", "consider", "TBD", "up to you", "your call". Resolved picks live in §Pending Decisions; deferred picks live in §Implementer Latitude.
 2. **Every path verified against HEAD.** Repo-relative paths under §Work Items resolve via `plan_digest_verify_paths`. Creates exempted (target path may not yet exist).
@@ -23,7 +23,16 @@ A plan is "digested" iff rules **1–9** hold (hard); rule **10** is soft (warn-
 7. **Scope-narrow §Acceptance.** Each row is one observable behavior — concrete, glossary-aligned, gate-able by code-review or verify-loop. No vague "improve X" / "polish Y".
 8. **Meta-stripped.** No audit history, no user-pick prose, no "human only" asides, no migration narrative, no aggregate-doc references.
 9. **Single STOP route.** §Invariants & Gate carries one **STOP:** clause naming the escalation triggers (anchor mismatch / acceptance unmet / invariant regression / validator fail). Per-step STOP forbidden.
-10. **Per-section soft byte caps (warn-only).** §Goal ≤400 B · §Acceptance ≤1500 B · §Pending Decisions ≤1500 B · §Implementer Latitude ≤800 B · §Work Items ≤2000 B · §Test Blueprint ≤1000 B · §Invariants & Gate ≤800 B; total target ≈8 KB. Overrun → emit `n_section_overrun` counter in handoff; do NOT abort.
+10. **EARS prefix required on every §Acceptance row** (unless `plan.ears_grandfathered=TRUE` — plans created before Wave B; `validate:plan-digest-coverage` skips check). Each §Acceptance row must begin with one of the 5 EARS patterns (case-insensitive):
+    - **WHEN** / **THE** (ubiquitous — always-applies behavior)
+    - **WHEN ... IF** (event-driven — conditional event trigger)
+    - **WHILE** (state-driven — continuous state condition)
+    - **IF ... THEN** (unwanted-behavior — error / exception path)
+    - **WHERE** (optional-feature — capability-conditional behavior)
+
+    Example valid rows: `WHEN the user invokes /spec-freeze THE tool rejects open_questions_count > 0.` / `IF frozen_at IS NULL THEN /ship-plan emits spec_not_frozen escalation.` Rows starting with any other prefix → `validate:plan-digest-coverage` exits 1. Rows without any prefix → exit 1. Skip-exemption: `plan.ears_grandfathered=TRUE` bypasses enforcement entirely.
+
+11. **Per-section soft byte caps (warn-only).** §Goal ≤400 B · §Acceptance ≤1500 B · §Pending Decisions ≤1500 B · §Implementer Latitude ≤800 B · §Work Items ≤2000 B · §Test Blueprint ≤1000 B · §Invariants & Gate ≤800 B; total target ≈8 KB. Overrun → emit `n_section_overrun` counter in handoff; do NOT abort.
 
 Rubric is injected verbatim into the `/stage-authoring` Phase 4 Opus authoring prompt as hard constraints. NO post-author `plan_digest_lint` MCP call. NO retry loop. Author measures byte length per sub-section after composition; overruns recorded as warnings, chain proceeds.
 
@@ -63,6 +72,7 @@ New authoring (`/stage-authoring` post-relaxation) writes the relaxed shape. No 
 - NO post-author `plan_digest_lint` MCP call. NO retry loop.
 - Author self-measures byte length per sub-section after composition; overruns recorded as `n_section_overrun` warnings in handoff; chain proceeds.
 - Pick-word scan + path verification happen in-prompt under rules 1–2; no separate lint pass.
+- EARS prefix enforcement (rule 10) runs via `validate:plan-digest-coverage` (exits 1 on violation); skipped when `plan.ears_grandfathered=TRUE`.
 
 ## Cross-references
 
