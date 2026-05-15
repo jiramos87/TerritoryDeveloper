@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement name="budget-panel" class="panel panel--budget">
+        <ui:Label name="title-label" class="panel__title" text="Budget" />
+        <ui:VisualElement name="content-area" class="panel__content">
+            <ui:Label name="balance-label" class="budget__balance" />
+            <ui:Button name="close-button" class="panel__close-btn" text="Close" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

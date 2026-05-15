@@ -1,0 +1,27 @@
+.panel {
+    flex-direction: column;
+    background-color: #1A2B3C;
+    padding: 8px;
+}
+
+.panel__title {
+    font-size: 16px;
+    color: #FFFFFF;
+    -unity-font-style: bold;
+}
+
+.panel__content {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.budget__balance {
+    font-size: 24px;
+    color: #FFD700;
+}
+
+.panel__close-btn {
+    align-self: flex-end;
+    width: 80px;
+    height: 28px;
+}

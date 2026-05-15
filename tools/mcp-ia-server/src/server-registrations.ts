@@ -122,6 +122,8 @@ import { registerResearchDocToExplorationSeed } from "./tools/research-doc-to-ex
 import { registerUiVisualBaselineGet } from "./tools/ui-visual-baseline-get.js";
 import { registerUiVisualBaselineRecord } from "./tools/ui-visual-baseline-record.js";
 import { registerUiVisualDiffRun } from "./tools/ui-visual-diff-run.js";
+import { registerUiToolkitPanelGet } from "./tools/ui-toolkit-panel-get.js";
+import { registerUiToolkitHostInspect } from "./tools/ui-toolkit-host-inspect.js";
 
 // Bridge + compute tools
 import {
@@ -289,6 +291,9 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerUiVisualBaselineGet(server);
   registerUiVisualBaselineRecord(server);
   registerUiVisualDiffRun(server);
+  // ui-toolkit-authoring-mcp-slices Stage 1 (TECH-34915..34917) — inspect surface
+  registerUiToolkitPanelGet(server);
+  registerUiToolkitHostInspect(server);
 }
 
 /**
