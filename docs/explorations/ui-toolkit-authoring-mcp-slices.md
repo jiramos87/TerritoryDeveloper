@@ -1,9 +1,199 @@
 ---
+# Design-explore handoff (Phase 4 canonical YAML — consumed by /ship-plan)
+slug: ui-toolkit-authoring-mcp-slices
+title: "UI Toolkit authoring MCP slices — 9-tool surface, phased rollout"
+target_version: 1
+stages:
+  - id: "1"
+    title: "Inspect — read-only surface + IUIToolkitPanelBackend boundary"
+    exit: "DiskBackend reads `.uxml`/`.uss`/scene UIDocument/Host C# AST; DbBackend stub returns parked error; ui_toolkit_panel_get + ui_toolkit_host_inspect MCP tools register; Stage 1 red-stage test green."
+    red_stage_proof: "tools/mcp-ia-server/tests/tools/ui-toolkit-stage1-inspect.test.ts::stage1_inspect_surface_complete"
+    red_stage_proof_block:
+      red_test_anchor: "tools/mcp-ia-server/tests/tools/ui-toolkit-stage1-inspect.test.ts::stage1_inspect_surface_complete"
+      target_kind: "tracer_verb"
+      proof_artifact_id: "ui-toolkit-stage1-inspect-tracer"
+      proof_status: "failed_as_expected"
+    tasks:
+      - id: "T1.0"
+        title: "IUIToolkitPanelBackend boundary + DiskBackend stub + factory"
+        prefix: TECH
+        kind: code
+        depends_on: []
+        digest_outline: "IUIToolkitPanelBackend interface + DiskBackend stub + factory wiring + env flag UI_TOOLKIT_BACKEND=disk|db"
+        touched_paths:
+          - tools/mcp-ia-server/src/ia-db/ui-toolkit-backend.ts
+          - tools/mcp-ia-server/src/ia-db/uss-parser.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage1-inspect.test.ts
+      - id: "T1.1"
+        title: "ui_toolkit_panel_get composite read tool"
+        prefix: TECH
+        kind: mcp-only
+        depends_on: ["T1.0"]
+        digest_outline: "ui_toolkit_panel_get — composite read: UXML + USS + host inspect + scene UIDocument + golden manifest"
+        touched_paths:
+          - tools/mcp-ia-server/src/tools/ui-toolkit-panel-get.ts
+          - tools/mcp-ia-server/src/server-registrations.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage1-inspect.test.ts
+      - id: "T1.2"
+        title: "ui_toolkit_host_inspect Host C# AST scan tool"
+        prefix: TECH
+        kind: mcp-only
+        depends_on: ["T1.0"]
+        digest_outline: "ui_toolkit_host_inspect — Host C# AST scan: Q-lookups, click handlers, modal slug, runtime VE construction"
+        touched_paths:
+          - tools/mcp-ia-server/src/tools/ui-toolkit-host-inspect.ts
+          - tools/mcp-ia-server/src/ia-db/csharp-host-parser.ts
+          - tools/mcp-ia-server/src/server-registrations.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage1-inspect.test.ts
+  - id: "2"
+    title: "Author — mutation surface (disk-canonical, idempotent on natural key)"
+    exit: "panel-schema.yaml extended with panel_kind: ui-toolkit-overlay + 9 element kinds; node_upsert + node_remove + uss_rule_upsert tools register, idempotent on natural key, allow-list gated; Stage 2 red-stage test green; manual golden re-record protocol documented in done-def."
+    red_stage_proof: "tools/mcp-ia-server/tests/tools/ui-toolkit-stage2-author.test.ts::stage2_author_idempotent_mutations"
+    red_stage_proof_block:
+      red_test_anchor: "tools/mcp-ia-server/tests/tools/ui-toolkit-stage2-author.test.ts::stage2_author_idempotent_mutations"
+      target_kind: "tracer_verb"
+      proof_artifact_id: "ui-toolkit-stage2-author-tracer"
+      proof_status: "failed_as_expected"
+    tasks:
+      - id: "T2.0"
+        title: "Idempotency contract + panel-schema.yaml ui-toolkit-overlay extension"
+        prefix: TECH
+        kind: code
+        depends_on: ["T1.0"]
+        digest_outline: "Idempotency contract + panel-schema.yaml extension (panel_kind: ui-toolkit-overlay) + per-kind Zod validators"
+        touched_paths:
+          - tools/blueprints/panel-schema.yaml
+          - tools/mcp-ia-server/src/tools/_ui-toolkit-shared.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage2-author.test.ts
+      - id: "T2.1"
+        title: "ui_toolkit_panel_node_upsert UXML tree mutation tool"
+        prefix: TECH
+        kind: mcp-only
+        depends_on: ["T2.0"]
+        digest_outline: "ui_toolkit_panel_node_upsert — UXML tree mutation + optional --seed-uss stub. Allow-list: spec-implementer, plan-author"
+        touched_paths:
+          - tools/mcp-ia-server/src/tools/ui-toolkit-panel-node-upsert.ts
+          - tools/mcp-ia-server/src/server-registrations.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage2-author.test.ts
+      - id: "T2.2"
+        title: "ui_toolkit_panel_node_remove cascade delete + orphan USS drift report tool"
+        prefix: TECH
+        kind: mcp-only
+        depends_on: ["T2.0"]
+        digest_outline: "ui_toolkit_panel_node_remove — cascade delete + orphan USS drift report (no auto-delete). Allow-list gated."
+        touched_paths:
+          - tools/mcp-ia-server/src/tools/ui-toolkit-panel-node-remove.ts
+          - tools/mcp-ia-server/src/server-registrations.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage2-author.test.ts
+      - id: "T2.3"
+        title: "ui_toolkit_uss_rule_upsert literal-hex preserving rule tool"
+        prefix: TECH
+        kind: mcp-only
+        depends_on: ["T2.0"]
+        digest_outline: "ui_toolkit_uss_rule_upsert — literal-hex preservation + idempotent on (slug, selector). Allow-list gated."
+        touched_paths:
+          - tools/mcp-ia-server/src/tools/ui-toolkit-uss-rule-upsert.ts
+          - tools/mcp-ia-server/src/server-registrations.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage2-author.test.ts
+  - id: "3"
+    title: "Wire — Host C# code-stub + scene UIDocument validation (DEC-A28 I4)"
+    exit: "host_q_bind tool defaults to code-stub return; --apply gate enforced by tracer test; ui_toolkit_scene_uidoc_validate emits structured verdict with bridge-wire OR runtime-spawn suggestion; Stage 3 red-stage test green."
+    red_stage_proof: "tools/mcp-ia-server/tests/tools/ui-toolkit-stage3-wire.test.ts::stage3_wire_apply_flag_gate"
+    red_stage_proof_block:
+      red_test_anchor: "tools/mcp-ia-server/tests/tools/ui-toolkit-stage3-wire.test.ts::stage3_wire_apply_flag_gate"
+      target_kind: "tracer_verb"
+      proof_artifact_id: "ui-toolkit-stage3-wire-tracer"
+      proof_status: "failed_as_expected"
+    tasks:
+      - id: "T3.0"
+        title: "DEC-A28 I4 apply-flag gate tracer"
+        prefix: TECH
+        kind: code
+        depends_on: ["T1.2"]
+        digest_outline: "DEC-A28 I4 enforcement — host_q_bind without --apply returns snippet only; Host file unchanged. Apply mode requires explicit flag."
+        touched_paths:
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage3-wire.test.ts
+      - id: "T3.1"
+        title: "ui_toolkit_host_q_bind code-stub + --apply Host rewriter tool"
+        prefix: TECH
+        kind: mcp-only
+        depends_on: ["T3.0"]
+        digest_outline: "ui_toolkit_host_q_bind — code-stub default, --apply rewrites Host C# + invokes unity_compile. Allow-list: spec-implementer, plan-author."
+        touched_paths:
+          - tools/mcp-ia-server/src/tools/ui-toolkit-host-q-bind.ts
+          - tools/mcp-ia-server/src/server-registrations.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage3-wire.test.ts
+      - id: "T3.2"
+        title: "ui_toolkit_scene_uidoc_validate scene wiring verdict tool"
+        prefix: TECH
+        kind: mcp-only
+        depends_on: ["T1.0"]
+        digest_outline: "ui_toolkit_scene_uidoc_validate — scene YAML scan, structured verdict + suggestion (bridge wire OR runtime-spawn pattern)"
+        touched_paths:
+          - tools/mcp-ia-server/src/tools/ui-toolkit-scene-uidoc-validate.ts
+          - tools/mcp-ia-server/src/server-registrations.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage3-wire.test.ts
+  - id: "4"
+    title: "Verify — pixel diff backstop + host lint (unlocks Path B DbBackend cutover)"
+    exit: "ui_toolkit_panel_pixel_diff wraps existing ui_visual_diff_run; ui_toolkit_host_lint emits structured findings; host-bindings validator wires into validate:all; Stage 4 red-stage test green; allow-list gates verified end-to-end."
+    red_stage_proof: "tools/mcp-ia-server/tests/tools/ui-toolkit-stage4-verify.test.ts::stage4_verify_pixel_and_lint_backstop"
+    red_stage_proof_block:
+      red_test_anchor: "tools/mcp-ia-server/tests/tools/ui-toolkit-stage4-verify.test.ts::stage4_verify_pixel_and_lint_backstop"
+      target_kind: "tracer_verb"
+      proof_artifact_id: "ui-toolkit-stage4-verify-tracer"
+      proof_status: "failed_as_expected"
+    tasks:
+      - id: "T4.0"
+        title: "Pixel diff wrapper tracer — reuses ui_visual_diff_run engine"
+        prefix: TECH
+        kind: code
+        depends_on: ["T2.1"]
+        digest_outline: "Pixel diff wraps existing ui_visual_diff_run engine — no new bridge kind; reuses unity_bridge_command capture_screenshot include_ui:true"
+        touched_paths:
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage4-verify.test.ts
+      - id: "T4.1"
+        title: "ui_toolkit_panel_pixel_diff slug-keyed pixel diff tool"
+        prefix: TECH
+        kind: mcp-only
+        depends_on: ["T4.0"]
+        digest_outline: "ui_toolkit_panel_pixel_diff — slug-keyed wrapper over ui_visual_diff_run; tolerance default 0.005 reused"
+        touched_paths:
+          - tools/mcp-ia-server/src/tools/ui-toolkit-panel-pixel-diff.ts
+          - tools/mcp-ia-server/src/server-registrations.ts
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage4-verify.test.ts
+      - id: "T4.2"
+        title: "ui_toolkit_host_lint Q-lookup + handler + slug + FindObjectOfType lint tool"
+        prefix: TECH
+        kind: mcp-only
+        depends_on: ["T1.2"]
+        digest_outline: "ui_toolkit_host_lint — Q-lookup orphan, handler unsubscribe, ModalCoordinator slug, FindObjectOfType-in-Update. Wires into validate:all."
+        touched_paths:
+          - tools/mcp-ia-server/src/tools/ui-toolkit-host-lint.ts
+          - tools/mcp-ia-server/src/server-registrations.ts
+          - tools/scripts/validate-ui-toolkit-host-bindings.mjs
+          - tools/mcp-ia-server/tests/tools/ui-toolkit-stage4-verify.test.ts
+notes: |
+  Companion seed: docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md.
+  Allow-list mutation tools (is_caller_authorized: ["spec-implementer", "plan-author"]):
+    - ui_toolkit_panel_node_upsert
+    - ui_toolkit_panel_node_remove
+    - ui_toolkit_uss_rule_upsert
+    - ui_toolkit_host_q_bind (only when --apply=true)
+  Deferred tools (out of scope this plan): ui_toolkit_panel_list (grep covers),
+  ui_toolkit_panel_tree (compose from panel_get), ui_toolkit_uss_resolve (grep covers),
+  ui_toolkit_panel_node_reorder (compose from upsert), ui_toolkit_tss_token_upsert (Path B work),
+  ui_toolkit_panel_uxml_replace (Write covers), ui_toolkit_modal_slug_register (merged into host_lint),
+  ui_toolkit_blip_binding_register (defer), ui_toolkit_drift_scan (TECH-34686 Path B),
+  ui_toolkit_panel_dependents (defer v2), ui_toolkit_panel_render_preview (folded into panel_pixel_diff).
+  Glossary candidates (not yet promoted): IUIToolkitPanelBackend, DiskBackend, DbBackend,
+  ui-toolkit-overlay, allow-list mutation tool, golden re-record protocol.
+
+# Seed metadata (preserved from initial doc creation)
 purpose: "Seed doc for design-explore — propose the agent-side MCP slice surface (read + author + wire + verify) for UI Toolkit panel authoring + modification, so the Path B emitter-parity master plan has a mechanical primitive set ready before it sizes stages."
 audience: agent
 loaded_by: on-demand
 created_at: 2026-05-14
-status: seed-for-design-explore
+status: design-explore-complete
 related_docs:
   - docs/explorations/ui-toolkit-emitter-parity-and-db-reverse-capture.md
   - docs/explorations/ui-as-code-state-of-the-art-2026-05.md
@@ -156,3 +346,132 @@ Five reality checks distilled from the pre-flight audit (full audit at `docs/ui-
 - `tools/mcp-ia-server/src/tools/ui-*.ts` — existing slice implementations (template for new ones).
 - `ia/rules/agent-principles.md` — token economy, MCP-first invariants.
 - Memory: `feedback_db_primary_pivot`, `feedback_ui_bake_prefab_rebake`.
+
+## §7. Design Expansion
+
+### Chosen Approach
+
+**Phased rollout — 4 stages: Inspect → Author → Wire → Verify. Narrowed 20-tool seed to 9-tool agent surface.**
+
+| Phase | Tools shipped |
+|---|---|
+| Inspect (Stage 1) | `ui_toolkit_panel_get`, `ui_toolkit_host_inspect` |
+| Author (Stage 2) | `ui_toolkit_panel_node_upsert`, `ui_toolkit_panel_node_remove`, `ui_toolkit_uss_rule_upsert` |
+| Wire (Stage 3) | `ui_toolkit_host_q_bind`, `ui_toolkit_scene_uidoc_validate` |
+| Verify (Stage 4) | `ui_toolkit_panel_pixel_diff`, `ui_toolkit_host_lint` |
+
+Dropped: `panel_list` (grep covers), `panel_tree` (compose from `panel_get`), `uss_resolve` (grep covers), `panel_node_reorder` (compose from upsert), `tss_token_upsert` (Path B work), `panel_uxml_replace` (Write covers), `modal_slug_register` (merged into `host_lint`), `blip_binding_register` (defer), `drift_scan` (Path B work, TECH-34686), `panel_dependents` (defer v2), `panel_render_preview` (folded into `panel_pixel_diff` — one verify surface).
+
+Rationale vs alternatives:
+- **Big-bang** rejected — violates prototype-first; 9 unproven slices land together; one schema drift cascades.
+- **Vertical-slice** rejected — backend-swappability invariant requires stable tool surface; per-slug iteration belongs at Path B cutover stage, not slice-build stage.
+- **Phased** chosen — Q1 user hint (read-first); Inspect tools usable Stage 1 close; backend interface locks Stage 1 before Stage 2 mutations build on it; verify backstop lands before any Path B cutover.
+
+### Architecture
+
+**`IUIToolkitPanelBackend` boundary** — TypeScript interface at `tools/mcp-ia-server/src/ia-db/ui-toolkit-backend.ts`.
+
+Read surface: `getPanel(slug)`, `listPanels(opts)`. Write surface: `writePanel(write)`, `upsertNode(slug, parent_path, node, ord)`, `removeNode(slug, node_path)`, `upsertUssRule(slug, selector, props, position?)`. Capability flag: `readonly kind: "disk" | "db"`.
+
+**`DiskBackend` (Stage 1)** — reads `Assets/UI/Generated/{slug}.uxml` + `.uss`; parses UXML via `fast-xml-parser` (existing dep); parses USS via new lightweight tokenizer (`tools/mcp-ia-server/src/ia-db/uss-parser.ts`). Writes via direct `fs.writeFileSync` + post-write `unity_bridge_command asset_database_refresh`. Idempotency = re-serialize-then-byte-compare before write.
+
+**`DbBackend` (stub Stage 1; impl Path B)** — JOINs `panel_detail` + `panel_child` rows; projects to `VisualElementNode` tree. Writes UPSERT rows in transaction + invokes `UxmlEmissionService` / `TssEmissionService` sidecar bake (TECH-34678..82). Stage 1 stub returns `{ok: false, error: "db_backend_not_implemented", parked_until: "TECH-34678..82"}`. Factory selects backend via env `UI_TOOLKIT_BACKEND=disk|db` AND per-slug feature flag in `feature-flags.json`.
+
+**`panel_pixel_diff` stays backend-agnostic** — wraps existing `ui_visual_diff_run` engine (R2 review fix). Routes around `IUIToolkitPanelBackend`. Inputs: slug + theme. Calls `unity_bridge_command capture_screenshot include_ui:true scene:CityScene panel_slug:{slug}`. Compares against `tools/visual-baseline/golden/cityscene-{slug}*.png` regardless of backend. Pixel goldens = visual contract; backend swap that mutates rendered pixels = automatic fail.
+
+**`host_inspect` + `host_q_bind` outside backend (DEC-A28 I4)** — both read `Assets/Scripts/UI/Hosts/{HostClass}.cs` directly via AST scan (`tools/mcp-ia-server/src/ia-db/csharp-host-parser.ts`, reuses `csharp-class-summary` utility). Write path (`host_q_bind --apply`) = direct `fs.writeFileSync` on Host source. No DB write, no bake invocation. Host C# is human-canonical per invariant.
+
+### Subsystem Impact
+
+- **New validators in `validate:all`**: `validate:ui-toolkit-panel-schema` (UXML kind/attr/class lint vs extended `panel-schema.yaml`), `validate:ui-toolkit-host-bindings` (runs `ui_toolkit_host_lint` repo-wide, fails CI on orphan Q-lookups / missing unsubscribes / missing modal slug registration).
+- **`panel-schema.yaml` extension**: add top-level `panel_kind: ui-toolkit-overlay` alongside existing prefab kinds. New element kinds: `button`, `label`, `slider`, `toggle`, `dropdown`, `text-field`, `integer-field`, `scroll-view`, `visual-element`. Each kind declares required `params{}` keys for Stage 2 Zod validation.
+- **Test harness**: `node:test + node:assert/strict` (NOT Vitest — review finding R1 corrected seed wording). Tests at `tools/mcp-ia-server/tests/tools/ui-toolkit-stage{N}-{slug}.test.ts`. Per-tool fixtures at `tools/scripts/test-fixtures/ui-toolkit-{tool}/`.
+- **Bridge kinds**: NONE NEW. Existing covers all — `capture_screenshot include_ui:true`, `asset_database_refresh`, `unity_compile`, `get_compilation_status`.
+- **Invariants flagged**: DEC-A28 I4 (Host C# outside bake — `host_q_bind --apply` enforces flag-gate); strangler per slug (all tools accept slug filter; mutation tools check `feature-flags.json` cutover gate); pixel goldens = contract (Stage 2 closeout protocol mandates manual golden re-record + human spot-check until Stage 4 lands); DB-primary pivot (mutations route through `IUIToolkitPanelBackend.writePanel`, never raw SQL or yaml edit).
+- **Allow-list (R3 review fix)**: 4 mutation tools (`panel_node_upsert`, `panel_node_remove`, `uss_rule_upsert`, `host_q_bind --apply`) restrict via `is_caller_authorized: ["spec-implementer", "plan-author"]`. Read-only + lint tools open.
+- **`ui_toolkit_drift_scan` deferral**: parks until Path B emitter ships (TECH-34678..86). Triple-output (UXML/USS/TSS) drift gate joins `validate:all` post-Path-B.
+
+### Implementation Points
+
+| # | Tool | File path | Template | Bridge kinds | Storage |
+|---|---|---|---|---|---|
+| 1 | `ui_toolkit_panel_get` | `tools/mcp-ia-server/src/tools/ui-toolkit-panel-get.ts` | `ui-panel.ts` | none | DiskBackend reads `.uxml`/`.uss`; DbBackend reads `panel_detail`+`panel_child` |
+| 2 | `ui_toolkit_host_inspect` | `tools/mcp-ia-server/src/tools/ui-toolkit-host-inspect.ts` | `csharp-class-summary.ts` | none | Host `.cs` direct read (outside backend) |
+| 3 | `ui_toolkit_panel_node_upsert` | `tools/mcp-ia-server/src/tools/ui-toolkit-panel-node-upsert.ts` | `ui-panel.ts` write pattern | `asset_database_refresh` | DiskBackend writes `.uxml`; DbBackend UPSERTs `panel_child` |
+| 4 | `ui_toolkit_panel_node_remove` | `tools/mcp-ia-server/src/tools/ui-toolkit-panel-node-remove.ts` | row 3 | `asset_database_refresh` | same |
+| 5 | `ui_toolkit_uss_rule_upsert` | `tools/mcp-ia-server/src/tools/ui-toolkit-uss-rule-upsert.ts` | row 3 + new `uss-parser.ts` util | `asset_database_refresh` | DiskBackend writes `.uss`; DbBackend UPSERTs `panel_child.style_props_json` |
+| 6 | `ui_toolkit_host_q_bind` | `tools/mcp-ia-server/src/tools/ui-toolkit-host-q-bind.ts` | `csharp-class-summary.ts` + fs write | `unity_compile` + `get_compilation_status` when `--apply` | Host `.cs` direct write |
+| 7 | `ui_toolkit_scene_uidoc_validate` | `tools/mcp-ia-server/src/tools/ui-toolkit-scene-uidoc-validate.ts` | `ui-def-drift-scan.ts` scene scan | none | scene YAML read |
+| 8 | `ui_toolkit_panel_pixel_diff` | `tools/mcp-ia-server/src/tools/ui-toolkit-panel-pixel-diff.ts` | wraps `ui-visual-diff-run.ts` (R2 reuse) | `capture_screenshot include_ui:true` | reads golden, writes diff artifact under `tools/reports/` |
+| 9 | `ui_toolkit_host_lint` | `tools/mcp-ia-server/src/tools/ui-toolkit-host-lint.ts` | `findobjectoftype-scan.ts` lint pattern | none | Host source read |
+
+All 9 register in `tools/mcp-ia-server/src/server-registrations.ts` adjacent to existing `registerUiPanel*` block.
+
+### Examples
+
+End-to-end agent task: "Add a `budget-extra-info` button to the hud-budget panel that opens a modal."
+
+```
+1. ui_toolkit_panel_get slug=hud-budget
+   → composite read returns uxml_tree + uss_rules + host_inspect + scene_uidoc + golden_manifest in one round-trip
+
+2. ui_toolkit_panel_node_upsert
+     slug=hud-budget
+     parent_path=budget-panel/budget-panel__footer
+     kind=button name=budget-extra-info
+     classes=[budget-panel__btn, budget-panel__btn--info]
+     params={text: "More info", action_id: "budget-open-extra-info-modal"}
+     ord=2 --seed-uss
+   → writes .uxml + seeds USS stub + triggers asset_database_refresh
+
+3. ui_toolkit_uss_rule_upsert
+     slug=hud-budget
+     selector=.budget-panel__btn--info:hover
+     properties={color: "#5b7fa8", background-color: "#1b3a5c"}
+     position=after:.budget-panel__btn:hover
+   → appends rule preserving literal hex, idempotent on (slug, selector)
+
+4. ui_toolkit_host_q_bind
+     host_class=BudgetPanelHost element_name=budget-extra-info
+     element_kind=Button callback_handler=OnBudgetExtraInfoClicked
+     target_manager=ModalCoordinator.Show value_param=budget-extra-info-modal
+   → returns C# snippet (no --apply) for human review
+   → human re-runs with --apply
+   → rewrites BudgetPanelHost.cs + triggers unity_compile → green
+
+5. ui_toolkit_scene_uidoc_validate slug=hud-budget
+   → {wired: true} (existing scene wiring intact — slug unchanged)
+
+6. ui_toolkit_host_lint host_class=BudgetPanelHost
+   → checks Q-lookup resolves, .clicked has matching -=, modal slug present
+   → {findings: [], status: clean}
+
+7. ui_toolkit_panel_pixel_diff slug=hud-budget baseline=cityscene-budget-panel-open
+   → captures screenshot via unity_bridge_command capture_screenshot include_ui:true
+   → pixel_delta_pct: 0.83 (button added — expected delta)
+   → human reviews side-by-side → confirms intentional → re-records golden via ui_visual_baseline_record
+   → re-runs pixel_diff → {pass: true}
+```
+
+Seven steps, zero raw `Read`/`Edit`/`grep`, full UXML+USS+Host+scene+visual loop closed.
+
+### Review Notes
+
+**BLOCKING (3, all resolved):**
+1. **R1** — Test framework drift: seed §3.4 said Vitest; repo uses `node:test + node:assert/strict`. Corrected in Phase 2 task fields + Phase 4 test-harness section. Tests live at `tools/mcp-ia-server/tests/tools/ui-toolkit-stage{N}-{slug}.test.ts`.
+2. **R2** — `panel_pixel_diff` overlapped existing `ui_visual_diff_run`. Resolved: pixel_diff becomes thin slug-keyed wrapper over existing diff engine. Saves one implementation; new tool is a contract surface, not a new engine.
+3. **R3** — Allow-list parked but 4 mutation tools bypass DB write-gate convention. Resolved: lock allow-list at design time — `is_caller_authorized: ["spec-implementer", "plan-author"]` for mutation tools. Read-only + lint tools stay open.
+
+**NON-BLOCKING (carried into future iterations):**
+- **R4** — Slug-lock concurrency: no per-slug mutation lock today. Same as existing `panel_detail_update`. Defer to v2 master plan; documented as known limitation.
+- **R5** — Per-kind `params{}` schema: panel-schema.yaml extension sufficient short-term; extract per-kind YAML at Stage 5 if surface area grows beyond ~3 kinds.
+- **R6** — Stage 4 verify-late risk: Stage 2 mutation tools ship without pixel-diff backstop for one stage. Mitigation: Stage 2 closeout requires manual `ui_visual_baseline_record` + human spot-check + golden re-record. Documented in Stage 2 done-def.
+- **R7** — Runtime-only surfaces (HoverInfoHost, MapPanelHost.BuildRuntimePanel) have no scene UIDocument → `panel_pixel_diff` won't work for them. Scope gap; runtime-VE pixel diff parks until TECH-34683 (DB schema for programmatic/runtime-spawned VE surfaces).
+
+### Expansion metadata
+
+- **Date**: 2026-05-14
+- **Model**: claude-opus-4-7[1m]
+- **Approach selected**: Phased rollout (Inspect → Author → Wire → Verify); 9 tools narrowed from 20-tool seed.
+- **Blocking items resolved**: 3 of 3.
+- **Next command**: `claude-personal "/ship-plan ui-toolkit-authoring-mcp-slices"`
