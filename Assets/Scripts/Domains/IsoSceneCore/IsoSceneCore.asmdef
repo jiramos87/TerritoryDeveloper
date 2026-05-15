@@ -1,0 +1,13 @@
+{
+    "name": "IsoSceneCore",
+    "rootNamespace": "Territory.IsoSceneCore",
+    "references": [],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": false
+}

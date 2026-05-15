@@ -1,0 +1,16 @@
+{
+    "name": "RegionScene",
+    "rootNamespace": "Territory.RegionScene",
+    "references": [
+        "GUID:1816056a6d934540a09c11d99d6672be",
+        "GUID:4ffbc615fcf34d01b4e7f2cc4f6d3062"
+    ],
+    "includePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [],
+    "noEngineReferences": false
+}
