@@ -9,6 +9,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { resolveRepoRoot } from "../config.js";
 import { parseUssFile, type UssRule } from "./uss-parser.js";
+import {
+  isIdempotentWrite,
+  parseUssPosition,
+  serializeUssRules,
+  type SerializableUssRule,
+} from "../tools/_ui-toolkit-shared.js";
 
 // ---------------------------------------------------------------------------
 // Shared types
@@ -71,7 +77,8 @@ export interface NodeWrite {
 export interface UssRuleWrite {
   selector: string;
   props: Record<string, string>;
-  position?: "append" | "prepend";
+  /** prepend | append | before:{selector} | after:{selector} */
+  position?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -91,14 +98,18 @@ export interface IUIToolkitPanelBackend {
     parent_path: string,
     node: NodeWrite,
     ord?: number,
-  ): Promise<{ ok: boolean; error?: string }>;
-  removeNode(slug: string, node_path: string): Promise<{ ok: boolean; error?: string }>;
+  ): Promise<{ ok: boolean; error?: string; idempotent?: boolean }>;
+  removeNode(
+    slug: string,
+    node_path: string,
+  ): Promise<{ ok: boolean; error?: string; idempotent?: boolean; orphan_uss_rules?: string[] }>;
   upsertUssRule(
     slug: string,
     selector: string,
     props: Record<string, string>,
-    position?: "append" | "prepend",
-  ): Promise<{ ok: boolean; error?: string }>;
+    /** prepend | append | before:{selector} | after:{selector} */
+    position?: string,
+  ): Promise<{ ok: boolean; error?: string; idempotent?: boolean }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -193,6 +204,83 @@ function parseUxmlTree(content: string): VisualElementNode[] {
   }
 
   return roots.length > 0 ? roots : nodes;
+}
+
+// ---------------------------------------------------------------------------
+// UXML subtree removal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Remove the element (and its children) with the given name attribute from UXML content.
+ * Handles both self-closing and paired open/close tags.
+ */
+function removeElementByName(content: string, name: string): string {
+  const lines = content.split(/\r?\n/);
+  const resultLines: string[] = [];
+  let skipDepth = 0;
+  let inSkipBlock = false;
+  // Tag name regex that captures the element tag for close-tag matching
+  let skipTag: string | null = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+
+    if (!inSkipBlock) {
+      // Check if this line opens the target element (self-closing)
+      const selfCloseRe = new RegExp(`<([A-Za-z][A-Za-z0-9._:-]*)\\b[^>]*\\bname="${name}"[^>]*/>`);
+      if (selfCloseRe.test(line)) {
+        // Self-closing — remove this line
+        continue;
+      }
+      // Check if this line opens the target element (paired)
+      const openRe = new RegExp(`<([A-Za-z][A-Za-z0-9._:-]*)\\b[^>]*\\bname="${name}"[^>]*>`);
+      const openMatch = openRe.exec(line);
+      if (openMatch) {
+        inSkipBlock = true;
+        skipDepth = 1;
+        skipTag = openMatch[1]!;
+        continue;
+      }
+      resultLines.push(line);
+    } else {
+      // We are inside the block to remove
+      // Count opens and closes for skipTag
+      const openCount = (line.match(new RegExp(`<${skipTag!}[\\s/>]`, "g")) ?? []).length;
+      const closeCount = (line.match(new RegExp(`</${skipTag!}>`, "g")) ?? []).length;
+      skipDepth += openCount - closeCount;
+      if (skipDepth <= 0) {
+        inSkipBlock = false;
+        skipTag = null;
+        skipDepth = 0;
+      }
+      // Skip this line
+    }
+  }
+
+  return resultLines.join("\n");
+}
+
+/**
+ * Extract all class names from the subtree rooted at the element with the given name.
+ */
+function extractClassesFromSubtree(content: string, name: string): string[] {
+  const classes: string[] = [];
+  // Find the start of the element
+  const startRe = new RegExp(`<[A-Za-z][A-Za-z0-9._:-]*\\b[^>]*\\bname="${name}"[^>]*(?:/>|>)`);
+  const startMatch = startRe.exec(content);
+  if (!startMatch) return classes;
+
+  const startIdx = startMatch.index;
+  // Collect everything until we find the matching close (simple heuristic: scan until close tag depth=0)
+  const substr = content.slice(startIdx);
+  const classRe = /\bclass="([^"]*)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = classRe.exec(substr)) !== null) {
+    for (const cls of m[1]!.split(" ").filter(Boolean)) {
+      if (!classes.includes(cls)) classes.push(cls);
+    }
+  }
+  return classes;
 }
 
 // ---------------------------------------------------------------------------
@@ -321,25 +409,257 @@ export class DiskBackend implements IUIToolkitPanelBackend {
 
   async upsertNode(
     slug: string,
-    _parent_path: string,
-    _node: NodeWrite,
-    _ord?: number,
-  ): Promise<{ ok: boolean; error?: string }> {
-    // Stage 2 mutation — disk read-modify-write UXML. Stub for Stage 1.
-    return { ok: false, error: `disk_upsert_node_not_implemented: Stage 2 covers UXML mutations for slug=${slug}` };
+    parent_path: string,
+    node: NodeWrite,
+    ord?: number,
+  ): Promise<{ ok: boolean; error?: string; idempotent?: boolean }> {
+    try {
+      const uxmlAbsPath =
+        findUxmlPath(this.repoRoot, slug) ??
+        path.join(this.repoRoot, UXML_SEARCH_ROOTS[0]!, `${slug}.uxml`);
+
+      // Read existing content (or bootstrap empty UXML)
+      let content: string;
+      if (fs.existsSync(uxmlAbsPath)) {
+        content = fs.readFileSync(uxmlAbsPath, "utf8");
+      } else {
+        content = `<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">\n</ui:UXML>\n`;
+      }
+
+      const tag = node.tag;
+      const name = node.name ?? "";
+      const classes = (node.classes ?? []).join(" ");
+      const attrs = node.attrs ?? {};
+
+      // Build attribute string
+      const attrParts: string[] = [];
+      if (name) attrParts.push(`name="${name}"`);
+      if (classes) attrParts.push(`class="${classes}"`);
+      for (const [k, v] of Object.entries(attrs)) {
+        attrParts.push(`${k}="${v}"`);
+      }
+      const attrStr = attrParts.length > 0 ? " " + attrParts.join(" ") : "";
+
+      // Check if node with same name already exists under parent_path
+      // Natural key: (slug, parent_path, name)
+      if (name) {
+        const namePattern = new RegExp(`<[A-Za-z][A-Za-z0-9._:-]*[^>]*\\bname="${name}"[^>]*/?>`, "g");
+        if (namePattern.test(content)) {
+          // Node exists — rebuild its attributes in-place
+          const updated = content.replace(
+            new RegExp(`(<[A-Za-z][A-Za-z0-9._:-]*[^>]*\\bname="${name}"[^>]*)(/>|>)`, "g"),
+            (_match: string, _open: string, close: string) => {
+              return `<${tag}${attrStr}${close === "/>" ? " /" : ""}>`;
+            },
+          );
+          if (isIdempotentWrite(content, updated)) {
+            return { ok: true, idempotent: true };
+          }
+          fs.mkdirSync(path.dirname(uxmlAbsPath), { recursive: true });
+          fs.writeFileSync(uxmlAbsPath, updated, "utf8");
+          return { ok: true };
+        }
+      }
+
+      // Insert new node. Find the insertion point by parent_path.
+      // parent_path is XPath-style: e.g. "root/content-area" matches name="content-area"
+      // Simple strategy: insert before </ui:UXML> when parent_path is root,
+      // or after the opening tag of the element with the last segment name.
+      const segments = parent_path.split("/").filter(Boolean);
+      const parentName = segments[segments.length - 1] ?? null;
+
+      const indent = "    ";
+      const nodeXml = `${indent}<${tag}${attrStr} />`;
+
+      let updated: string;
+      if (!parentName || parentName === "root" || parentName === "") {
+        // Insert before closing UXML tag
+        updated = content.replace(/(<\/ui:UXML>)/, `${nodeXml}\n$1`);
+      } else {
+        // Find the opening tag of the parent element by name and insert inside it
+        const parentTagRe = new RegExp(
+          `(<[A-Za-z][A-Za-z0-9._:-]*[^>]*\\bname="${parentName}"[^>]*>)`,
+          "m",
+        );
+        if (parentTagRe.test(content)) {
+          updated = content.replace(parentTagRe, `$1\n${nodeXml}`);
+        } else {
+          // Parent not found — append before </ui:UXML>
+          updated = content.replace(/(<\/ui:UXML>)/, `${nodeXml}\n$1`);
+        }
+      }
+
+      if (isIdempotentWrite(content, updated)) {
+        return { ok: true, idempotent: true };
+      }
+
+      fs.mkdirSync(path.dirname(uxmlAbsPath), { recursive: true });
+      fs.writeFileSync(uxmlAbsPath, updated, "utf8");
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
   }
 
-  async removeNode(slug: string, _node_path: string): Promise<{ ok: boolean; error?: string }> {
-    return { ok: false, error: `disk_remove_node_not_implemented: Stage 2 covers UXML mutations for slug=${slug}` };
+  async removeNode(
+    slug: string,
+    node_path: string,
+  ): Promise<{ ok: boolean; error?: string; idempotent?: boolean; orphan_uss_rules?: string[] }> {
+    try {
+      const uxmlAbsPath = findUxmlPath(this.repoRoot, slug);
+      if (!uxmlAbsPath) {
+        // File doesn't exist — no-op
+        return { ok: true, idempotent: true, orphan_uss_rules: [] };
+      }
+
+      const content = fs.readFileSync(uxmlAbsPath, "utf8");
+
+      // Resolve target name from path (last segment)
+      const segments = node_path.split("/").filter(Boolean);
+      const targetName = segments[segments.length - 1];
+
+      if (!targetName) {
+        return { ok: false, error: "node_path must have at least one segment" };
+      }
+
+      // Check if node exists
+      const namePattern = new RegExp(`name="${targetName}"`);
+      if (!namePattern.test(content)) {
+        // Already absent — no-op
+        return { ok: true, idempotent: true, orphan_uss_rules: [] };
+      }
+
+      // Cascade remove: strip the entire element subtree for this name.
+      // Strategy: find the opening tag, then track brace depth to find its close.
+      const updated = removeElementByName(content, targetName);
+
+      if (isIdempotentWrite(content, updated)) {
+        return { ok: true, idempotent: true, orphan_uss_rules: [] };
+      }
+
+      // Collect class names that were in the removed subtree
+      const removedClasses = extractClassesFromSubtree(content, targetName);
+
+      fs.writeFileSync(uxmlAbsPath, updated, "utf8");
+
+      // Scan USS files for orphan selectors
+      const orphan_uss_rules = this._findOrphanUssRules(slug, removedClasses, updated);
+
+      return { ok: true, orphan_uss_rules };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
   }
 
   async upsertUssRule(
     slug: string,
-    _selector: string,
-    _props: Record<string, string>,
-    _position?: "append" | "prepend",
-  ): Promise<{ ok: boolean; error?: string }> {
-    return { ok: false, error: `disk_upsert_uss_rule_not_implemented: Stage 2 covers USS mutations for slug=${slug}` };
+    selector: string,
+    props: Record<string, string>,
+    position?: string,
+  ): Promise<{ ok: boolean; error?: string; idempotent?: boolean }> {
+    try {
+      // Resolve USS path — always write to Generated dir per spec
+      const generatedDir = path.join(this.repoRoot, "Assets/UI/Generated");
+      const ussAbsPath =
+        findUssPaths(this.repoRoot, slug)[0] ??
+        path.join(generatedDir, `${slug}.uss`);
+
+      // Read existing content
+      let existingContent = "";
+      if (fs.existsSync(ussAbsPath)) {
+        existingContent = fs.readFileSync(ussAbsPath, "utf8");
+      }
+
+      // Parse existing rules
+      const existingRules = parseUssFile(existingContent);
+
+      // Check if selector already exists
+      const existingIdx = existingRules.findIndex((r) => r.selector === selector);
+
+      const newRule: SerializableUssRule = { selector, props };
+
+      let updatedRules: SerializableUssRule[];
+
+      if (existingIdx !== -1) {
+        // Idempotency check: same props?
+        const existing = existingRules[existingIdx]!;
+        const sameProps =
+          JSON.stringify(Object.entries(existing.props).sort()) ===
+          JSON.stringify(Object.entries(props).sort());
+        if (sameProps) {
+          return { ok: true, idempotent: true };
+        }
+        // Update in-place
+        updatedRules = existingRules.map((r, i) =>
+          i === existingIdx ? newRule : { selector: r.selector, props: r.props },
+        );
+      } else {
+        // Insert at position
+        const pos = parseUssPosition(position ?? "append");
+        const baseRules: SerializableUssRule[] = existingRules.map((r) => ({
+          selector: r.selector,
+          props: r.props,
+        }));
+
+        if (pos.kind === "prepend") {
+          updatedRules = [newRule, ...baseRules];
+        } else if (pos.kind === "append") {
+          updatedRules = [...baseRules, newRule];
+        } else if (pos.kind === "before" && pos.ref) {
+          const refIdx = baseRules.findIndex((r) => r.selector === pos.ref);
+          if (refIdx === -1) {
+            updatedRules = [...baseRules, newRule];
+          } else {
+            updatedRules = [...baseRules.slice(0, refIdx), newRule, ...baseRules.slice(refIdx)];
+          }
+        } else if (pos.kind === "after" && pos.ref) {
+          const refIdx = baseRules.findIndex((r) => r.selector === pos.ref);
+          if (refIdx === -1) {
+            updatedRules = [...baseRules, newRule];
+          } else {
+            updatedRules = [
+              ...baseRules.slice(0, refIdx + 1),
+              newRule,
+              ...baseRules.slice(refIdx + 1),
+            ];
+          }
+        } else {
+          updatedRules = [...baseRules, newRule];
+        }
+      }
+
+      const proposed = serializeUssRules(updatedRules);
+
+      if (isIdempotentWrite(existingContent, proposed)) {
+        return { ok: true, idempotent: true };
+      }
+
+      fs.mkdirSync(path.dirname(ussAbsPath), { recursive: true });
+      fs.writeFileSync(ussAbsPath, proposed, "utf8");
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
+  }
+
+  /** Scan USS files for class selectors that no longer appear in the UXML after removal. */
+  private _findOrphanUssRules(slug: string, removedClasses: string[], remainingUxml: string): string[] {
+    const orphans: string[] = [];
+    const ussPaths = findUssPaths(this.repoRoot, slug);
+    for (const ussPath of ussPaths) {
+      const ussContent = fs.readFileSync(ussPath, "utf8");
+      const rules = parseUssFile(ussContent);
+      for (const rule of rules) {
+        // Extract class names from selector (e.g. ".foo" → "foo", ".foo .bar" → ["foo","bar"])
+        const selectorClasses = rule.selector.match(/\.([\w-]+)/g)?.map((c) => c.slice(1)) ?? [];
+        const isOrphan = selectorClasses.some((cls) => {
+          // Was in removed subtree AND no longer in remaining UXML
+          return removedClasses.includes(cls) && !new RegExp(`\\b${cls}\\b`).test(remainingUxml);
+        });
+        if (isOrphan) orphans.push(rule.selector);
+      }
+    }
+    return orphans;
   }
 
   private _readGoldenManifestEntry(slug: string): GoldenManifestEntry | null {
@@ -385,13 +705,13 @@ export class DbBackend implements IUIToolkitPanelBackend {
   async writePanel(): Promise<{ ok: boolean; error?: string }> {
     throw DB_PARKED_ERROR;
   }
-  async upsertNode(): Promise<{ ok: boolean; error?: string }> {
+  async upsertNode(): Promise<{ ok: boolean; error?: string; idempotent?: boolean }> {
     throw DB_PARKED_ERROR;
   }
-  async removeNode(): Promise<{ ok: boolean; error?: string }> {
+  async removeNode(): Promise<{ ok: boolean; error?: string; idempotent?: boolean; orphan_uss_rules?: string[] }> {
     throw DB_PARKED_ERROR;
   }
-  async upsertUssRule(): Promise<{ ok: boolean; error?: string }> {
+  async upsertUssRule(): Promise<{ ok: boolean; error?: string; idempotent?: boolean }> {
     throw DB_PARKED_ERROR;
   }
 }

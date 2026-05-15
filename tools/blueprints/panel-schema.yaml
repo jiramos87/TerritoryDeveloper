@@ -9,6 +9,50 @@
 # Schema:
 #   kind:          widget kind slug (matches panel_child.kind + params_json.kind after NormalizeChildKind)
 #   required_keys: list of params_json field names that must be present + non-empty for this kind
+#
+# panel_kind: ui-toolkit-overlay — UXML authoring kinds for UI Toolkit overlay panels.
+# Added: TECH-34918 (ui-toolkit-authoring-mcp-slices Stage 2).
+# Each kind maps to a ui:XXX UXML element. params keys are consumed by Stage 2 Zod validators
+# in tools/mcp-ia-server/src/tools/_ui-toolkit-shared.ts.
+
+panel_kind:
+  ui-toolkit-overlay:
+    uxml_element_kinds:
+      - kind: button
+        uxml_tag: ui:Button
+        required_params:
+          - action_id
+      - kind: label
+        uxml_tag: ui:Label
+        required_params:
+          - text
+      - kind: slider
+        uxml_tag: ui:Slider
+        required_params:
+          - low-value
+          - high-value
+      - kind: toggle
+        uxml_tag: ui:Toggle
+        required_params:
+          - label
+      - kind: dropdown
+        uxml_tag: ui:DropdownField
+        required_params:
+          - choices
+      - kind: text-field
+        uxml_tag: ui:TextField
+        required_params:
+          - label
+      - kind: integer-field
+        uxml_tag: ui:IntegerField
+        required_params:
+          - label
+      - kind: scroll-view
+        uxml_tag: ui:ScrollView
+        required_params: []
+      - kind: visual-element
+        uxml_tag: ui:VisualElement
+        required_params: []
 
 kinds:
   - kind: button

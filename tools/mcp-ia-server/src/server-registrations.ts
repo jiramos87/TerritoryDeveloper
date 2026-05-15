@@ -124,6 +124,9 @@ import { registerUiVisualBaselineRecord } from "./tools/ui-visual-baseline-recor
 import { registerUiVisualDiffRun } from "./tools/ui-visual-diff-run.js";
 import { registerUiToolkitPanelGet } from "./tools/ui-toolkit-panel-get.js";
 import { registerUiToolkitHostInspect } from "./tools/ui-toolkit-host-inspect.js";
+import { registerUiToolkitPanelNodeUpsert } from "./tools/ui-toolkit-panel-node-upsert.js";
+import { registerUiToolkitPanelNodeRemove } from "./tools/ui-toolkit-panel-node-remove.js";
+import { registerUiToolkitUssRuleUpsert } from "./tools/ui-toolkit-uss-rule-upsert.js";
 
 // Bridge + compute tools
 import {
@@ -294,6 +297,10 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   // ui-toolkit-authoring-mcp-slices Stage 1 (TECH-34915..34917) — inspect surface
   registerUiToolkitPanelGet(server);
   registerUiToolkitHostInspect(server);
+  // ui-toolkit-authoring-mcp-slices Stage 2 (TECH-34918..34921) — mutation surface
+  registerUiToolkitPanelNodeUpsert(server);
+  registerUiToolkitPanelNodeRemove(server);
+  registerUiToolkitUssRuleUpsert(server);
 }
 
 /**
