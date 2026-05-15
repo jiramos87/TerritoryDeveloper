@@ -17,6 +17,8 @@ using Territory.Timing;
 using Territory.Utilities.Compute;
 using Territory.Audio;
 using Domains.Grid.Services;
+using Territory.IsoSceneCore;
+using Domains.Registry;
 
 namespace Territory.Core
 {
@@ -71,6 +73,17 @@ public partial class GridManager
         chunkCulling.chunkObjects = chunkObjects;
         chunkCulling.chunkActiveState = chunkActiveState;
         roadCache = new RoadCacheService(this);
+
+        // Register IsoSceneChunkCuller in ServiceRegistry (Start-equivalent; invariant #12 — called after Awake)
+        var registry = UnityEngine.Object.FindObjectOfType<ServiceRegistry>();
+        if (registry != null && cachedCamera != null)
+        {
+            _isoChunkCuller = new IsoSceneChunkCuller();
+            _isoChunkCuller.Configure(cachedCamera, width, height, chunkSize, tileWidth, tileHeight);
+            // Sync culler visibility events to ChunkCullingSystem chunk objects
+            _isoChunkCuller.OnVisibleSetChanged += (minCX, maxCX, minCY, maxCY) => { /* ChunkCullingSystem owns GameObject toggling */ };
+            registry.Register<IsoSceneChunkCuller>(_isoChunkCuller);
+        }
     }
 
     void CreateGrid(bool createBaseTiles = true)
@@ -200,6 +213,7 @@ public partial class GridManager
         if (!isInitialized || chunkObjects == null) return;
         if (skipChunkCullingFramesRemaining > 0) { skipChunkCullingFramesRemaining--; return; }
         chunkCulling?.UpdateVisibility();
+        _isoChunkCuller?.UpdateVisibility();
     }
     #endregion
 

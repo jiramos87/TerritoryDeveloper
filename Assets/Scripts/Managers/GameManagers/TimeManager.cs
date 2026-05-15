@@ -7,6 +7,7 @@ using Territory.Zones;
 using Territory.Roads;
 using Territory.Simulation;
 using Territory.Geography;
+using Territory.IsoSceneCore;
 
 namespace Territory.Timing
 {
@@ -39,6 +40,11 @@ public class TimeManager : MonoBehaviour
     private float timeMultiplier = 1f;
     private float timeElapsed = 0f;
     private System.DateTime currentDate;
+    // IsoSceneTickBus bridge — registered by GameManager.Start (Stage 1.1)
+    private IsoSceneTickBus _tickBus;
+
+    /// <summary>Wire tick bus bridge. Called by GameManager.Start (invariant #12).</summary>
+    public void RegisterTickBus(IsoSceneTickBus bus) => _tickBus = bus;
 
     void Awake()
     {
@@ -91,6 +97,7 @@ public class TimeManager : MonoBehaviour
             cityStats.PerformDailyUpdates();
             zoneManager.CalculateAvailableSquareZonedSections();
             PlaceAllZonedBuildings();
+            _tickBus?.Publish(IsoTickKind.GlobalTick);
             if (simulationManager != null)
                 simulationManager.ProcessSimulationTick();
             if (currentDate.Day == 1)

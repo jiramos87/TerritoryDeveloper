@@ -3,6 +3,8 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Territory.Core;
+using Territory.IsoSceneCore;
+using Domains.Registry;
 
 namespace Territory.UI
 {
@@ -66,6 +68,10 @@ public class CameraController : MonoBehaviour
     private Camera mainCamera;
     public GridManager gridManager;
     public CameraButtonsController cameraButtonsController;
+
+    // IsoSceneCore delegation — registered in Start (invariant #12)
+    private IsoSceneCamera _isoCamera;
+    private ServiceRegistry _registry;
 
     /// <summary>Init camera early in lifecycle.</summary>
     void Awake()
@@ -135,6 +141,18 @@ public class CameraController : MonoBehaviour
         {
             InitializeCamera();
         }
+
+        // Register IsoSceneCamera in Start (invariant #12 — never in Awake)
+        _registry = FindObjectOfType<ServiceRegistry>();
+        if (_registry != null && mainCamera != null)
+        {
+            _isoCamera = new IsoSceneCamera();
+            _isoCamera.ConfigureFull(
+                mainCamera, moveSpeed, zoomLevels, startZoomLevel,
+                referenceOrthoSize, scrollThresholdPerLevel, zoomStepCooldown, zoomSmoothSpeed,
+                dragPanThresholdPixels, panInertiaDamping, panInertiaMinVelocity);
+            _registry.Register<IsoSceneCamera>(_isoCamera);
+        }
     }
 
     void Update()
@@ -142,17 +160,26 @@ public class CameraController : MonoBehaviour
         // Only handle input if camera is properly initialized
         if (mainCamera != null)
         {
-            if (!Input.GetMouseButton(1))
+            if (_isoCamera != null)
             {
-                WasLastRightClickAPan = false;
+                // Delegate to IsoSceneCamera service (Stage 1.1 extraction)
+                _isoCamera.Tick(Time.unscaledDeltaTime);
+                WasLastRightClickAPan = _isoCamera.WasLastRightClickAPan;
             }
+            else
+            {
+                if (!Input.GetMouseButton(1))
+                {
+                    WasLastRightClickAPan = false;
+                }
 
-            HandleMovement();
-            HandleZoom();
-            HandleScrollZoom();
-            ApplySmoothZoom();
-            HandleDragToPan();
-            ApplyPanInertia();
+                HandleMovement();
+                HandleZoom();
+                HandleScrollZoom();
+                ApplySmoothZoom();
+                HandleDragToPan();
+                ApplyPanInertia();
+            }
         }
     }
 
@@ -265,6 +292,7 @@ public class CameraController : MonoBehaviour
     /// <param name="centerWorldPosition">World position to center camera on.</param>
     public void MoveCameraToMapCenter(Vector3 centerWorldPosition)
     {
+        if (_isoCamera != null) { _isoCamera.MoveTo(centerWorldPosition); return; }
 
         // Ensure camera is initialized before moving it
         if (mainCamera == null)
@@ -323,6 +351,7 @@ public class CameraController : MonoBehaviour
 
     public void ZoomIn()
     {
+        if (_isoCamera != null) { _isoCamera.ZoomIn(); return; }
         if (currentZoomLevel > 0)
         {
             currentZoomLevel--;
@@ -332,6 +361,7 @@ public class CameraController : MonoBehaviour
 
     public void ZoomOut()
     {
+        if (_isoCamera != null) { _isoCamera.ZoomOut(); return; }
         if (currentZoomLevel < zoomLevels.Length - 1)
         {
             currentZoomLevel++;

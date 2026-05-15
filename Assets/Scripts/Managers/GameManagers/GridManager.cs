@@ -15,6 +15,8 @@ using Territory.Timing;
 using Territory.Utilities.Compute;
 using Territory.Audio;
 using Domains.Grid.Services;
+using Territory.IsoSceneCore;
+using Domains.Registry;
 
 namespace Territory.Core
 {
@@ -57,6 +59,8 @@ public partial class GridManager : MonoBehaviour, IGridManager
     private RoadCacheService roadCache;
     private CellAccessService cellAccessService;
     private GridQueryService _gridQueryService;
+    // IsoSceneCore services — registered in InitializeGrid (Stage 1.1)
+    private IsoSceneChunkCuller _isoChunkCuller;
 
     /// <summary>Fired when urban cells (buildings) bulldozed.</summary>
     public System.Action<System.Collections.Generic.IReadOnlyList<Vector2Int>> onUrbanCellsBulldozed;

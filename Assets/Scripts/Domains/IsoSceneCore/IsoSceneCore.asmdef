@@ -1,7 +1,9 @@
 {
     "name": "IsoSceneCore",
     "rootNamespace": "Territory.IsoSceneCore",
-    "references": [],
+    "references": [
+        "GUID:1816056a6d934540a09c11d99d6672be"
+    ],
     "includePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

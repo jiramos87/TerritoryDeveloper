@@ -17,7 +17,8 @@
         "UI.Editor",
         "UiBake.KindRenderers.Editor",
         "Water",
-        "Zones"
+        "Zones",
+        "GUID:4ffbc615fcf34d01b4e7f2cc4f6d3062"
     ],
     "includePlatforms": [],
     "allowUnsafeCode": false,

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Territory.Core;
+using Territory.IsoSceneCore;
+using Domains.Registry;
 
 namespace Territory.Persistence
 {
@@ -19,6 +21,18 @@ public class GameManager : MonoBehaviour
         // (which seeds money to $20,000).
         if (gridManager == null) gridManager = FindObjectOfType<GridManager>();
         if (saveManager == null) saveManager = FindObjectOfType<GameSaveManager>();
+
+        // Register IsoSceneTickBus + bridge TimeManager → bus.Publish (invariant #12 — Start only)
+        var registry = FindObjectOfType<ServiceRegistry>();
+        if (registry != null)
+        {
+            var tickBus = new IsoSceneTickBus();
+            registry.Register<IsoSceneTickBus>(tickBus);
+
+            var timeManager = FindObjectOfType<Territory.Timing.TimeManager>();
+            if (timeManager != null)
+                timeManager.RegisterTickBus(tickBus);
+        }
     }
 
     public void SaveGame(string saveName = null)
