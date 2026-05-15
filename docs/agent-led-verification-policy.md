@@ -14,6 +14,10 @@ During **implementation** and **fix** work with Cursor agents on this repository
 - **Editor launch:** If the Unity Editor is not running, agents should run **`npm run unity:ensure-editor`** (macOS; exit 0 = ready, exit 2 = not macOS, exit 3 = binary not found) **before** concluding that the human must open Unity. The script launches the Editor on `REPO_ROOT` and waits up to 90 s for the lockfile.
 - **Path A — project lock:** **`npm run unity:testmode-batch`** starts a **second** Unity process. If the **Unity Editor** already has **`REPO_ROOT`** open, batchmode aborts (*"another Unity instance is running"*, often exit **134**). **Before Path A**, agents **must** release the lock: preferred one-liner **`npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32`** (runs **`tools/scripts/unity-quit-project.sh`** first), or quit the Editor manually / run **`tools/scripts/unity-quit-project.sh`** then invoke batch without **`--quit-editor-first`**. **Both Path A and Path B in one session:** run **Path A** first (with **`--quit-editor-first`** when the Editor might be open), then **`npm run unity:ensure-editor`** (macOS) so **Path B** has an Editor on **`REPO_ROOT`** again.
 
+## Stop hook enforcement
+
+The **Verification block** requirement above is enforced by a Claude Code **Stop hook** — [`tools/scripts/claude-hooks/stop-verification-required.sh`](../tools/scripts/claude-hooks/stop-verification-required.sh). The hook runs at session end, scans the final assistant message for a fenced `Verification` block, and **exits 2** (denying session completion) when the block is absent after substantive implementation. Exit 0 = block present or session is non-implementation (doc-only, query). Hook registration: `.claude/settings.json` under `hooks.Stop[]`. This hook is the **enforcement layer** for the policy prose above — editing one without the other creates drift.
+
 ## Verification block (required in agent completion messages)
 
 When reporting **Verification** after substantive implementation (especially when **§7b** / **Load pipeline** / **test mode** applies), include **all** of the following that were run:

@@ -12,6 +12,7 @@ alwaysApply: true
 - Prefer closed-loop testing (`verify-loop` / `testmode-batch`) over human-in-the-loop. Ask only when bridge/batch can't reach the surface.
 - Unity mutations/reads → `unity_bridge_command` / `unity_bridge_get` end-to-end. Agent owns Editor work. Missing kind → propose bridge tool stub BEFORE escalating.
 - **Stage = one test file, grown task-by-task (incremental TDD red→green protocol).** One file per stage under `tests/{plan-slug}/stage{N}-{slug}.test.{mjs|cs}`; red on first task, green on last. Stage close requires file fully green. Master-plan close unions all stage files. Full protocol: `ia/skills/ship-cycle/SKILL.md`.
+- **Hook enforcement.** Two Claude Code Stop hooks gate safety invariants at session end — exit 0 = allow, exit 2 = deny (session blocked). Scripts: [`tools/scripts/claude-hooks/stop-verification-required.sh`](../../tools/scripts/claude-hooks/stop-verification-required.sh) (Verification block required after substantive implementation) and [`tools/scripts/claude-hooks/skill-surface-guard.sh`](../../tools/scripts/claude-hooks/skill-surface-guard.sh) (generated skill surface drift guard). Both registered in `.claude/settings.json`.
 
 ## Token economy + speed
 
