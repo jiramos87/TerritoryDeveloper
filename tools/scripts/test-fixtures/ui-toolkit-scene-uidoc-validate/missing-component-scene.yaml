@@ -1,0 +1,7 @@
+# Fixture: GO exists but UIDocument component missing — suggestion: bridge_wire_call
+slug: budget-panel
+scene: CityScene
+gameObjects:
+  - name: budget-panel-uidoc
+    components:
+      - type: BudgetPanelHost

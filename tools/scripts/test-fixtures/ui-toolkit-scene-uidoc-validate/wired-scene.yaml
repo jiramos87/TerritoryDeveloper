@@ -1,0 +1,10 @@
+# Fixture: fully wired scene — {slug}-uidoc GO exists with UIDocument + Host components
+slug: budget-panel
+scene: CityScene
+gameObjects:
+  - name: budget-panel-uidoc
+    components:
+      - type: UIDocument
+        sourceAsset: "Assets/UI/UXML/budget-panel.uxml"
+        sourceAssetGUID: "abc123def456"
+      - type: BudgetPanelHost

@@ -88,6 +88,10 @@ function globCsFiles(dir: string, results: string[] = []): string[] {
   return results;
 }
 
+export function findHostFileForClass(className: string, repoRoot: string): string | null {
+  return findFileForClass(className, repoRoot);
+}
+
 function findFileForClass(className: string, repoRoot: string): string | null {
   // Primary: filename stem matches class name
   const scriptRoot = path.join(repoRoot, ASSETS_SCRIPTS);

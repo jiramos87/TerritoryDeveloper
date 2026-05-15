@@ -127,6 +127,8 @@ import { registerUiToolkitHostInspect } from "./tools/ui-toolkit-host-inspect.js
 import { registerUiToolkitPanelNodeUpsert } from "./tools/ui-toolkit-panel-node-upsert.js";
 import { registerUiToolkitPanelNodeRemove } from "./tools/ui-toolkit-panel-node-remove.js";
 import { registerUiToolkitUssRuleUpsert } from "./tools/ui-toolkit-uss-rule-upsert.js";
+import { registerUiToolkitHostQBind } from "./tools/ui-toolkit-host-q-bind.js";
+import { registerUiToolkitSceneUidocValidate } from "./tools/ui-toolkit-scene-uidoc-validate.js";
 
 // Bridge + compute tools
 import {
@@ -301,6 +303,9 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerUiToolkitPanelNodeUpsert(server);
   registerUiToolkitPanelNodeRemove(server);
   registerUiToolkitUssRuleUpsert(server);
+  // ui-toolkit-authoring-mcp-slices Stage 3 (TECH-34922..34924) — wire surface
+  registerUiToolkitHostQBind(server);
+  registerUiToolkitSceneUidocValidate(server);
 }
 
 /**

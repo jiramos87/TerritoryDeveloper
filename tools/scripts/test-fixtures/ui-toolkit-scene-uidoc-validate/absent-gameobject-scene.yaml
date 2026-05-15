@@ -1,0 +1,7 @@
+# Fixture: GO entirely absent — suggestion: runtime_spawn_pattern
+slug: budget-panel
+scene: CityScene
+gameObjects:
+  - name: MainCamera
+    components:
+      - type: Camera
