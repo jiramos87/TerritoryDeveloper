@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: region-city-summary | kind: modal | stage: region-scene-prototype 3.0 -->
+  <Style src="region-city-summary.uss"/>
+  <ui:VisualElement name="region-city-summary" class="region-city-summary" style="display: none;">
+    <ui:Label name="lbl-city-name" class="region-city-summary__headline"/>
+    <ui:Label name="lbl-pop"       class="region-city-summary__row"/>
+    <ui:Label name="lbl-urban"     class="region-city-summary__row"/>
+    <ui:Button name="btn-enter-city" class="region-city-summary__enter-btn disabled" text="Enter City (disabled)" />
+  </ui:VisualElement>
+</ui:UXML>

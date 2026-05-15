@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: region-cell-hover | kind: transient | stage: region-scene-prototype 3.0 -->
+  <Style src="region-cell-hover.uss"/>
+  <ui:VisualElement name="region-cell-hover-panel" class="region-hover" picking-mode="Ignore" style="display: none;">
+    <ui:Label name="lbl-coord"   class="region-hover__row region-hover__row--coord"/>
+    <ui:Label name="lbl-terrain" class="region-hover__row region-hover__row--terrain"/>
+    <ui:Label name="lbl-height"  class="region-hover__row"/>
+    <ui:Label name="lbl-city"    class="region-hover__row region-hover__row--city"/>
+  </ui:VisualElement>
+</ui:UXML>

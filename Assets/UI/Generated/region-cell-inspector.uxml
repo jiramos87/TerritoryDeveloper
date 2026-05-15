@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <!-- Panel: region-cell-inspector | kind: modal | stage: region-scene-prototype 3.0 -->
+  <Style src="region-cell-inspector.uss"/>
+  <ui:VisualElement name="region-cell-inspector" class="region-inspector" style="display: none;">
+    <ui:Label name="lbl-title"   class="region-inspector__title"/>
+    <ui:Label name="lbl-terrain" class="region-inspector__row"/>
+    <ui:Label name="lbl-height"  class="region-inspector__row"/>
+    <ui:Label name="lbl-water"   class="region-inspector__row"/>
+    <ui:Label name="lbl-cliff"   class="region-inspector__row"/>
+    <ui:Label name="lbl-pop"     class="region-inspector__row region-inspector__row--stat"/>
+    <ui:Label name="lbl-urban"   class="region-inspector__row region-inspector__row--stat"/>
+  </ui:VisualElement>
+</ui:UXML>

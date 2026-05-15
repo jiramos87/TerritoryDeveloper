@@ -1,0 +1,45 @@
+/* Panel: region-city-summary | kind: modal | stage: region-scene-prototype 3.0 */
+
+.region-city-summary {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: 200px;
+    background-color: #23262f;
+    border-color: #2e3340;
+    border-width: 1px;
+    border-radius: 6px;
+    padding: 12px 14px;
+    flex-direction: column;
+}
+
+.region-city-summary__headline {
+    color: #f4d28a;
+    font-size: 13px;
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+}
+
+.region-city-summary__row {
+    color: #9aa3b2;
+    font-size: 10px;
+    margin-bottom: 3px;
+}
+
+.region-city-summary__enter-btn {
+    margin-top: 10px;
+    padding: 4px 8px;
+    background-color: #2a2d36;
+    border-color: #2e3340;
+    border-width: 1px;
+    border-radius: 3px;
+    color: #6c7689;
+    font-size: 10px;
+    -unity-text-align: middle-center;
+}
+
+.region-city-summary__enter-btn.disabled {
+    opacity: 0.45;
+    cursor: default;
+}

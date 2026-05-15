@@ -1,0 +1,34 @@
+/* Panel: region-cell-inspector | kind: modal | stage: region-scene-prototype 3.0 */
+
+.region-inspector {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    width: 220px;
+    background-color: #23262f;
+    border-color: #2e3340;
+    border-width: 1px;
+    border-radius: 6px;
+    padding: 12px 14px;
+    flex-direction: column;
+}
+
+.region-inspector__title {
+    color: #e6e9ef;
+    font-size: 13px;
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+}
+
+.region-inspector__row {
+    color: #9aa3b2;
+    font-size: 10px;
+    margin-bottom: 3px;
+}
+
+.region-inspector__row--stat {
+    color: #f4d28a;
+    font-size: 11px;
+    margin-top: 4px;
+}

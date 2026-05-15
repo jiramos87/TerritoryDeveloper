@@ -2,6 +2,7 @@ using UnityEngine;
 using Domains.Registry;
 using Territory.IsoSceneCore;
 using Territory.RegionScene.Terrain;
+using Territory.RegionScene.UI;
 
 namespace Territory.RegionScene
 {
@@ -11,6 +12,13 @@ namespace Territory.RegionScene
         [SerializeField] private Camera mainCamera;
         [SerializeField] private float panSpeed = 5f;
         [SerializeField] private int terrainSeed = 42;
+
+        // Flat-grass prototype: single terrain sprite (grass everywhere). Post-prototype expansion
+        // adds water/cliff/region-specific sprite slots back per the new geo logic.
+        [SerializeField] private Sprite grassSprite;
+
+        // Stage 3.0 UI panel hosts (wired in Inspector)
+        [SerializeField] private RegionCellClickHandler cellClickHandler;
 
         private ServiceRegistry _registry;
         private IsoSceneCamera _camera;
@@ -55,6 +63,11 @@ namespace Territory.RegionScene
             rendererGo.transform.SetParent(transform);
             _cellRenderer = rendererGo.AddComponent<RegionCellRenderer>();
             _cellRenderer.Configure(_heightMap, _waterMap, _cliffMap, _culler);
+            _cellRenderer.WireSprites(grassSprite);
+
+            // Stage 3.0 — wire click handler (Subscribe in Start per invariant #12)
+            if (cellClickHandler != null)
+                cellClickHandler.Configure(_heightMap, _waterMap, _cliffMap);
         }
 
         private void Update()
