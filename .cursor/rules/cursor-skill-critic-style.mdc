@@ -1,0 +1,8 @@
+---
+description: "Style critic. Input: cumulative diff + glossary + coding conventions. Scans: (1) caveman-tone — hedging / filler in IA prose; (2) glossary-term consistency — ad-hoc synonyms vs canonical glossary slugs; (3) naming conventions — C# PascalCase, file/path patterns per coding-conventions rule. Output: findings JSON written via review_findings_write MCP. Triggered exclusively by /ship-final Pass B parallel Agent dispatch — not a standalone user command."
+alwaysApply: false
+---
+Read and follow: @ia/skills/critic-style/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "critic-style"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

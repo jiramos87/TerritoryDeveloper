@@ -1,0 +1,8 @@
+---
+description: "Security critic. Input: cumulative diff filtered to Assets/**, tools/mcp-ia-server/**, web/**. Scans: (1) input-validation — unvalidated user/agent input reaching DB or filesystem; (2) path-traversal — unsanitized path segments in file ops; (3) secret-leak — credential/key literals, env-var dump patterns, .env exposure. Output: findings JSON via review_findings_write MCP. Triggered exclusively by /ship-final Pass B — not standalone."
+alwaysApply: false
+---
+Read and follow: @ia/skills/critic-security/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "critic-security"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-15T21:04:23.459Z",
+  "last_generated": "2026-05-15T21:29:17.544Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -2478,6 +2478,16 @@
         "componentization",
         "concern boundary",
         "domain folder"
+      ],
+      "cited_in": []
+    },
+    "Feature flag (stage-scoped)": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "archetype_version",
+        "asset family",
+        "asset-pipeline-standard"
       ],
       "cited_in": []
     },

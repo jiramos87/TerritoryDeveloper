@@ -1,0 +1,8 @@
+---
+description: "Logic critic. Input: cumulative diff + invariants summary. Scans: (1) data-flow — null-path gaps, unguarded casts, missing error branches; (2) invariant touchpoints — Unity rules 1–11 + universal rules 12–13 touched by diff without matching guard comment; (3) control-flow — unreachable branches, early-return skipping cleanup. Output: findings JSON via review_findings_write MCP. Triggered exclusively by /ship-final Pass B — not standalone."
+alwaysApply: false
+---
+Read and follow: @ia/skills/critic-logic/SKILL.md
+
+When this skill invokes MCP mutation tools, pass `caller_agent: "critic-logic"`.
+If this skill is lifecycle-heavy, check: @.cursor/rules/cursor-lifecycle-adapters.mdc

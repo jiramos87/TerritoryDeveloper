@@ -26,6 +26,7 @@ phases:
   - Parse SLUG + load master_plan_state
   - Assert sections closed (open ia_section_claims = 0)
   - Assert all stages done (no partial / pending / in_progress)
+  - Pass B critics — dispatch /critic-style + /critic-logic + /critic-security in parallel; block on severity=high; AskUserQuestion override path logs to arch_changelog kind=critic_override
   - Plan-scoped validate:fast (paths from ia_task_commits for slug; HEAD-diff fallback)
   - Assert cron_validate_post_close_jobs drained for slug (queued+running = 0)
   - Git tag {slug}-v{N} (annotated, local)
@@ -46,6 +47,8 @@ tools_extra:
   - mcp__territory-ia__master_plan_locate
   - mcp__territory-ia__master_plan_close
   - mcp__territory-ia__cron_journal_append_enqueue
+  - mcp__territory-ia__review_findings_write
+  - mcp__territory-ia__cron_arch_changelog_append_enqueue
 caveman_exceptions:
   - code
   - commits
@@ -56,6 +59,9 @@ caveman_exceptions:
 hard_boundaries:
   - IF any `ia_section_claims` row open for slug → STOP. Run /section-closeout first.
   - IF any `ia_stages.status` ≠ `done` (incl. `partial`, `pending`, `in_progress`) → STOP. Ship remaining stages first.
+  - IF Pass B critics return `severity=high` AND no operator override → STOP `critic_high_severity_block`.
+  - Critics MUST be dispatched in parallel — one message, 3 Agent tool uses. Never sequential.
+  - Operator override MUST log to `arch_changelog kind=critic_override` via `cron_arch_changelog_append_enqueue` before continuing.
   - IF plan-scoped `validate:fast` exits non-zero → STOP. Fix + re-run. Scope is the union of paths in `ia_task_commits` for slug — drift in unrelated plans CANNOT block this close.
   - IF `cron_validate_post_close_jobs` has any `queued` / `running` row for slug → STOP. Cron drainer behind; re-run after drained.
   - IF `closed_at` already set on parent → STOP. Version already closed.
@@ -104,11 +110,21 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 1. **`load_plan`** — `master_plan_state(slug)` → `{version, closed_at, stages[]}`.
 2. **`assert_sections_closed`** — bash: count `ia_section_claims` open rows for slug. STOP on `> 0`.
 3. **`assert_stages_done`** — bash: assert every `stages[].status === 'done'`. STOP on any `partial` / `pending` / `in_progress`.
-4. **`cumulative_validate`** — bash: query `ia_task_commits` for plan's task shas → union `git show --name-only` paths → `npm run validate:fast -- --diff-paths <csv>` (path-map scoped, TECH-12640). Drift in unrelated plans does NOT block this close. Fallback: HEAD-diff `validate:fast` when DB unreachable. STOP on non-zero exit.
-5. **`assert_post_close_validate_drained`** — bash: assert `cron_validate_post_close_jobs` has zero `queued` / `running` rows for slug. STOP on drainer-behind so close blocks until verdict lands; operator re-runs `/ship-final` once drained.
-6. **`git_tag`** — bash: `git tag -a {slug}-v{N} -m "Close {slug} v{N}"`. Local only, never push.
-7. **`close_plan`** — MCP: `master_plan_close(slug)`. Flips `closed_at = now()`. Must precede cron_journal_append_enqueue.
-8. **`journal_close`** — MCP: `cron_journal_append_enqueue(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[]})`.
+4. **`pass_b_critics`** — dispatch 3 critics in parallel (one message, 3 Agent tool uses):
+   - `/critic-style {slug} {cumulative_diff}`
+   - `/critic-logic {slug} {cumulative_diff}`
+   - `/critic-security {slug} {cumulative_diff}`
+   Each critic calls `review_findings_write` MCP per finding. After all 3 return:
+   query `SELECT count(*) FROM ia_review_findings WHERE plan_slug='{slug}' AND severity='high'`.
+   - `count > 0` AND no override → `AskUserQuestion("Critic found {count} high-severity finding(s). Override to proceed? (yes/no)")`.
+     - `yes` → `cron_arch_changelog_append_enqueue(kind='critic_override', body='Operator overrode {count} high-severity findings.')`. Continue.
+     - `no` → STOP `critic_high_severity_block`.
+   - `count == 0` → continue.
+5. **`cumulative_validate`** — bash: query `ia_task_commits` for plan's task shas → union `git show --name-only` paths → `npm run validate:fast -- --diff-paths <csv>` (path-map scoped, TECH-12640). Drift in unrelated plans does NOT block this close. Fallback: HEAD-diff `validate:fast` when DB unreachable. STOP on non-zero exit.
+6. **`assert_post_close_validate_drained`** — bash: assert `cron_validate_post_close_jobs` has zero `queued` / `running` rows for slug. STOP on drainer-behind so close blocks until verdict lands; operator re-runs `/ship-final` once drained.
+7. **`git_tag`** — bash: `git tag -a {slug}-v{N} -m "Close {slug} v{N}"`. Local only, never push.
+8. **`close_plan`** — MCP: `master_plan_close(slug)`. Flips `closed_at = now()`. Must precede cron_journal_append_enqueue.
+9. **`journal_close`** — MCP: `cron_journal_append_enqueue(phase=version-close, payload_kind=version_close, payload={plan_slug, version, tag, sha, validate_all_result, sections_closed[], critic_findings_count, critic_high_count})`.
 
 ---
 
@@ -116,6 +132,7 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 
 - Open section claim → recipe stops at `assert_sections_closed` (exit 1). Run `/section-closeout {SLUG} {SECTION_ID}` for each open section, retry.
 - Stage not done → recipe stops at `assert_stages_done` (exit 1). Ship remaining stages, retry.
+- Critic `severity=high` without override → recipe stops at `pass_b_critics` with `critic_high_severity_block`. Operator must answer AskUserQuestion; log override to `arch_changelog` if proceeding.
 - Plan-scoped `validate:fast` red → recipe stops at `cumulative_validate` (exit 1). Fix surface + re-run. Scope = paths in `ia_task_commits` for slug; unrelated-plan drift cannot block.
 - Re-run on partial failure: idempotent at DB level — `master_plan_close` is no-op when `closed_at` already set; recipe stops with `version_already_closed` error from MCP layer.
 - Tag exists → `git tag` fails fast with native error. Manual `git tag -d` only when retry needed (destructive-op confirmation).
@@ -126,6 +143,9 @@ Recipe steps (`tools/recipes/ship-final.yaml`):
 
 - IF open section claim → STOP. `/section-closeout` first.
 - IF any stage `status ≠ done` → STOP. `/ship-stage` remaining stages first.
+- IF critic `severity=high` AND no operator override → STOP `critic_high_severity_block`. AskUserQuestion mandatory.
+- Override MUST log `arch_changelog kind=critic_override` before continuing.
+- Critics dispatched in parallel — one message, 3 Agent tool uses. Never sequential.
 - IF plan-scoped `validate:fast` red → STOP. Fix + re-run. Scope is plan's task-commit paths only; unrelated-plan drift cannot trigger this stop.
 - IF `cron_validate_post_close_jobs` has open rows for slug → STOP. Drainer behind; re-run after drained.
 - IF `closed_at` already set → STOP with `version_already_closed`.
@@ -164,3 +184,4 @@ Do NOT push tag. Do NOT create v(N+1) row. Do NOT commit source.
 | 2026-05-06 | Phase 4 cumulative_validate switched from whole-repo `validate:all` to plan-scoped `validate:fast --diff-paths <csv>` (paths derived by unioning `git show --name-only` across `ia_task_commits` shas for slug). Whole-repo gate red-blocked closes when unrelated-plan handoff drift was present. New behavior fails ONLY on drift in this plan's edits. Fallback to HEAD-diff `validate:fast` when DB unreachable. | Force-close override on `ship-cycle-db-read-efficiency` v1 close — handoff-schema drift in `chain-token-cut.md` + `async-cron-jobs.md` blocked unrelated plan close. |
 | 2026-05-06 | Path-map sub-fix — `validate:fast` runner extended to accept entries shaped `{id, scope:"matched"}` which forward matched touched paths as positional args (`npm run script -- path1 path2`). `docs/explorations/**` entry rewritten to scoped form so plan-scoped runs only validate touched handoff docs. `ia/skills/ship-plan/**` → handoff-schema mapping removed (whole-tree on SKILL.md edit re-collapsed scope; validate:all chain still covers schema-source changes). `validate-fast-coverage.mjs` updated to handle object entries. | Smoke test of patched cumulative-validate.sh on this plan re-failed on whole-tree handoff scan — touched skill files triggered bare-string entry. |
 | 2026-05-10 | Phase 4.5 step `assert_post_close_validate_drained` — gates close on `cron_validate_post_close_jobs` queued+running rows = 0 for slug. Pairs with new `cron_validate_post_close_jobs` queue introduced by ship-cycle Pass B refactor — async post-close validate verdict must land before version close. Re-runnable after drainer catches up. | Lifecycle skills refactor (Phase 4 / mig 0133 / cron handler `validate-post-close-cron-handler.ts`). |
+| 2026-05-15 | Wave E — Pass B critic review step inserted after `assert_stages_done`. Dispatches `/critic-style` + `/critic-logic` + `/critic-security` in parallel via Agent tool. `severity=high` blocks plan close; `AskUserQuestion` override path logs to `arch_changelog kind=critic_override`. `review_findings_write` MCP registered (mig 0164). `journal_close` payload extended with `critic_findings_count` + `critic_high_count`. Steps renumbered 1–9. | vibe-coding-safety stage-6-0 (TECH-36146). |

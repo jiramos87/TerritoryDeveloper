@@ -134,6 +134,7 @@ import { registerUiToolkitPanelPixelDiff } from "./tools/ui-toolkit-panel-pixel-
 import { registerUiToolkitHostLint } from "./tools/ui-toolkit-host-lint.js";
 import { registerMasterPlanSpecFreeze } from "./tools/master-plan-spec-freeze.js";
 import { registerFeatureFlagsSnapshotWrite } from "./tools/feature-flags-snapshot-write.js";
+import { registerReviewFindingsWrite } from "./tools/review-findings-write.js";
 
 // Bridge + compute tools
 import {
@@ -319,6 +320,8 @@ export function registerIaCoreTools(server: McpServer, registry: Registry): void
   registerMasterPlanSpecFreeze(server);
   // vibe-coding-safety Stage 5.0 (TECH-36136) — feature flags snapshot writer
   registerFeatureFlagsSnapshotWrite(server);
+  // vibe-coding-safety Stage 6.0 (TECH-36145) — multi-agent critic findings writer
+  registerReviewFindingsWrite(server);
 }
 
 /**

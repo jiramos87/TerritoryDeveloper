@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-05-15T21:04:23.259Z",
+  "last_generated": "2026-05-15T21:29:17.370Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -743,43 +743,43 @@
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 301
+          "line_start": 302
         },
         {
           "section_id": "user-interface",
           "title": "User interface",
           "depth": 2,
-          "line_start": 325
+          "line_start": 326
         },
         {
           "section_id": "ui-toolkit-current-ui-baseline",
           "title": "UI Toolkit (current UI baseline)",
           "depth": 3,
-          "line_start": 340
+          "line_start": 341
         },
         {
           "section_id": "code-architecture-atomization",
           "title": "Code architecture (atomization)",
           "depth": 2,
-          "line_start": 364
+          "line_start": 365
         },
         {
           "section_id": "retired-terms-do-not-use",
           "title": "Retired terms — do not use",
           "depth": 2,
-          "line_start": 381
+          "line_start": 382
         },
         {
           "section_id": "do-not-confuse",
           "title": "Do not confuse",
           "depth": 2,
-          "line_start": 396
+          "line_start": 397
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 410
+          "line_start": 411
         }
       ]
     },
