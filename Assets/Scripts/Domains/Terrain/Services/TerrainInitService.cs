@@ -28,6 +28,7 @@ namespace Domains.Terrain.Services
         private readonly System.Action<Vector2, int, bool> _setCellHeight;
         private readonly System.Func<int, int, int, Vector2> _getWorldPositionVector;
 
+        /// <summary>Construct terrain init service with dependencies.</summary>
         public TerrainInitService(
             System.Func<HeightMap> getHeightMap,
             System.Action<HeightMap> setHeightMap,
