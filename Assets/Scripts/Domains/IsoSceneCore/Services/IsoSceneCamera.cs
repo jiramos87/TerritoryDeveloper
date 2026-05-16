@@ -37,6 +37,7 @@ namespace Territory.IsoSceneCore
         /// <summary>True when last right-click release was a pan drag.</summary>
         public bool WasLastRightClickAPan { get; private set; }
 
+        /// <summary>Configure camera + pan speed; snap to closest zoom level.</summary>
         public void Configure(Camera cam, float panSpeed)
         {
             _cam = cam;
@@ -71,6 +72,7 @@ namespace Territory.IsoSceneCore
             _configured = true;
         }
 
+        /// <summary>Per-frame: handle keys, scroll-zoom, smooth-zoom, drag-pan, inertia.</summary>
         public void Tick(float dt)
         {
             if (_cam == null || !_configured) return;
@@ -86,6 +88,7 @@ namespace Territory.IsoSceneCore
             ApplyPanInertia();
         }
 
+        /// <summary>Step zoom in one level (if not at min).</summary>
         public void ZoomIn()
         {
             if (_currentZoomLevel > 0)
@@ -95,6 +98,7 @@ namespace Territory.IsoSceneCore
             }
         }
 
+        /// <summary>Step zoom out one level (if not at max).</summary>
         public void ZoomOut()
         {
             if (_currentZoomLevel < _zoomLevels.Length - 1)
@@ -104,6 +108,7 @@ namespace Territory.IsoSceneCore
             }
         }
 
+        /// <summary>Snap camera position to worldPos.xy.</summary>
         public void MoveTo(Vector3 worldPos)
         {
             if (_cam == null) return;
