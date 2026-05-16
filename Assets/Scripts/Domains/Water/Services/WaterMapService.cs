@@ -26,6 +26,7 @@ namespace Domains.Water.Services
         private readonly int _width;
         private readonly int _height;
 
+        /// <summary>Construct water map service with grid dimensions.</summary>
         public WaterMapService(int width, int height)
         {
             _width = width;
