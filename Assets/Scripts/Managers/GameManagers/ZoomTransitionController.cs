@@ -6,7 +6,6 @@ using UnityEngine.Profiling;
 using PrimeTween;
 using Territory.Managers;
 using Territory.Persistence;
-using Territory.Services;
 using Territory.UI.Panels;
 
 namespace Territory.SceneManagement
@@ -59,9 +58,6 @@ namespace Territory.SceneManagement
         private const float DrawCallCostThresholdMultiplier = 1.3f;
         private long _baselineDrawCalls;
 
-        [SerializeField] private CellStreamingPipeline cellStreamingPipeline;
-        [SerializeField] private InputLockService inputLockService;
-
         private SceneOrchestratorManager _orchestrator;
         private ISaveCoordinator _saveCoordinator;
         private ErrorToastController _errorToast;
@@ -84,16 +80,6 @@ namespace Territory.SceneManagement
             _saveCoordinator = FindObjectOfType<SaveCoordinator>();
             _errorToast      = FindObjectOfType<ErrorToastController>();
             if (_cam == null) _cam = Camera.main;
-
-            // Wire FirstRingLoaded → InputLockService.Unlock (Stage 6.0)
-            if (cellStreamingPipeline != null && inputLockService != null)
-                cellStreamingPipeline.FirstRingLoaded += inputLockService.Unlock;
-        }
-
-        void OnDestroy()
-        {
-            if (cellStreamingPipeline != null && inputLockService != null)
-                cellStreamingPipeline.FirstRingLoaded -= inputLockService.Unlock;
         }
 
         /// <summary>Request a scene transition to <paramref name="target"/>. State machine: Idle→AwaitConfirm→Saving→TweeningOut→AwaitLoad→Landing→Idle.</summary>
