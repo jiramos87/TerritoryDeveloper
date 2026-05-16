@@ -99,6 +99,7 @@ namespace Domains.UI.Services
             });
         }
 
+        /// <summary>Resolve type-scale font size by slug; fallback when missing.</summary>
         public static float ResolveTypeScaleFontSize(string slug, float fallback)
         {
             if (!string.IsNullOrEmpty(slug) && s_TypeScale != null
@@ -107,6 +108,7 @@ namespace Domains.UI.Services
             return fallback;
         }
 
+        /// <summary>Resolve type-scale weight by slug; fallback when missing.</summary>
         public static string ResolveTypeScaleWeight(string slug, string fallback)
         {
             if (!string.IsNullOrEmpty(slug) && s_TypeScale != null
@@ -115,6 +117,7 @@ namespace Domains.UI.Services
             return fallback;
         }
 
+        /// <summary>Resolve color token hex by slug; null when missing.</summary>
         public static string ResolveColorTokenHex(string slug)
         {
             if (!string.IsNullOrEmpty(slug) && s_ColorHex != null
