@@ -14,6 +14,7 @@ namespace Territory.Audio
     internal static class BlipFxChain
     {
         private const double TwoPi = 2.0 * Math.PI;
+        private const float MsPerSecond = 1000f;
 
         /// <summary>
         /// Apply one FX slot in-place on sample <paramref name="x"/>.
@@ -104,7 +105,7 @@ namespace Territory.Audio
                     // p0 = delay ms → samples D; p1 = feedback gain g (clamped [0,0.97] in OnValidate).
                     // Null/out-of-range guard → passthrough (matches Stage 5.1 convention).
                     if (delayBuf == null || bufLen <= 0) break;
-                    int D = (int)(p0 / 1000f * sampleRate);
+                    int D = (int)(p0 / MsPerSecond * sampleRate);
                     if (D < 1 || D >= bufLen) break;
                     int readIdx = writePos - D;
                     if (readIdx < 0) readIdx += bufLen;
@@ -123,7 +124,7 @@ namespace Territory.Audio
                     // p0 = delay ms → samples D; p1 = feedback/feedforward gain g.
                     // no clamp — Schroeder stable for |g| < 1
                     if (delayBuf == null || bufLen <= 0) break;
-                    int D = (int)(p0 / 1000f * sampleRate);
+                    int D = (int)(p0 / MsPerSecond * sampleRate);
                     if (D < 1 || D >= bufLen) break;
                     float g = p1;
                     int readIdx = writePos - D;
@@ -147,7 +148,7 @@ namespace Territory.Audio
                     ringPhase += (float)(TwoPi * p0 / sampleRate);
                     if (ringPhase >= (float)TwoPi) ringPhase -= (float)TwoPi;
 
-                    float depthSamples = p1 / 1000f * sampleRate;
+                    float depthSamples = p1 / MsPerSecond * sampleRate;
                     float lfoOffset    = depthSamples * (float)Math.Sin(ringPhase);
 
                     // Base delay at buffer midpoint so ±lfoOffset stays in range for depth ≤ bufLen/2 samples.
@@ -172,7 +173,7 @@ namespace Territory.Audio
                     ringPhase += (float)(TwoPi * p0 / sampleRate);
                     if (ringPhase >= (float)TwoPi) ringPhase -= (float)TwoPi;
 
-                    float depthSamples = p1 / 1000f * sampleRate;
+                    float depthSamples = p1 / MsPerSecond * sampleRate;
                     float lfoOffset    = depthSamples * (float)Math.Sin(ringPhase);
 
                     float center = bufLen * 0.5f;
