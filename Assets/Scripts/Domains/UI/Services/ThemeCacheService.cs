@@ -81,6 +81,7 @@ namespace Domains.UI.Services
             gridCoordinatesText = txt;
         }
 
+        /// <summary>Rebuild cell-data panel layout for current text.</summary>
         public void RefreshCellDataPanelLayout(Text gridCoordinatesText)
         {
             if (gridCoordinatesText == null) return;
@@ -93,6 +94,7 @@ namespace Domains.UI.Services
         }
 
         // ─── HUD mount + alignment ────────────────────────────────────────────────
+        /// <summary>Mount chrome under HUD layout root; order after ControlPanel/MiniMap.</summary>
         public static void EnsureCellDataPanelHudMount(RectTransform chromeRt)
         {
             if (chromeRt == null) return;
@@ -104,6 +106,7 @@ namespace Domains.UI.Services
             else { Transform mm = mount.Find("MiniMapPanel"); if (mm != null) chromeRt.SetSiblingIndex(mm.GetSiblingIndex() + 1); }
         }
 
+        /// <summary>Anchor cell-data panel to right-center; size to half-height square.</summary>
         public static void AlignCellDataPanel(RectTransform chromeRt)
         {
             if (chromeRt == null) return;
@@ -118,6 +121,7 @@ namespace Domains.UI.Services
             chromeRt.anchoredPosition = new Vector2(-rightMargin, 0f); chromeRt.sizeDelta = new Vector2(side, side);
         }
 
+        /// <summary>Apply square layout to chrome — clamp against data-panel-buttons top.</summary>
         public static void CellDataPanelApplySquareLayout(RectTransform chromeRt, RectTransform parentRt, float minX, float referenceTopY, float gapAboveReference, float widthBand)
         {
             float minChromeBottom = referenceTopY + gapAboveReference;
@@ -140,6 +144,7 @@ namespace Domains.UI.Services
             chromeRt.anchoredPosition = new Vector2(minX, chromeBottomY) - anchorRefBottomLeft; chromeRt.sizeDelta = new Vector2(side, side);
         }
 
+        /// <summary>Try aligning chrome above ControlPanel; false if missing.</summary>
         public static bool TryAlignCellDataPanelToControlPanel(RectTransform chromeRt)
         {
             RectTransform parentRt = chromeRt.parent as RectTransform;
@@ -153,6 +158,7 @@ namespace Domains.UI.Services
             return true;
         }
 
+        /// <summary>Align chrome above MiniMapPanel.</summary>
         public static void AlignCellDataPanelToMiniMap(RectTransform chromeRt)
         {
             if (chromeRt == null) return;
@@ -166,6 +172,7 @@ namespace Domains.UI.Services
         }
 
         // ─── Scroll layout ────────────────────────────────────────────────────────
+        /// <summary>Resize scroll viewport + content; toggle vertical scroll by fit.</summary>
         public static void UpdateCellDataPanelScrollLayout(RectTransform chromeRt, Text dbgText)
         {
             if (chromeRt == null) return;
@@ -189,6 +196,7 @@ namespace Domains.UI.Services
             Canvas.ForceUpdateCanvases();
         }
 
+        /// <summary>Estimate preferred text height at given inner width.</summary>
         public static float EstimateCellDataPanelTextPreferredHeight(Text text, float innerWidth)
         {
             if (text == null) return 64f;
@@ -200,6 +208,7 @@ namespace Domains.UI.Services
         }
 
         // ─── Text inset / scroll under-inset ─────────────────────────────────────
+        /// <summary>Set inset rect to fill chrome with margin padding.</summary>
         public static void ApplyCellDataPanelTextInset(RectTransform insetRt)
         {
             if (insetRt == null) return;
@@ -209,6 +218,7 @@ namespace Domains.UI.Services
             insetRt.offsetMin = new Vector2(18f, 10f); insetRt.offsetMax = new Vector2(-18f, -10f);
         }
 
+        /// <summary>Strip extra layout drivers from text rect; reset transform.</summary>
         public static void EnsureCellDataPanelTextLayoutDriver(RectTransform textRt)
         {
             if (textRt == null) return;
@@ -224,6 +234,7 @@ namespace Domains.UI.Services
             textRt.anchoredPosition = Vector2.zero; textRt.sizeDelta = Vector2.zero; textRt.offsetMin = Vector2.zero; textRt.offsetMax = Vector2.zero;
         }
 
+        /// <summary>Reparent text rect under chrome inset; mint inset if missing.</summary>
         public static void EnsureCellDataPanelTextUnderInset(Transform chromeTransform, RectTransform textRt)
         {
             if (chromeTransform == null || textRt == null) return;
@@ -242,6 +253,7 @@ namespace Domains.UI.Services
             EnsureCellDataPanelTextLayoutDriver(textRt);
         }
 
+        /// <summary>Mint scroll-root + viewport + content under inset; reparent text.</summary>
         public static void EnsureCellDataPanelScrollUnderInset(RectTransform insetRt, RectTransform textRt)
         {
             if (insetRt == null || textRt == null) return;
@@ -276,6 +288,7 @@ namespace Domains.UI.Services
         }
 
         // ─── Demand gauge ────────────────────────────────────────────────────────
+        /// <summary>Ensure demand gauge fill image on panel; mint track + fill if missing.</summary>
         public void EnsureDemandGaugeForPanel(Text anchorText, string panelExactName, ref Image fillImageRef, Color? borderSubtle, Color? surfaceToolbar)
         {
             if (anchorText == null) return;
