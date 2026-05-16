@@ -5,6 +5,8 @@ using Territory.Core;
 using Territory.Terrain;
 using Territory.Roads;
 using Territory.Simulation;
+using Territory.SceneManagement;
+using Territory.Services;
 using Domains.UI.Services;
 
 namespace Territory.UI
@@ -19,6 +21,13 @@ public enum MiniMapLayer
     Forests = 1 << 2,
     Desirability = 1 << 3,
     Centroid = 1 << 4,
+}
+
+/// <summary>Scale-aware minimap render mode. City = city grid; Region = region cells. Stage 5.0 (TECH-37610).</summary>
+public enum MinimapMode
+{
+    City,
+    Region,
 }
 
 /// <summary>
@@ -45,6 +54,46 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandl
     [SerializeField] private MiniMapLayer activeLayers = MiniMapLayer.Streets | MiniMapLayer.Zones;
     private readonly MiniMapService _svc = new MiniMapService();
 
+    // Stage 5.0 — scale-aware mode + dual-cache (TECH-37610).
+    private MinimapMode _currentMode = MinimapMode.City;
+    private Texture2D _cityCache;
+    private Texture2D _regionCache;
+    private bool _cityNeedsRegen;
+    private bool _regionNeedsRegen;
+
+    /// <summary>Current minimap mode (City or Region).</summary>
+    public MinimapMode CurrentMode => _currentMode;
+
+    /// <summary>Switch minimap mode. Displays cached texture during regen to prevent blank-flash.</summary>
+    public void SetMode(MinimapMode mode)
+    {
+        if (_currentMode == mode) return;
+        _currentMode = mode;
+
+        // Display cached texture immediately while async regen queued.
+        Texture2D cached = mode == MinimapMode.City ? _cityCache : _regionCache;
+        if (cached != null && mapImage != null)
+            mapImage.texture = cached;
+
+        RebuildTexture();
+    }
+
+    /// <summary>Invalidate city cache (e.g. on PlayerCityDataUpdated).</summary>
+    public void InvalidateCityCache()
+    {
+        _cityNeedsRegen = true;
+        if (_currentMode == MinimapMode.City)
+            RebuildTexture();
+    }
+
+    /// <summary>Invalidate region cache (e.g. on cell stream-in).</summary>
+    public void InvalidateRegionCache()
+    {
+        _regionNeedsRegen = true;
+        if (_currentMode == MinimapMode.Region)
+            RebuildTexture();
+    }
+
     // ── Public API ────────────────────────────────────────────────────────────────
     public bool IsVisible => (miniMapPanel != null ? miniMapPanel : gameObject).activeSelf;
 
@@ -62,6 +111,9 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandl
     // ── Unity Lifecycle ───────────────────────────────────────────────────────────
     void Awake()
     {
+        // DEC-A29 hub-preservation: DontDestroyOnLoad — MinimapController persists across scene loads in CoreScene.
+        DontDestroyOnLoad(this.gameObject);
+
         if (gridManager == null)         gridManager         = FindObjectOfType<GridManager>();
         if (waterManager == null)        waterManager        = FindObjectOfType<WaterManager>();
         if (interstateManager == null)   interstateManager   = FindObjectOfType<InterstateManager>();
@@ -79,12 +131,34 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandl
         }
     }
 
-    void Start()   { if (gridManager != null && gridManager.onGridRestored != null) gridManager.onGridRestored += OnGridRestored; }
+    private IsoSceneContextService _contextService;
+
+    void Start()
+    {
+        if (gridManager != null && gridManager.onGridRestored != null)
+            gridManager.onGridRestored += OnGridRestored;
+
+        // Stage 5.0 — subscribe to context changes for scale-aware mode switch.
+        _contextService = FindObjectOfType<IsoSceneContextService>();
+        if (_contextService != null)
+            _contextService.ContextChanged += OnSceneContextChanged;
+    }
 
     void OnDestroy()
     {
         if (gridManager != null && gridManager.onGridRestored != null) gridManager.onGridRestored -= OnGridRestored;
+        if (_contextService != null) _contextService.ContextChanged -= OnSceneContextChanged;
         if (_mapTexture != null) { Destroy(_mapTexture); _mapTexture = null; }
+        if (_cityCache  != null) { Destroy(_cityCache);  _cityCache  = null; }
+        if (_regionCache != null) { Destroy(_regionCache); _regionCache = null; }
+    }
+
+    private void OnSceneContextChanged(IsoSceneContextService.SceneContext ctx)
+    {
+        if (ctx == IsoSceneContextService.SceneContext.City)
+            SetMode(MinimapMode.City);
+        else if (ctx == IsoSceneContextService.SceneContext.Region)
+            SetMode(MinimapMode.Region);
     }
 
     void Update()
@@ -101,7 +175,14 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandl
     {
         // iter-41 — don't block when mapImage RawImage isn't wired (Effort 6 reads
         // the texture via MapTexture accessor for UI Toolkit binding).
-        if (gridManager == null || !gridManager.isInitialized) return;
+        // Stage 5.0 — city mode requires gridManager; region mode can build without it (flat).
+        if (_currentMode == MinimapMode.City && (gridManager == null || !gridManager.isInitialized)) return;
+        if (_currentMode == MinimapMode.Region)
+        {
+            RebuildRegionTexture();
+            return;
+        }
+
         int w = gridManager.width, h = gridManager.height;
 
         if (_mapTexture == null || _mapTexture.width != w || _mapTexture.height != h)
@@ -133,6 +214,43 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler, IDragHandl
         }
 
         _mapTexture.Apply();
+
+        // Cache city texture for mode-switch blank-flash prevention.
+        if (_cityCache != null && (_cityCache.width != w || _cityCache.height != h))
+        {
+            Destroy(_cityCache);
+            _cityCache = null;
+        }
+        if (_cityCache == null)
+            _cityCache = new Texture2D(w, h) { filterMode = FilterMode.Point };
+        Graphics.CopyTexture(_mapTexture, _cityCache);
+        _cityNeedsRegen = false;
+
+        if (mapImage != null) mapImage.texture = _mapTexture;
+    }
+
+    private void RebuildRegionTexture()
+    {
+        const int regionSize = 64;
+        if (_mapTexture == null || _mapTexture.width != regionSize || _mapTexture.height != regionSize)
+        {
+            if (_mapTexture != null) Destroy(_mapTexture);
+            _mapTexture = new Texture2D(regionSize, regionSize) { filterMode = FilterMode.Point };
+        }
+
+        // Prototype: flat green region texture. Real data binding post-streaming pipeline (Stage 6).
+        var greenish = new Color(0.28f, 0.52f, 0.28f, 1f);
+        for (int x = 0; x < regionSize; x++)
+            for (int y = 0; y < regionSize; y++)
+                _mapTexture.SetPixel(x, y, greenish);
+        _mapTexture.Apply();
+
+        // Cache region texture.
+        if (_regionCache == null)
+            _regionCache = new Texture2D(regionSize, regionSize) { filterMode = FilterMode.Point };
+        Graphics.CopyTexture(_mapTexture, _regionCache);
+        _regionNeedsRegen = false;
+
         if (mapImage != null) mapImage.texture = _mapTexture;
     }
 
