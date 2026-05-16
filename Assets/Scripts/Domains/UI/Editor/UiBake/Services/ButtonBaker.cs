@@ -10,6 +10,7 @@ namespace Domains.UI.Editor.UiBake.Services
     {
         readonly BakeContext _ctx;
 
+        /// <summary>Construct button-baker with bake context.</summary>
         public ButtonBaker(BakeContext ctx)
         {
             _ctx = ctx;
