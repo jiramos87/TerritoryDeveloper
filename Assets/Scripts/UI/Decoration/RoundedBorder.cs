@@ -12,6 +12,12 @@ namespace Territory.UI.Decoration
     [RequireComponent(typeof(CanvasRenderer))]
     public class RoundedBorder : MaskableGraphic
     {
+        private const float QuadrantSweepDeg = 90f;
+        private const float QuadrantStartTR = 0f;
+        private const float QuadrantStartTL = 90f;
+        private const float QuadrantStartBL = 180f;
+        private const float QuadrantStartBR = 270f;
+
         [SerializeField] private float _cornerRadius = 4f;
         [SerializeField] private float _borderWidth = 2f;
         [SerializeField] private Color _borderColor = Color.white;
@@ -79,10 +85,10 @@ namespace Territory.UI.Decoration
             // Outer rounded perimeter — 4 quadrants × (seg+1) points.
             int ringCount = (seg + 1) * 4;
             var outerPts = new Vector2[ringCount];
-            BuildArc(outerPts, 0, seg, cTR, r, 0f);    // 0..90
-            BuildArc(outerPts, 1, seg, cTL, r, 90f);   // 90..180
-            BuildArc(outerPts, 2, seg, cBL, r, 180f);  // 180..270
-            BuildArc(outerPts, 3, seg, cBR, r, 270f);  // 270..360
+            BuildArc(outerPts, 0, seg, cTR, r, QuadrantStartTR);
+            BuildArc(outerPts, 1, seg, cTL, r, QuadrantStartTL);
+            BuildArc(outerPts, 2, seg, cBL, r, QuadrantStartBL);
+            BuildArc(outerPts, 3, seg, cBR, r, QuadrantStartBR);
 
             // ── Fill pass (triangle fan from center) ────────────────────
             if (_fillEnabled && _fillColor.a > 0f)
@@ -107,10 +113,10 @@ namespace Territory.UI.Decoration
                 float bw = Mathf.Min(_borderWidth, w * 0.5f, h * 0.5f);
                 float rInner = Mathf.Max(0f, r - bw);
                 var innerPts = new Vector2[ringCount];
-                BuildArc(innerPts, 0, seg, cTR, rInner, 0f);
-                BuildArc(innerPts, 1, seg, cTL, rInner, 90f);
-                BuildArc(innerPts, 2, seg, cBL, rInner, 180f);
-                BuildArc(innerPts, 3, seg, cBR, rInner, 270f);
+                BuildArc(innerPts, 0, seg, cTR, rInner, QuadrantStartTR);
+                BuildArc(innerPts, 1, seg, cTL, rInner, QuadrantStartTL);
+                BuildArc(innerPts, 2, seg, cBL, rInner, QuadrantStartBL);
+                BuildArc(innerPts, 3, seg, cBR, rInner, QuadrantStartBR);
 
                 // For border the inner ring radius must shrink AND the inner perimeter must follow
                 // the inset rect (xMin+bw .. xMax-bw). When rInner == 0 (border thicker than radius)
@@ -160,7 +166,7 @@ namespace Territory.UI.Decoration
             for (int s = 0; s <= seg; s++)
             {
                 float t = (float)s / seg;
-                float deg = startDeg + t * 90f;
+                float deg = startDeg + t * QuadrantSweepDeg;
                 float rad = deg * Mathf.Deg2Rad;
                 outBuf[basePos + s] = new Vector2(center.x + Mathf.Cos(rad) * radius, center.y + Mathf.Sin(rad) * radius);
             }

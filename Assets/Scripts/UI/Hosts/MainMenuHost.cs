@@ -21,6 +21,23 @@ namespace Territory.UI.Hosts
         const string LastSavePathKey = "LastSavePath";
         const string SfxVolumePrefKey = "SfxVolume";
 
+        // Map size dropdown defaults.
+        const int MapSizeSmall = 32;
+        const int MapSizeMedium = 64;
+        const int MapSizeLarge = 128;
+        const int MapSizeXL = 256;
+
+        // Budget tier defaults.
+        const int BudgetLow = 20000;
+        const int BudgetMedium = 40000;
+        const int BudgetHigh = 100000;
+
+        // Reroll/seed bounds.
+        const int CityNameSuffixMin = 100;
+        const int CityNameSuffixMax = 999;
+        const int SeedMin = 1;
+        const int SeedMax = 99999;
+
         // View slugs.
         const string ViewRoot     = "root";
         const string ViewLoad     = "load";
@@ -205,8 +222,8 @@ namespace Territory.UI.Hosts
         void SeedNewGameDefaults()
         {
             if (_ngCityName != null)
-                _ngCityName.value = Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(100, 999)}";
-            if (_ngSeed != null) _ngSeed.value = UnityEngine.Random.Range(1, 99999);
+                _ngCityName.value = Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(CityNameSuffixMin, CityNameSuffixMax)}";
+            if (_ngSeed != null) _ngSeed.value = UnityEngine.Random.Range(SeedMin, SeedMax);
             if (_ngMapSize != null && string.IsNullOrEmpty(_ngMapSize.value)) _ngMapSize.value = "medium - 64x64";
             if (_ngBudget != null && string.IsNullOrEmpty(_ngBudget.value))   _ngBudget.value  = "medium - $40,000";
         }
@@ -214,8 +231,8 @@ namespace Territory.UI.Hosts
         void OnNewGameReroll()
         {
             if (_ngCityName != null)
-                _ngCityName.value = Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(100, 999)}";
-            if (_ngSeed != null) _ngSeed.value = UnityEngine.Random.Range(1, 99999);
+                _ngCityName.value = Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(CityNameSuffixMin, CityNameSuffixMax)}";
+            if (_ngSeed != null) _ngSeed.value = UnityEngine.Random.Range(SeedMin, SeedMax);
         }
 
         void OnNewGameSubmit()
@@ -224,8 +241,8 @@ namespace Territory.UI.Hosts
             int budget = BudgetStringToInt(_ngBudget != null ? _ngBudget.value : "medium - $40,000");
             string cityName = _ngCityName != null && !string.IsNullOrWhiteSpace(_ngCityName.value)
                 ? _ngCityName.value
-                : (Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(100, 999)}");
-            int seed = _ngSeed != null ? _ngSeed.value : UnityEngine.Random.Range(1, 99999);
+                : (Modals.CityNamePoolService.TryRollRandom() ?? $"Ciudad-{UnityEngine.Random.Range(CityNameSuffixMin, CityNameSuffixMax)}");
+            int seed = _ngSeed != null ? _ngSeed.value : UnityEngine.Random.Range(SeedMin, SeedMax);
             var mainMenu = FindObjectOfType<MainMenuController>();
             if (mainMenu != null)
                 mainMenu.StartNewGame(mapSize, budget, cityName, seed);
@@ -240,20 +257,20 @@ namespace Territory.UI.Hosts
         // players see what the tier resolves to before submitting.
         static int MapSizeStringToInt(string v)
         {
-            if (string.IsNullOrEmpty(v)) return 64;
-            if (v.StartsWith("small"))  return 32;
-            if (v.StartsWith("medium")) return 64;
-            if (v.StartsWith("large"))  return 128;
-            if (v.StartsWith("XL"))     return 256;
-            return 64;
+            if (string.IsNullOrEmpty(v)) return MapSizeMedium;
+            if (v.StartsWith("small"))  return MapSizeSmall;
+            if (v.StartsWith("medium")) return MapSizeMedium;
+            if (v.StartsWith("large"))  return MapSizeLarge;
+            if (v.StartsWith("XL"))     return MapSizeXL;
+            return MapSizeMedium;
         }
         static int BudgetStringToInt(string v)
         {
-            if (string.IsNullOrEmpty(v)) return 40000;
-            if (v.StartsWith("low"))    return 20000;
-            if (v.StartsWith("medium")) return 40000;
-            if (v.StartsWith("high"))   return 100000;
-            return 40000;
+            if (string.IsNullOrEmpty(v)) return BudgetMedium;
+            if (v.StartsWith("low"))    return BudgetLow;
+            if (v.StartsWith("medium")) return BudgetMedium;
+            if (v.StartsWith("high"))   return BudgetHigh;
+            return BudgetMedium;
         }
 
         void OnLoad()
