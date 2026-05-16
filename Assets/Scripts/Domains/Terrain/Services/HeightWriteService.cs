@@ -17,6 +17,7 @@ namespace Domains.Terrain.Services
         private readonly System.Func<int> _getWidth;
         private readonly System.Func<int> _getHeight;
 
+        /// <summary>Construct height write service with dependencies.</summary>
         public HeightWriteService(
             System.Func<HeightMap> getHeightMap,
             System.Action<HeightMap> setHeightMap,
