@@ -463,37 +463,6 @@ Orchestrator: [`ia/projects/utilities-master-plan.md`](projects/utilities-master
 
 ### Stage 1.1 — Data contracts + enums
 
-- [ ] **TECH-331** — Add `UtilityKind` / `ScaleTag` / `PoolStatus` enums (Stage 1.1 T1.1.1)
-  - Type: infrastructure / data model
-  - Files: `Assets/Scripts/Data/Utilities/UtilityKind.cs` (new), `ScaleTag.cs` (new), `PoolStatus.cs` (new)
-  - Notes: Three plain enums w/ XML doc per value. No runtime refs yet. Stage 1.1 Phase 1 of utilities-master-plan.
-  - Acceptance: files compile clean via `unity:compile-check`; `validate:all` green.
-  - Related: TECH-332, TECH-333, TECH-334
-
-- [ ] **TECH-332** — Add `PoolState` struct (Stage 1.1 T1.1.2)
-  - Type: infrastructure / data model
-  - Files: `Assets/Scripts/Data/Utilities/PoolState.cs` (new)
-  - Notes: Blittable struct (`net`, `ema`, `status`, two hysteresis counters). Default → Healthy + zeros. Stage 1.1 Phase 1.
-  - Acceptance: compiles clean; blittable; `validate:all` green.
-  - Depends on: TECH-331 (PoolStatus enum — hard gate)
-  - Related: TECH-331, TECH-333, TECH-334
-
-- [ ] **TECH-333** — Add `IUtilityContributor` + `IUtilityConsumer` interfaces (Stage 1.1 T1.1.3)
-  - Type: infrastructure / data model
-  - Files: `Assets/Scripts/Data/Utilities/IUtilityContributor.cs` (new), `IUtilityConsumer.cs` (new)
-  - Notes: Two read-only interfaces — Kind, rate, Scale. Consumed by service + registry in later stages. Stage 1.1 Phase 2.
-  - Acceptance: compile clean; XML doc; `validate:all` green.
-  - Depends on: TECH-331 (enums — hard gate)
-  - Related: TECH-331, TECH-332, TECH-334
-
-- [ ] **TECH-334** — Utilities assembly + compile-check green (Stage 1.1 T1.1.4)
-  - Type: infrastructure / build
-  - Files: `Assets/Scripts/Data/Utilities/Utilities.asmdef` (new, if used)
-  - Notes: Asmdef wiring OR confirm main-asm inclusion. Closes Stage 1.1 exit criteria. Stage 1.1 Phase 2.
-  - Acceptance: `unity:compile-check` green; types visible to consumers; `validate:all` green.
-  - Depends on: TECH-331, TECH-332, TECH-333 (all types exist — hard gate)
-  - Related: TECH-331, TECH-332, TECH-333
-
 ## Skill training program
 
 Orchestrator: [`ia/projects/skill-training-master-plan.md`](projects/skill-training-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Approach A two-skill split — structured JSON self-report emitter at Phase-N-tail of 13 lifecycle skills + `skill-train` consumer subagent (Opus, on-demand) that synthesizes recurring friction into patch proposals for SKILL.md bodies, gated by user review. Exploration: [`docs/skill-training-exploration.md`](docs/skill-training-exploration.md) §Design Expansion. Stage 1.1 opened 2026-04-18 — 4 tasks filed below (TECH-367..TECH-370: glossary rows × 4 + agent-lifecycle surface-map row + CLAUDE.md §3 pointer + AGENTS.md retrospective paragraph). Satisfies invariant #12 — terminology lands before Stage 1.2 or Step 2 authors cross-refs.

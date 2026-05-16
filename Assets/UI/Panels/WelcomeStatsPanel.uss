@@ -1,0 +1,48 @@
+.welcome-stats__panel {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    translate: 0 -50%;
+    background-color: rgba(20, 16, 10, 0.82);
+    border-radius: 8px;
+    padding: 20px;
+    min-width: 240px;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.welcome-stats__panel--visible {
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+}
+
+.welcome-stats__title {
+    font-size: 16px;
+    color: rgb(220, 200, 160);
+    margin-bottom: 14px;
+    -unity-font-style: bold;
+    -unity-text-align: upper-center;
+}
+
+.welcome-stats__fields {
+    flex-direction: column;
+}
+
+.welcome-stats__row {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.welcome-stats__label {
+    font-size: 13px;
+    color: rgb(180, 170, 150);
+}
+
+.welcome-stats__value {
+    font-size: 13px;
+    color: rgb(240, 230, 200);
+    -unity-font-style: bold;
+}

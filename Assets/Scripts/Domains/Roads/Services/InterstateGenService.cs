@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 using Territory.Core;
 using Territory.Geography;
@@ -59,7 +60,7 @@ public class InterstateGenService
         if (heightMap == null) return positions;
 
         int runSeed = System.Environment.TickCount ^ (int)(Time.realtimeSinceStartup * 1000);
-        Random.InitState(InterstateGenSeed + attemptOffset + runSeed);
+        UnityEngine.Random.InitState(InterstateGenSeed + attemptOffset + runSeed);
 
         int w = _grid.width;
         int h = _grid.height;
@@ -75,7 +76,7 @@ public class InterstateGenService
         }
         if (borderPairs.Count == 0) return positions;
 
-        int pairIdx = Random.Range(0, borderPairs.Count);
+        int pairIdx = UnityEngine.Random.Range(0, borderPairs.Count);
         int borderA = borderPairs[pairIdx].a;
         int borderB = borderPairs[pairIdx].b;
 
@@ -86,7 +87,7 @@ public class InterstateGenService
 
         for (int attempt = 0; attempt < MaxRouteAttempts; attempt++)
         {
-            Random.InitState(InterstateGenSeed + attemptOffset + runSeed + attempt);
+            UnityEngine.Random.InitState(InterstateGenSeed + attemptOffset + runSeed + attempt);
 
             Vector2Int? entry = _conformance.GetValidBorderCell(borderA, w, h, heightMap);
             Vector2Int? exit = _conformance.GetValidBorderCell(borderB, w, h, heightMap);
@@ -94,7 +95,7 @@ public class InterstateGenService
 
             for (int pathTry = 0; pathTry < PathTriesPerPair; pathTry++)
             {
-                Random.InitState(InterstateGenSeed + attemptOffset + runSeed + attempt * 100 + pathTry);
+                UnityEngine.Random.InitState(InterstateGenSeed + attemptOffset + runSeed + attempt * 100 + pathTry);
                 List<Vector2Int> path = FindInterstatePathAStar(entry.Value, exit.Value, w, h, heightMap);
                 if (path == null || path.Count < 2 || path[path.Count - 1] != exit.Value) continue;
                 if (_roads != null && !_roads.ValidateBridgePath(path, heightMap)) continue;
@@ -154,6 +155,8 @@ public class InterstateGenService
     /// <summary>A* path between border cells; smooth + parallel-offset retry on hill cross.</summary>
     public List<Vector2Int> FindInterstatePathAStar(Vector2Int start, Vector2Int end, int w, int h, HeightMap heightMap)
     {
+        if (heightMap == null) throw new ArgumentNullException(nameof(heightMap));
+
         var path = PickLowerCostInterstateAStarPath(start, end, w, h, heightMap);
         if (path == null || path.Count < 2 || path[path.Count - 1] != end)
             path = BiasedWalkPath(start, end, w, h, heightMap);
@@ -407,7 +410,7 @@ public class InterstateGenService
 
                 if (ax != 0) candidates.Add(new Vector2Int(current.x + ax, current.y));
                 if (ay != 0) candidates.Add(new Vector2Int(current.x, current.y + ay));
-                if (Random.value < 0.08f)
+                if (UnityEngine.Random.value < 0.08f)
                 {
                     if (ax != 0) { candidates.Add(new Vector2Int(current.x, current.y + 1)); candidates.Add(new Vector2Int(current.x, current.y - 1)); }
                     if (ay != 0) { candidates.Add(new Vector2Int(current.x + 1, current.y)); candidates.Add(new Vector2Int(current.x - 1, current.y)); }
@@ -457,7 +460,7 @@ public class InterstateGenService
                 }
                 int dist = Mathf.Abs(c.x - end.x) + Mathf.Abs(c.y - end.y);
                 int score = dist + stepCost + turnCost;
-                if (score < bestScore || (score == bestScore && Random.value > 0.5f))
+                if (score < bestScore || (score == bestScore && UnityEngine.Random.value > 0.5f))
                 {
                     bestScore = score;
                     next = c;

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 using Territory.Core;
 using Territory.Terrain;
@@ -65,6 +66,8 @@ public class InterstateConformanceService
     /// <summary>True if cell allowed as interstate origin (height>0 + slope allowed).</summary>
     public bool IsCellAllowedForInterstate(int x, int y, int w, int h, HeightMap heightMap, bool checkSlopes)
     {
+        if (heightMap == null) throw new ArgumentNullException(nameof(heightMap));
+
         if (heightMap.GetHeight(x, y) <= 0)
             return false;
         if (!checkSlopes || _terrain == null) return true;
@@ -129,7 +132,7 @@ public class InterstateConformanceService
         var candidates = GetValidBorderCellsWithPreference(border, w, h, heightMap);
         if (candidates.Count == 0) return null;
         int poolSize = Mathf.Min(candidates.Count, Mathf.Max(1, (candidates.Count + 2) / 3));
-        int idx = Random.Range(0, poolSize);
+        int idx = UnityEngine.Random.Range(0, poolSize);
         return candidates[idx];
     }
 
@@ -227,6 +230,9 @@ public class InterstateConformanceService
     /// <summary>True if path crosses water then lands within max bridge width.</summary>
     public bool IsValidBridgeSegment(List<Vector2Int> path, Vector2Int waterCell, Vector2Int end, int w, int h, HeightMap heightMap)
     {
+        if (path == null) throw new ArgumentNullException(nameof(path));
+        if (heightMap == null) throw new ArgumentNullException(nameof(heightMap));
+
         if (path.Count == 0) return false;
         int dx = end.x - waterCell.x;
         int dy = end.y - waterCell.y;
@@ -260,6 +266,8 @@ public class InterstateConformanceService
     /// <summary>True if bridge segment from start cell crosses ≤ max water tiles to land.</summary>
     public bool IsValidBridgeSegmentFrom(Vector2Int from, Vector2Int waterCell, Vector2Int end, int w, int h, HeightMap heightMap)
     {
+        if (heightMap == null) throw new ArgumentNullException(nameof(heightMap));
+
         if (heightMap.GetHeight(waterCell.x, waterCell.y) != 0) return false;
         int dx = end.x - waterCell.x;
         int dy = end.y - waterCell.y;
@@ -291,6 +299,8 @@ public class InterstateConformanceService
     /// <summary>True if single step from→to valid (slope/height/bridge).</summary>
     public bool IsDirectStepValid(Vector2Int from, Vector2Int to, int w, int h, HeightMap heightMap, Vector2Int pathEnd)
     {
+        if (heightMap == null) throw new ArgumentNullException(nameof(heightMap));
+
         if (to.x < 0 || to.x >= w || to.y < 0 || to.y >= h) return false;
         int hFrom = heightMap.GetHeight(from.x, from.y);
         int hTo = heightMap.GetHeight(to.x, to.y);
