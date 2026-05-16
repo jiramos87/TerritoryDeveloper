@@ -38,6 +38,7 @@ public class PrefabResolverService
 
     private readonly List<Vector2Int> scratchHighDeckBridgeNormals = new List<Vector2Int>(4);
 
+    /// <summary>Construct prefab resolver — wires lookup + variantPick + cache subservices.</summary>
     public PrefabResolverService(IGridManager grid, ITerrainManager terrain, IRoadManager roads)
     {
         gridManager = grid;
