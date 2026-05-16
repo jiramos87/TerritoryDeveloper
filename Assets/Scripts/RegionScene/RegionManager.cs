@@ -1,12 +1,16 @@
+using System;
 using UnityEngine;
 using Domains.Registry;
+using Territory.Core;
 using Territory.IsoSceneCore;
 using Territory.IsoSceneCore.Contracts;
+using Territory.RegionScene.CellRendering;
 using Territory.RegionScene.Evolution;
 using Territory.RegionScene.Persistence;
 using Territory.RegionScene.Terrain;
 using Territory.RegionScene.Tools;
 using Territory.RegionScene.UI;
+using Territory.Services;
 
 namespace Territory.RegionScene
 {
@@ -33,6 +37,18 @@ namespace Territory.RegionScene
         private RegionCellRenderer _cellRenderer;
         private RegionData _regionData;
         private RegionToolCreateCity _createCityTool;
+
+        // Stage 8.0 — single-renderer registry slot. Defaults to BrownDiamondCellRenderer;
+        // sibling exploration overrides by registering its own IRegionCellRenderer before RegionManager.Start.
+        private IRegionCellRenderer _cellRendererPlugin;
+
+        // Stage 8.0 — IsoSceneContextService for event fire guard (only fire in Region context).
+        private IsoSceneContextService _contextService;
+
+        /// <summary>Stage 8.0 — fires when GrowthCatchupRunner.Catchup completes for the player city while
+        /// IsoSceneContext == Region. Sibling exploration subscribes to re-render the player 2x2 area.
+        /// Does NOT fire while IsoSceneContext == City (city self-renders in CityScene).</summary>
+        public event Action<PlayerCityState> PlayerCityDataUpdated;
 
         private void Awake()
         {
@@ -81,9 +97,23 @@ namespace Territory.RegionScene
             _cellRenderer.Configure(_heightMap, _waterMap, _cliffMap, _culler);
             _cellRenderer.WireSprites(grassSprite);
 
+            // Stage 8.0 — resolve IRegionCellRenderer plugin (sibling override or default).
+            _cellRendererPlugin = _registry.Resolve<IRegionCellRenderer>();
+            if (_cellRendererPlugin == null)
+            {
+                var defaultPlugin = new BrownDiamondCellRenderer(rendererGo.transform, grassSprite, RegionHeightMap.RegionGridSize);
+                _cellRendererPlugin = defaultPlugin;
+                _registry.Register<IRegionCellRenderer>(_cellRendererPlugin);
+            }
+            // Wire plugin into culler callback so Render() is invoked per visible cell.
+            _culler.OnVisibleSetChanged += OnVisibleSetChangedPlugin;
+
             // Stage 3.0 — wire click handler (Subscribe in Start per invariant #12)
             if (cellClickHandler != null)
                 cellClickHandler.Configure(_heightMap, _waterMap, _cliffMap);
+
+            // Stage 8.0 — resolve context service for PlayerCityDataUpdated guard.
+            _contextService = FindObjectOfType<IsoSceneContextService>();
 
             // Stage 5.0 — register city-placement tool into IIsoSceneToolRegistry
             var toolReg   = _registry.Resolve<IIsoSceneToolRegistry>();
@@ -106,6 +136,32 @@ namespace Territory.RegionScene
             _camera?.Tick(Time.deltaTime);
         }
 
+        private void OnDestroy()
+        {
+            if (_culler != null)
+                _culler.OnVisibleSetChanged -= OnVisibleSetChangedPlugin;
+        }
+
+        /// <summary>Stage 8.0 — invoke IRegionCellRenderer.Render per visible cell chunk range.</summary>
+        private void OnVisibleSetChangedPlugin(int minCX, int maxCX, int minCY, int maxCY)
+        {
+            if (_cellRendererPlugin == null || _heightMap == null) return;
+            int chunkSize = 16;
+            int xStart = Mathf.Max(0, minCX * chunkSize);
+            int xEnd   = Mathf.Min(RegionHeightMap.RegionGridSize - 1, (maxCX + 1) * chunkSize - 1);
+            int yStart = Mathf.Max(0, minCY * chunkSize);
+            int yEnd   = Mathf.Min(RegionHeightMap.RegionGridSize - 1, (maxCY + 1) * chunkSize - 1);
+
+            for (int x = xStart; x <= xEnd; x++)
+            {
+                for (int y = yStart; y <= yEnd; y++)
+                {
+                    var regionCell = new RegionCell(x, y, _regionData?.GetCell(x, y)?.owningCityId);
+                    _cellRendererPlugin.Render(regionCell, null);
+                }
+            }
+        }
+
         private void DestroyPlaceholder()
         {
             var placeholder = transform.Find("PlaceholderSprite");
@@ -126,5 +182,38 @@ namespace Territory.RegionScene
 
         // ArrowKeysPanCamera — tracer anchor for stage1.0 test
         public bool ArrowKeysPanCamera => _camera != null;
+
+        /// <summary>Stage 8.0 — active IRegionCellRenderer plugin. Used by contract test to assert Render() call count.</summary>
+        public IRegionCellRenderer CellRendererPlugin => _cellRendererPlugin;
+
+        /// <summary>Stage 8.0 — called by growth-catchup pipeline when city evolution completes while in Region context.
+        /// Fires PlayerCityDataUpdated and re-renders the player 2x2 area via the active IRegionCellRenderer.
+        /// NO-OP when IsoSceneContext == City (city self-renders).</summary>
+        public void NotifyCityEvolved(PlayerCityState state)
+        {
+            if (state == null) return;
+            // Guard: only fire and re-render in Region context.
+            if (_contextService != null && _contextService.Context != IsoSceneContextService.SceneContext.Region)
+                return;
+
+            PlayerCityDataUpdated?.Invoke(state);
+
+            // Re-render player 2x2 footprint with fresh state.
+            if (_cellRendererPlugin != null)
+            {
+                for (int dx = 0; dx < 2; dx++)
+                {
+                    for (int dy = 0; dy < 2; dy++)
+                    {
+                        int cx = state.AnchorX + dx;
+                        int cy = state.AnchorY + dy;
+                        if (cx < 0 || cx >= RegionHeightMap.RegionGridSize) continue;
+                        if (cy < 0 || cy >= RegionHeightMap.RegionGridSize) continue;
+                        var cell = new RegionCell(cx, cy, _regionData?.GetCell(cx, cy)?.owningCityId);
+                        _cellRendererPlugin.Render(cell, state);
+                    }
+                }
+            }
+        }
     }
 }
