@@ -27,11 +27,16 @@ namespace Domains.Water.Services
         /// <summary>Clear all water output (call when plant list is reset).</summary>
         public void ResetWaterOutput() => _cityWaterOutput = 0;
 
+        /// <summary>Total water output.</summary>
         public int GetTotalWaterOutput() => _cityWaterOutput;
 
+        /// <summary>Add value to water consumption.</summary>
         public void AddWaterConsumption(int value) => _cityWaterConsumption += value;
+        /// <summary>Subtract value from water consumption.</summary>
         public void RemoveWaterConsumption(int value) => _cityWaterConsumption -= value;
+        /// <summary>Total water consumption.</summary>
         public int GetTotalWaterConsumption() => _cityWaterConsumption;
+        /// <summary>True if output exceeds consumption (city water available).</summary>
         public bool GetCityWaterAvailability() => _cityWaterOutput > _cityWaterConsumption;
 
         // ─── Adjacency query (pure; no MonoBehaviour) ─────────────────────────
