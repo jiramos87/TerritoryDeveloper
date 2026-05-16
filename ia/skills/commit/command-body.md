@@ -10,7 +10,7 @@
 
 **Related:**
 - [`caveman:caveman-commit`](../caveman-commit.md) — caveman-style commit message helper. `/commit` invokes per-cluster after subject synthesis.
-- [`/verify-loop`](verify-loop.md) — full closed-loop verification (use BEFORE `/commit` when bridge/compile evidence needed).
+- [`/verify-loop`](../../../.claude/commands/verify-loop.md) — full closed-loop verification (use BEFORE `/commit` when bridge/compile evidence needed).
 
 ## Dispatch
 

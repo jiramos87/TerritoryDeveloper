@@ -75,7 +75,7 @@ Seam #2 tuples carry a domain-specific shape instead of the generic 4-key shape.
 | `related` | string[] | Sibling task ids within same Stage. May be empty. |
 | `stub_body` | object | Sub-fields: `summary` (§1), `goals` (§2.1), `systems_map` (§4.2), `impl_plan_sketch` (§7). Applier writes these into spec stub verbatim. |
 
-Pair skills: [`stage-file/SKILL.md`](../skills/stage-file/SKILL.md) (merged planner + applier passes — DB-backed post Step 6 collapse).
+Pair skills: [`ship-plan/SKILL.md`](../skills/ship-plan/SKILL.md) (merged planner + applier passes — DB-backed post Step 6 collapse).
 
 ## Validation gate
 
@@ -86,7 +86,7 @@ After applying all tuples, Sonnet pair-tail MUST run the validator appropriate t
 | 1, 2 | `npm run validate:master-plan-status` + `npm run validate:backlog-yaml` |
 | 3 | `npm run verify:local` (or stage-appropriate Path A) |
 
-Stage closeout (former seam #4) runs `npm run validate:all` inline within `/ship-stage` Pass B after `stage_closeout_apply` MCP returns — see [`ship-stage/SKILL.md`](../skills/ship-stage/SKILL.md).
+Stage closeout (former seam #4) runs `npm run validate:all` inline within `/ship-stage` Pass B after `stage_closeout_apply` MCP returns — see [`ship-cycle/SKILL.md`](../skills/ship-cycle/SKILL.md).
 
 On non-zero exit: pair-tail STOPS, returns control to Opus pair-head with `{exit_code, stderr, failing_tuple_index}`. Opus revises the `§Plan`; Sonnet re-applies from scratch (idempotency clause guarantees safety).
 

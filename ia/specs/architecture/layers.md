@@ -55,7 +55,7 @@
 | RoadStrokeTerrainRules | Land slope allowlist and stroke truncation (flat + cardinal ramps only for road cells) |
 | UrbanCentroidService | Urban centroid and ring calculation |
 | GameBootstrap | Entry point, game loading flow |
-| **Compute** utilities (`Utilities/Compute/`) | **Pure** **C#** **World ↔ Grid**, **growth ring**, **grid distance**, **`PathfindingCostKernel`**, **WaterAdjacency**, **DesirabilityFieldSampler**, etc. **Edit Mode** **UTF** parity-checks **`tools/compute-lib`**. Charter trace: [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md); ongoing rows: [`BACKLOG.md`](../../BACKLOG.md) **§ Compute-lib program**. |
+| **Compute** utilities (`Utilities/Compute/`) | **Pure** **C#** **World ↔ Grid**, **growth ring**, **grid distance**, **`PathfindingCostKernel`**, **WaterAdjacency**, **DesirabilityFieldSampler**, etc. **Edit Mode** **UTF** parity-checks **`tools/compute-lib`**. Charter trace: [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md); ongoing rows: [`BACKLOG.md`](../../../BACKLOG.md) **§ Compute-lib program**. |
 
 ## Full Dependency Map
 

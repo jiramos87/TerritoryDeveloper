@@ -66,7 +66,7 @@ No MCP from skill body beyond the Tool recipe below.
 
 `design-explore` → `master-plan-new` → `master-plan-extend` → `stage-decompose` → `stage-file` → `stage-authoring` → `plan-review` (→ `plan-applier` on critical, cap=1) → `project-new` → `/ship-stage` (inline closeout). Release-rollout sits ABOVE this chain — it does not replace it; it sequences multiple child chains under one umbrella.
 
-**Related:** [`release-rollout-enumerate`](../release-rollout-enumerate/SKILL.md) · [`release-rollout-track`](../release-rollout-track/SKILL.md) · [`release-rollout-skill-bug-log`](../release-rollout-skill-bug-log/SKILL.md) · [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/skills/README.md`](../README.md).
+**Related:** [`release-rollout-enumerate`](../release-rollout-enumerate/SKILL.md) · [`release-rollout-track`](../release-rollout-track/SKILL.md) · [`release-rollout-skill-bug-log`](../release-rollout-skill-bug-log/SKILL.md) · [`ship-plan`](../ship-plan/SKILL.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/skills/README.md`](../README.md).
 
 **Shape ref:** [`docs/full-game-mvp-rollout-tracker.md`](../../../docs/full-game-mvp-rollout-tracker.md) (canonical tracker shape — 11 rows + disagreements + skill iteration log).
 
@@ -284,7 +284,7 @@ Phase 4 table + Phase 4 handoff shape + §Next step + Guardrails all updated to 
 
 **Rollout row:** all rows (skill-level fix, not row-specific)
 
-**Tracker aggregator:** [`docs/full-game-mvp-rollout-tracker.md#skill-iteration-log`](../../../docs/full-game-mvp-rollout-tracker.md#skill-iteration-log)
+**Tracker aggregator:** [`docs/full-game-mvp-rollout-tracker.md#skill-iteration-log`](../../../docs/full-game-mvp-rollout-tracker.md#skill-iteration-log-aggregator)
 
 ---
 
@@ -307,6 +307,6 @@ Phase 4 emit-only dispatch. No autonomous chaining. No product-language intervie
 
 **Rollout row:** all rows (skill-level fix)
 
-**Tracker aggregator:** [`docs/full-game-mvp-rollout-tracker.md#skill-iteration-log`](../../../docs/full-game-mvp-rollout-tracker.md#skill-iteration-log)
+**Tracker aggregator:** [`docs/full-game-mvp-rollout-tracker.md#skill-iteration-log`](../../../docs/full-game-mvp-rollout-tracker.md#skill-iteration-log-aggregator)
 
 ---

@@ -6,7 +6,7 @@ slices_via: none
 ---
 # TECH-828 — Strict (slug, stage_id) and (task_id) FK pre-check + descriptive error in cron enqueue MCP tools
 
-> **Issue:** [TECH-828](../../BACKLOG.md)
+> **Issue:** [TECH-828](../../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-05-08
 > **Last updated:** 2026-05-08

@@ -33,9 +33,9 @@ hard_boundaries: []
 
 # Close Dev Loop — fix → verify → report (IDE agent bridge)
 
-Visual/terrain bug recipe. Before/after via `debug_context_bundle` (Moore export + screenshot + console + anomalies). **Canonical:** glossary IDE agent bridge, unity-development-context §10, [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md).
+Visual/terrain bug recipe. Before/after via `debug_context_bundle` (Moore export + screenshot + console + anomalies). **Canonical:** glossary IDE agent bridge, unity-development-context §10, [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md).
 
-**Timeouts:** `timeout_ms: 40000` initial; on timeout → `npm run unity:ensure-editor` → retry 60 s. Ceiling 120 s. Policy: [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md).
+**Timeouts:** `timeout_ms: 40000` initial; on timeout → `npm run unity:ensure-editor` → retry 60 s. Ceiling 120 s. Policy: [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
 
 **Related:** [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) · [`project-spec-implement`](../project-spec-implement/SKILL.md) · [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) (Step 0).
 
@@ -106,4 +106,4 @@ npm run db:bridge-preflight
 - Exit 4 (SQL error) → report code + stderr, no retry.
 - Still failing after one repair → report, escalate, no loop.
 
-See [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) (Bridge environment preflight) for URL resolution + Unity/MCP alignment.
+See [`docs/postgres-ia-dev-setup.md`](../../../docs/postgres-ia-dev-setup.md) (Bridge environment preflight) for URL resolution + Unity/MCP alignment.

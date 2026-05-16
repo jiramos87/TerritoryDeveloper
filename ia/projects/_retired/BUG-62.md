@@ -6,7 +6,7 @@ slices_via: none
 ---
 # BUG-62 — Toolbar + HUD button clicks dead — adapter slug case mismatch
 
-> **Issue:** [BUG-62](../../BACKLOG.md)
+> **Issue:** [BUG-62](../../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-05-04
 > **Last updated:** 2026-05-04

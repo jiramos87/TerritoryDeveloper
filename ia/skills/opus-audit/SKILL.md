@@ -143,6 +143,5 @@ Return: `{stage_id, tasks_audited[], audit_paragraphs_written: N}`.
 ## Cross-references
 
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
-- [`ia/skills/opus-code-review/SKILL.md`](../opus-code-review/SKILL.md) — per-Stage code review (runs before audit).
-- [`ia/skills/ship-stage/SKILL.md`](../ship-stage/SKILL.md) — caller; owns closeout via `stage_closeout_apply`.
+- [`ia/skills/ship-cycle/SKILL.md`](../ship-cycle/SKILL.md) — caller; owns closeout via `stage_closeout_apply`.
 - Glossary term **Opus audit** (`ia/specs/glossary.md`).

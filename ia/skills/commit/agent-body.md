@@ -2,7 +2,7 @@
 
 # Mission
 
-Run [`ia/skills/commit/SKILL.md`](../../ia/skills/commit/SKILL.md) end-to-end for `$ARGUMENTS`. Sweep full working tree (caller + orphan changes from closed parallel sessions), cluster by topic, poll caller per cluster, validate + commit per cluster.
+Run [`ia/skills/commit/SKILL.md`](SKILL.md) end-to-end for `$ARGUMENTS`. Sweep full working tree (caller + orphan changes from closed parallel sessions), cluster by topic, poll caller per cluster, validate + commit per cluster.
 
 # Execution model
 

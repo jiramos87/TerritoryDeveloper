@@ -6,7 +6,7 @@ slices_via: none
 ---
 # TECH-846 — Big-file Read PreToolUse warn hook (Tier A4 compaction mitigation)
 
-> **Issue:** [TECH-846](../../BACKLOG.md)
+> **Issue:** [TECH-846](../../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-05-08
 > **Last updated:** 2026-05-08

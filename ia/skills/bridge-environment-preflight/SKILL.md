@@ -34,7 +34,7 @@ hard_boundaries: []
 
 Run before any `unity_bridge_command` / `unity_compile` / `unity_bridge_get`, or at start of a close-dev-loop session. Checks Postgres reachable + migration 0008 (`agent_bridge_job`) applied — IDE agent bridge queue prereqs.
 
-**Related:** [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (Step 0). **Post exit 0:** `unity_bridge_command` with `timeout_ms: 40000` initial; on timeout follow escalation protocol ([`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md)): `npm run unity:ensure-editor` → retry 60 s. **Normative:** [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md), [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md), unity-development-context §10.
+**Related:** [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (Step 0). **Post exit 0:** `unity_bridge_command` with `timeout_ms: 40000` initial; on timeout follow escalation protocol ([`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md)): `npm run unity:ensure-editor` → retry 60 s. **Normative:** [`docs/postgres-ia-dev-setup.md`](../../../docs/postgres-ia-dev-setup.md), [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md), unity-development-context §10.
 
 ## Prerequisites
 
@@ -70,7 +70,7 @@ Not required: Unity Editor (bridge commands check separately).
 
 ## URL resolution note
 
-Script imports `resolveIaDatabaseUrl` — same two-layer resolution as territory-ia MCP: `DATABASE_URL` env wins, else `config/postgres-dev.json` when not in CI. Unity Editor may use EditorPrefs or repo-root `.env.local` — NOT read by this script. Preflight passes but bridge times out → likely URL mismatch between MCP and Unity. See [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md).
+Script imports `resolveIaDatabaseUrl` — same two-layer resolution as territory-ia MCP: `DATABASE_URL` env wins, else `config/postgres-dev.json` when not in CI. Unity Editor may use EditorPrefs or repo-root `.env.local` — NOT read by this script. Preflight passes but bridge times out → likely URL mismatch between MCP and Unity. See [`docs/postgres-ia-dev-setup.md`](../../../docs/postgres-ia-dev-setup.md).
 
 ## Persist exit code (runtime state)
 

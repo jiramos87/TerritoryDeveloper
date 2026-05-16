@@ -62,7 +62,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Dispatch mode:** Inline (SKILL.md-only) or via Agent subagent (Sonnet pin). No multi-turn LLM reasoning — pure mechanical DB mutex.
 
-**Related:** [`section-closeout`](../section-closeout/SKILL.md) (release) · [`ship-stage`](../ship-stage/SKILL.md) (heartbeats) · `section_claim` MCP · `claim_heartbeat` MCP.
+**Related:** [`section-closeout`](../section-closeout/SKILL.md) (release) · [`ship-cycle`](../ship-cycle/SKILL.md) (heartbeats) · `section_claim` MCP · `claim_heartbeat` MCP.
 
 ---
 

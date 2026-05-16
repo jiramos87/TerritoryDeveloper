@@ -60,7 +60,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 - No worktree teardown — V2 dropped per-section worktree.
 - Drift gate + DB closeout + claim release stay; that's the entire skill.
 
-**Related:** [`section-claim`](../section-claim/SKILL.md) · [`ship-stage`](../ship-stage/SKILL.md) · `section_closeout_apply` MCP.
+**Related:** [`section-claim`](../section-claim/SKILL.md) · [`ship-cycle`](../ship-cycle/SKILL.md) · `section_closeout_apply` MCP.
 
 ---
 

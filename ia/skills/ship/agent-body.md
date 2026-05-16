@@ -2,7 +2,7 @@
 
 # Mission
 
-Run [`ia/skills/ship/SKILL.md`](../../ia/skills/ship/SKILL.md) end-to-end for `$ARGUMENTS`. Single-task standalone ship pipeline: author digest → implement → verify-loop → close (DB status walk). 6 phases (Resolve task + standalone gate → Author §Plan Digest → Implement → Verify-loop → Close → Hand-off).
+Run [`ia/skills/ship/SKILL.md`](SKILL.md) end-to-end for `$ARGUMENTS`. Single-task standalone ship pipeline: author digest → implement → verify-loop → close (DB status walk). 6 phases (Resolve task + standalone gate → Author §Plan Digest → Implement → Verify-loop → Close → Hand-off).
 
 Standalone-tasks only. Stage-attached tasks (slug + stage_id non-null in `ia_tasks`) → STOP with `/ship-stage` handoff.
 

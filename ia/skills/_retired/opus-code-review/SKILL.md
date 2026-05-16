@@ -42,7 +42,7 @@ hard_boundaries: []
 
 # Opus-code-review skill (per-Stage)
 
-Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). **Self-review on your own branch** — [`agent-code-review-self.md`](../../rules/agent-code-review-self.md).
+Caveman default — [`agent-output-caveman.md`](../../../rules/agent-output-caveman.md). **Self-review on your own branch** — [`agent-code-review-self.md`](../../../rules/agent-code-review-self.md).
 
 **Role:** Per-Stage reviewer in `/ship-stage` Pass B. Runs after `verify-loop` succeeds on the cumulative Stage diff. Reads diff vs combined acceptance from §Plan Digest of every Task in the Stage; emits one of three verdicts. Critical fixes applied **inline** via direct Edit / Write — `§Code Fix Plan` tuples are NOT written. Caller re-enters verify-loop + code-review at most once on critical.
 
@@ -75,7 +75,7 @@ DB is sole source of truth for task spec sections. Reads via `task_spec_section`
 
 For each Task `{TASK_ID}` in `stage_bundle.tasks` (status ∈ {`implemented`, `verified`}):
 
-1. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "§Plan Digest"})` → relaxed shape (§Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate) OR legacy shape (§Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps). Detect by sub-heading presence. Literal `§` prefix required (see [`plan-digest-contract.md` §Section heading literal](../../rules/plan-digest-contract.md)).
+1. `mcp__territory-ia__task_spec_section({task_id: "{TASK_ID}", section: "§Plan Digest"})` → relaxed shape (§Goal / §Acceptance / §Pending Decisions / §Implementer Latitude / §Work Items / §Test Blueprint / §Invariants & Gate) OR legacy shape (§Goal / §Acceptance / §Test Blueprint / §Examples / §Mechanical Steps). Detect by sub-heading presence. Literal `§` prefix required (see [`plan-digest-contract.md` §Section heading literal](../../../rules/plan-digest-contract.md)).
 2. Aggregate `{TASK_ID → §Plan Digest}` map. Combined acceptance = union of all per-Task §Acceptance rows.
 
 Single bundle covers all N Tasks. Context overhead = O(1) per Stage via `STAGE_MCP_BUNDLE`.
@@ -96,7 +96,7 @@ Run review against checks below over the full Stage diff. Collect findings by se
 | Cross-ref links resolve | minor |
 | Frontmatter `phases:` present on new SKILL.md files | minor |
 | No new singletons; no `FindObjectOfType` in per-frame (C# only) | critical if violated |
-| **Scene wiring** — Task whose §Plan Digest carries a **Scene Wiring** entry (legacy: dedicated mechanical step; relaxed: §Work Items row prefixed `(Scene Wiring)`) OR whose diff fires any trigger in [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) (new runtime MonoBehaviour / new `[SerializeField]` / new StreamingAssets consumer / new prefab at scene boot / new scene-level `UnityEvent`) has a matching `Assets/Scenes/*.unity` edit in the Stage diff AND the evidence block (scene/parent/component/serialized_fields/unity_events/compile_check) was emitted by `spec-implementer` | **critical if trigger fired but no `.unity` / prefab edit, or evidence block absent** |
+| **Scene wiring** — Task whose §Plan Digest carries a **Scene Wiring** entry (legacy: dedicated mechanical step; relaxed: §Work Items row prefixed `(Scene Wiring)`) OR whose diff fires any trigger in [`ia/rules/unity-scene-wiring.md`](../../../rules/unity-scene-wiring.md) (new runtime MonoBehaviour / new `[SerializeField]` / new StreamingAssets consumer / new prefab at scene boot / new scene-level `UnityEvent`) has a matching `Assets/Scenes/*.unity` edit in the Stage diff AND the evidence block (scene/parent/component/serialized_fields/unity_events/compile_check) was emitted by `spec-implementer` | **critical if trigger fired but no `.unity` / prefab edit, or evidence block absent** |
 
 **Determine verdict:**
 - Zero findings → **PASS**.
@@ -196,8 +196,8 @@ Caller branches on `next`:
 
 ## Cross-references
 
-- [`ia/rules/unity-scene-wiring.md`](../../rules/unity-scene-wiring.md) — scene-wiring trigger list + evidence block; feeds Phase 3 critical check.
-- [`ia/skills/verify-loop/SKILL.md`](../verify-loop/SKILL.md) — runs immediately before this skill in Pass B.
+- [`ia/rules/unity-scene-wiring.md`](../../../rules/unity-scene-wiring.md) — scene-wiring trigger list + evidence block; feeds Phase 3 critical check.
+- [`ia/skills/verify-loop/SKILL.md`](../../verify-loop/SKILL.md) — runs immediately before this skill in Pass B.
 - [`ia/skills/ship-stage/SKILL.md`](../ship-stage/SKILL.md) — caller; owns single stage commit + status flips + closeout.
-- [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
+- [`ia/skills/domain-context-load/SKILL.md`](../../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
 - Glossary term **Opus code review** (`ia/specs/glossary.md`).

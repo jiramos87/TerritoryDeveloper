@@ -3,9 +3,9 @@
 **Scope:** Standalone tasks only (`master_plan_id IS NULL` in `ia_tasks`). Stage-attached tasks STOP at Phase 0 with `/ship-stage` handoff.
 
 **Related:**
-- [`/ship-stage`](ship-stage.md) — multi-task Stage chain (different surface; covers stage-attached tasks).
-- [`/stage-authoring`](stage-authoring.md) — Stage-scoped digest authoring (`/ship` Phase 1 calls `--task` mode inline).
-- [`/verify-loop`](verify-loop.md) — closed-loop verification (`/ship` Phase 3 invokes inline).
+- [`/ship-cycle`](../ship-cycle/SKILL.md) — stage-atomic multi-task ship-cycle (Pass A implement + Pass B verify + closeout).
+- [`/ship-plan`](../ship-plan/SKILL.md) — bulk §Plan Digest authoring (`/ship` Phase 1 calls inline for single-task path).
+- [`/verify-loop`](../../../.claude/commands/verify-loop.md) — closed-loop verification (`/ship` Phase 3 invokes inline).
 
 **Locked design:**
 - Step 1 = author digest (no separate readiness gate).

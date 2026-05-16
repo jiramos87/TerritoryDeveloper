@@ -6,7 +6,7 @@ slices_via: none
 ---
 # BUG-59 — Restore MainMenu Options + NewGame click handlers — cross-scene UIManager.Instance gap
 
-> **Issue:** [BUG-59](../../BACKLOG.md)
+> **Issue:** [BUG-59](../../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-29
 > **Last updated:** 2026-04-29

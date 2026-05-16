@@ -45,7 +45,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Role:** Compress mode cold path. Audits `Draft` tasks in a Stage for over-granularity; merges groups into consolidated issues before kickoff. User-gated at Step 3 — no destructive action without explicit confirmation.
 
-Routing: [`stage-file/SKILL.md`](../stage-file/SKILL.md) dispatcher routes here when Stage has 0 `_pending_` + ≥1 `Draft` tasks. File mode → [`stage-file-plan`](../stage-file-plan/SKILL.md) + [`stage-file-apply`](../stage-file-apply/SKILL.md) pair.
+Routing: [`ship-plan/SKILL.md`](../ship-plan/SKILL.md) is the canonical bulk authoring path (stage-file dispatcher retired; compress flow folded into ship-plan).
 
 ---
 

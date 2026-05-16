@@ -41,7 +41,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 Checklist of existing `npm` commands — not a second copy of validation scripts or MCP tools.
 
-**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) (phase exit Pre-commit) · [`plan-applier`](../plan-applier/SKILL.md) Mode stage-closeout (post-IA persistence — retired `project-spec-close` folded into Stage-scoped pair per M6 collapse) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (optional bridge, not part of this manifest) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) + [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) (Verification block). **CI parity:** [`.github/workflows/ia-tools.yml`](../../../.github/workflows/ia-tools.yml).
+**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) (phase exit Pre-commit) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (optional bridge, not part of this manifest) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) + [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) (Verification block). **CI parity:** [`.github/workflows/ia-tools.yml`](../../../.github/workflows/ia-tools.yml).
 
 ## Failure policy
 

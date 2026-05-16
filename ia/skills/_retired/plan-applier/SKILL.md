@@ -42,11 +42,11 @@ caller_agent: plan-applier
 
 # Plan-applier — Sonnet pair-tail
 
-Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md).
+Caveman default — [`agent-output-caveman.md`](../../../rules/agent-output-caveman.md).
 
 **Role:** Sonnet pair-tail for the Plan-Apply pair. Reads `§Plan Fix` tuples emitted by the plan-review pair-head; applies each edit verbatim in declared order; runs validation gate; escalates on anchor ambiguity. Never reorders, merges, or interprets.
 
-Contract: [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Validation gate, §Escalation rule, §Idempotency requirement.
+Contract: [`ia/rules/plan-apply-pair-contract.md`](../../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Validation gate, §Escalation rule, §Idempotency requirement.
 Sibling pair-heads: [`plan-review-mechanical/SKILL.md`](../plan-review-mechanical/SKILL.md) + [`plan-review-semantic/SKILL.md`](../plan-review-semantic/SKILL.md).
 
 **Progress stderr:** use skill name `plan-applier` and phase labels from frontmatter `phases:` array.
@@ -186,7 +186,7 @@ Re-running this skill on partially- or fully-applied `§Plan Fix` exits 0 with z
 
 ## Cross-references
 
-- [`ia/rules/plan-apply-pair-contract.md`](../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Validation gate, §Escalation rule, §Idempotency requirement.
+- [`ia/rules/plan-apply-pair-contract.md`](../../../rules/plan-apply-pair-contract.md) — §Plan tuple shape, §Validation gate, §Escalation rule, §Idempotency requirement.
 - [`ia/skills/plan-review-mechanical/SKILL.md`](../plan-review-mechanical/SKILL.md) + [`ia/skills/plan-review-semantic/SKILL.md`](../plan-review-semantic/SKILL.md) — pair-heads.
 - Glossary term **plan-fix apply** (`ia/specs/glossary.md`).
 

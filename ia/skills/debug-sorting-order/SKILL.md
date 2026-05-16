@@ -33,7 +33,7 @@ hard_boundaries: []
 
 # Debug sorting order — bridge exports + geography §7
 
-**Canonical formula:** [`ia/specs/isometric-geography-system.md`](../specs/isometric-geography-system.md) §7 (retrieve via **`spec_section`** key **`geo`**, section **§7**).
+**Canonical formula:** [`ia/specs/isometric-geography-system.md`](../../specs/isometric-geography-system.md) §7 (retrieve via **`spec_section`** key **`geo`**, section **§7**).
 
 **Not** a substitute for **`close-dev-loop`** when you need **`debug_context_bundle`** (screenshot + console + anomaly scan + Moore export). Use this skill when the question is **sorting math / layer ordering** and bounded **JSON exports** suffice.
 
@@ -78,7 +78,7 @@ Use the same **`seed_cell`** string for both runs. Record artifact paths or past
 | `unity_export_sorting_debug` | **`kind`:** **`export_sorting_debug`** — optional **`seed_cell`** `"x,y"`, **`timeout_ms`**, **`agent_id`**. |
 | `unity_export_cell_chunk` | **`kind`:** **`export_cell_chunk`** — **`origin_x`**, **`origin_y`**, **`chunk_width`**, **`chunk_height`**, optional **`timeout_ms`**, **`agent_id`**. |
 
-Prefer raw **`unity_bridge_command`** if you need a different **`kind`**, manual **`unity_bridge_get`** polling, or custom **`params`** not covered above ([`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md)).
+Prefer raw **`unity_bridge_command`** if you need a different **`kind`**, manual **`unity_bridge_get`** polling, or custom **`params`** not covered above ([`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md)).
 
 ## Seed prompt
 

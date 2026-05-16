@@ -6,7 +6,7 @@ slices_via: none
 ---
 # TECH-847 — Scratchpad ledger MCP + audit-mode skill + audit-summary output-style (Tier A1+A3+C4 compaction-loop mitigation)
 
-> **Issue:** [TECH-847](../../BACKLOG.md)
+> **Issue:** [TECH-847](../../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-05-08
 > **Last updated:** 2026-05-08

@@ -6,7 +6,7 @@ slices_via: none
 ---
 # Project spec review — paste prompt (no Cursor Skill frontmatter)
 
-For chats where Cursor Skills not loaded. Authoritative MCP tool order: **[`ia/skills/stage-authoring/SKILL.md`](../skills/stage-authoring/SKILL.md)** (see **Tool recipe (territory-ia)**).
+For chats where Cursor Skills not loaded. Authoritative MCP tool order: **[`ia/skills/ship-plan/SKILL.md`](../skills/ship-plan/SKILL.md)** (see **Tool recipe (territory-ia)**).
 
 Replace `{SPEC_PATH}` with project spec (e.g. ref `BACKLOG.md` row by issue id — flat task specs phased out post DB-primary refactor).
 

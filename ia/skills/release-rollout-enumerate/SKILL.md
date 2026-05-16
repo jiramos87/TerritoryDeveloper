@@ -39,7 +39,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Lifecycle:** One-shot. Runs ONCE per umbrella to seed the tracker. Re-runs only on explicit reseed request (appends new rows if umbrella bucket table grows). Runs BEFORE the umbrella skill (`release-rollout`) can advance any row.
 
-**Related:** [`release-rollout`](../release-rollout/SKILL.md) · [`master-plan-new`](../master-plan-new/SKILL.md) · [`master-plan-extend`](../master-plan-extend/SKILL.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
+**Related:** [`release-rollout`](../release-rollout/SKILL.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
 ---
 
@@ -180,6 +180,6 @@ Phase 4 handoff + §Next step wrapped as `claude-personal "/..."` with explicit 
 
 **Rollout row:** standalone (seeder skill)
 
-**Tracker aggregator:** [`docs/full-game-mvp-rollout-tracker.md#skill-iteration-log`](../../../docs/full-game-mvp-rollout-tracker.md#skill-iteration-log)
+**Tracker aggregator:** [`docs/full-game-mvp-rollout-tracker.md#skill-iteration-log`](../../../docs/full-game-mvp-rollout-tracker.md#skill-iteration-log-aggregator)
 
 ---

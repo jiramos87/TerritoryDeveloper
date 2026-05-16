@@ -216,8 +216,6 @@ Locked baseline: `hud-bar`, `toolbar` panels seeded in migrations 0109, 0110.
 
 Future expansion: per-kind snapshots (`tokens.json`, `components.json`) — Stage 4 surface.
 
-See also: [`docs/explorations/ui-implementation-mvp-rest.md`](../../docs/explorations/ui-implementation-mvp-rest.md).
-
 ## 6. Composition junctions
 
 ### 6.1 `panel_child`
