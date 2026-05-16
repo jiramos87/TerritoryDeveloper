@@ -15,6 +15,7 @@ namespace Domains.Grid.Services
     {
         private readonly IGridManager grid;
 
+        /// <summary>Construct cell-access service with grid reference.</summary>
         public CellAccessService(IGridManager grid)
         {
             this.grid = grid;
