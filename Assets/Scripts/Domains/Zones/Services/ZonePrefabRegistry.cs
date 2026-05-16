@@ -13,6 +13,7 @@ namespace Domains.Zones.Services
     {
         private readonly Dictionary<(Zone.ZoneType, int), List<GameObject>> _prefabs;
 
+        /// <summary>Construct registry with zone+size→prefab list dictionary.</summary>
         public ZonePrefabRegistry(Dictionary<(Zone.ZoneType, int), List<GameObject>> prefabs)
         {
             _prefabs = prefabs ?? new Dictionary<(Zone.ZoneType, int), List<GameObject>>();
