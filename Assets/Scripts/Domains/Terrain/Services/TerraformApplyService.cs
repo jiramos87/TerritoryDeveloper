@@ -13,6 +13,7 @@ namespace Domains.Terrain.Services
         private readonly System.Func<HeightMap> _getHeightMap;
         private readonly System.Action<int, int> _restoreTerrainForCell;
 
+        /// <summary>Construct terraform apply service with dependencies.</summary>
         public TerraformApplyService(
             System.Func<HeightMap> getHeightMap,
             System.Action<int, int> restoreTerrainForCell = null)
