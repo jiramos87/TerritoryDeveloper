@@ -27,22 +27,27 @@ namespace Domains.UI.Services
         public const float CellDataPanelMaxSquareSide = 220f;
 
         // ─── Name predicates ────────────────────────────────────────────────────
+        /// <summary>True if name matches cell-data panel root.</summary>
         public static bool IsCellDataPanelRootName(string n) => n == CellDataPanelName || n == CellDataPanelNameAlt;
+        /// <summary>True if name matches cell-data panel text holder.</summary>
         public static bool IsCellDataPanelTextHolderName(string n) => n == CellDataPanelTextInsetName || n == CellDataPanelTextHolderAlt;
 
         // ─── Ancestor / root finders ────────────────────────────────────────────
+        /// <summary>Walk ancestors for transform matching exact name.</summary>
         public static Transform FindNamedAncestor(Transform t, string exactName)
         {
             while (t != null) { if (t.name == exactName) return t; t = t.parent; }
             return null;
         }
 
+        /// <summary>Walk up to find cell-data panel root transform.</summary>
         public static Transform FindCellDataPanelRoot(Transform from)
         {
             for (Transform p = from; p != null; p = p.parent) { if (IsCellDataPanelRootName(p.name)) return p; }
             return null;
         }
 
+        /// <summary>Find cell-data panel text inset rect under chrome.</summary>
         public static RectTransform FindCellDataPanelInset(RectTransform chromeRt)
         {
             if (chromeRt == null) return null;
@@ -51,6 +56,7 @@ namespace Domains.UI.Services
             return t != null ? t.GetComponent<RectTransform>() : null;
         }
 
+        /// <summary>Walk up to find HUD layout root (parent of ControlPanel/MiniMap).</summary>
         public static Transform FindHudLayoutRoot(Transform from)
         {
             for (Transform p = from; p != null; p = p.parent)
@@ -58,6 +64,7 @@ namespace Domains.UI.Services
             return null;
         }
 
+        /// <summary>Find HUD layout root via scene scan — post-rebuild fallback.</summary>
         public static Transform FindHudLayoutRootForRebuild()
         {
             GameObject mm = GameObject.Find("MiniMapPanel");
@@ -69,6 +76,7 @@ namespace Domains.UI.Services
         }
 
         // ─── Rect bounds helper ─────────────────────────────────────────────────
+        /// <summary>Get child rect bounds in parent rect coord space.</summary>
         public static bool TryGetRectBoundsInParent(RectTransform parentRt, RectTransform childRt, out float minX, out float maxX, out float minY, out float maxY)
         {
             minX = maxX = minY = maxY = 0f;
