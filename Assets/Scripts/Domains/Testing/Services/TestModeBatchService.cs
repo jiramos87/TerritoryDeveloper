@@ -16,6 +16,7 @@ namespace Domains.Testing.Services
     {
         // ── Command-line arg parsers ────────────────────────────────────────────
 
+        /// <summary>Parse -testSimulationTicks N from args; clamped [0,10000].</summary>
         public static int ParseSimulationTicks(string[] args)
         {
             if (args == null || args.Length == 0) return 0;
@@ -26,6 +27,7 @@ namespace Domains.Testing.Services
             return 0;
         }
 
+        /// <summary>Parse -testGoldenPath path from args; null when absent.</summary>
         public static string ParseTestGoldenPath(string[] args)
         {
             if (args == null || args.Length == 0) return null;
@@ -35,6 +37,7 @@ namespace Domains.Testing.Services
             return null;
         }
 
+        /// <summary>True if -testNewGame flag present.</summary>
         public static bool ParseNewGameFlag(string[] args)
         {
             if (args == null) return false;
@@ -43,6 +46,7 @@ namespace Domains.Testing.Services
             return false;
         }
 
+        /// <summary>Parse -testSeed N from args; 0 when absent.</summary>
         public static int ParseTestSeed(string[] args)
         {
             if (args == null) return 0;
@@ -55,6 +59,7 @@ namespace Domains.Testing.Services
 
         // ── Report writing ──────────────────────────────────────────────────────
 
+        /// <summary>Write JSON report from full batch state.</summary>
         public static void TryWriteReportFromState(string repoRoot, AgentTestModeBatchStateDto state, bool ok, string error)
         {
             int exitCode = state.exit_code != 0 ? state.exit_code : (ok ? 0 : 6);
@@ -62,6 +67,7 @@ namespace Domains.Testing.Services
                 state.ticks_requested, state.ticks_applied, state);
         }
 
+        /// <summary>Write minimal JSON report; reads cmdline args for scenario context.</summary>
         public static void TryWriteReportImmediate(string repoRoot, bool ok, string error, int exitCode)
         {
             string savePath = string.Empty;
@@ -75,6 +81,7 @@ namespace Domains.Testing.Services
             TryWriteReportBody(repoRoot, ok, error, exitCode, savePath, scenarioId, ticksRequested, 0, null);
         }
 
+        /// <summary>Write full JSON report under tools/reports — composes DTO from state.</summary>
         public static void TryWriteReportBody(
             string repoRoot,
             bool ok,
