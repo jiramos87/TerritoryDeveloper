@@ -9,6 +9,8 @@ namespace Territory.Buildings
 /// </summary>
 public class WaterPlant : MonoBehaviour, IBuilding
 {
+    private const int PercentMax = 100;
+
     private int waterOutput;
     private int maintenanceCost;
     private int currentWorkers;
@@ -43,8 +45,8 @@ public class WaterPlant : MonoBehaviour, IBuilding
             BuildingType = Building.BuildingType.Water;
 
             SetActive(true);
-            SetProductivity(100, false);
-            SetWorkers(100); // Use percentage instead of InitialWorkers
+            SetProductivity(PercentMax, false);
+            SetWorkers(PercentMax); // Use percentage instead of InitialWorkers
 
             // Initialize water output
             UpdateWaterOutput();
@@ -67,7 +69,7 @@ public class WaterPlant : MonoBehaviour, IBuilding
 
     public void SetProductivity(int productivityLevel, bool updateWaterOutput = true)
     {
-        productivity = Mathf.Clamp(productivityLevel, 0, 100);
+        productivity = Mathf.Clamp(productivityLevel, 0, PercentMax);
 
         if (updateWaterOutput)
         {
@@ -77,20 +79,20 @@ public class WaterPlant : MonoBehaviour, IBuilding
 
     public void SetBudget(int percentage)
     {
-        maintenanceCost = InitialMaintenanceCost * Mathf.Clamp(percentage, 0, 100) / 100;
+        maintenanceCost = InitialMaintenanceCost * Mathf.Clamp(percentage, 0, PercentMax) / PercentMax;
         SetWorkers(percentage);
     }
 
     public void SetWorkers(int percentage)
     {
-        currentWorkers = MaxWorkers * Mathf.Clamp(percentage, 0, 100) / 100;
+        currentWorkers = MaxWorkers * Mathf.Clamp(percentage, 0, PercentMax) / PercentMax;
         UpdateWaterOutput();
     }
 
     private void UpdateWaterOutput()
     {
         float activeMultiplier = active ? 1f : 0f;
-        float productivityPercent = productivity / 100f;
+        float productivityPercent = productivity / (float)PercentMax;
         float workersPercent = (float)currentWorkers / MaxWorkers;
 
         waterOutput = Mathf.RoundToInt(activeMultiplier * productivityPercent * workersPercent * BaseOutput);

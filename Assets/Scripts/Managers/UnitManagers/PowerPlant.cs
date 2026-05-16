@@ -11,6 +11,8 @@ namespace Territory.Buildings
 /// </summary>
 public class PowerPlant : MonoBehaviour, IBuilding
 {
+    private const int PercentMax = 100;
+
     private int powerOutput;
     private int maintenanceCost;
     private int currentWorkers;
@@ -40,8 +42,8 @@ public class PowerPlant : MonoBehaviour, IBuilding
         BaseOutput = baseOutput;
 
         SetActive(true);
-        SetProductivity(100, false);
-        SetWorkers(100);
+        SetProductivity(PercentMax, false);
+        SetWorkers(PercentMax);
 
         animator = GetComponent<Animator>();
 
@@ -64,7 +66,7 @@ public class PowerPlant : MonoBehaviour, IBuilding
 
     public void SetProductivity(int productivityLevel, bool updatePowerOutput = true)
     {
-        productivity = Mathf.Clamp(productivityLevel, 0, 100);
+        productivity = Mathf.Clamp(productivityLevel, 0, PercentMax);
 
         if (updatePowerOutput)
         {
@@ -74,19 +76,19 @@ public class PowerPlant : MonoBehaviour, IBuilding
 
     public void SetBudget(int percentage)
     {
-        maintenanceCost = InitialMaintenanceCost * Mathf.Clamp(percentage, 0, 100) / 100;
+        maintenanceCost = InitialMaintenanceCost * Mathf.Clamp(percentage, 0, PercentMax) / PercentMax;
         SetWorkers(percentage);
     }
 
     public void SetWorkers(int percentage)
     {
-        currentWorkers = MaxWorkers * Mathf.Clamp(percentage, 0, 100) / 100;
+        currentWorkers = MaxWorkers * Mathf.Clamp(percentage, 0, PercentMax) / PercentMax;
         UpdatePowerOutput();
     }
 
     private void UpdatePowerOutput()
     {
-        powerOutput = (active ? 100 : 0) * productivity / 100 * currentWorkers / MaxWorkers + BaseOutput;
+        powerOutput = (active ? PercentMax : 0) * productivity / PercentMax * currentWorkers / MaxWorkers + BaseOutput;
 
         // Example: Notify CityStats of power output change
         // CityStats.Instance.UpdatePowerOutput();
