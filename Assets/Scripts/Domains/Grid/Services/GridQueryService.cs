@@ -13,6 +13,7 @@ namespace Domains.Grid.Services
     {
         private readonly IGridManager _grid;
 
+        /// <summary>Construct grid-query service with grid reference.</summary>
         public GridQueryService(IGridManager grid)
         {
             _grid = grid;
