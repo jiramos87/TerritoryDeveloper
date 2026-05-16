@@ -157,9 +157,11 @@ namespace Domains.Forests.Services
 
         // ── Forest type data ────────────────────────────────────────────────────────
 
+        /// <summary>Water consumption for forest density type.</summary>
         public int GetWaterConsumptionForForestType(Forest.ForestType ft)
         { switch (ft) { case Forest.ForestType.Sparse: return 2; case Forest.ForestType.Medium: return 3; case Forest.ForestType.Dense: return 5; default: return 0; } }
 
+        /// <summary>Construction cost for forest type (currently 0).</summary>
         public int GetConstructionCostForForestType(Forest.ForestType ft) => 0;
 
         // ── Sorting order ───────────────────────────────────────────────────────────
