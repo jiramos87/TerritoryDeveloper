@@ -22,7 +22,8 @@ namespace Territory.UI
 public class MainMenuController : MonoBehaviour
 {
     private const string LastSavePathKey = "LastSavePath";
-    private const int CitySceneBuildIndex = 1;
+    // Build order: 0=CoreScene, 1=MainMenu, 2=CityScene, 3=RegionScene, 4=SampleScene
+    private const int CitySceneBuildIndex = 2;
 
     [Header("Optional: assign in Inspector to use pre-built UI")]
     [SerializeField] private Button continueButton;
@@ -315,7 +316,7 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        const int RegionSceneBuildIndex = 2;  // Stage 5.0 will move to build settings constant
+        const int RegionSceneBuildIndex = 3;  // Build order: 0=CoreScene,1=MainMenu,2=CityScene,3=RegionScene
         SceneManager.LoadScene(RegionSceneBuildIndex);
     }
 
@@ -378,7 +379,7 @@ public class MainMenuController : MonoBehaviour
 
     public void LoadGame() { OnLoadCityClicked(); }
 
-    public void ReturnToMainMenu() { SceneManager.LoadScene(0); }
+    public void ReturnToMainMenu() { SceneManager.LoadScene(1); } // 1=MainMenu (0 is now CoreScene)
 
     public void QuitGame() { Application.Quit(); }
 

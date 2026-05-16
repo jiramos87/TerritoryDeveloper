@@ -255,7 +255,7 @@ namespace Territory.UI.Modals
             if (_saveManager == null || _selectedSlotIndex < 0 || _selectedSlotIndex >= _slotMetas.Count) return;
             var meta = _slotMetas[_selectedSlotIndex];
             GameStartInfo.SetPendingLoadPath(meta.FilePath);
-            UnityEngine.SceneManagement.SceneManager.LoadScene(1);
+            UnityEngine.SceneManagement.SceneManager.LoadScene(2); // 2=CityScene (0=CoreScene,1=MainMenu)
         }
 
         private void OnSaveConfirmed()

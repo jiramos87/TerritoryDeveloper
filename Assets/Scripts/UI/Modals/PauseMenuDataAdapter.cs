@@ -120,11 +120,10 @@ namespace Territory.UI.Modals
             UnmountSubView();
         }
 
-        // CityScene has no MainMenuController instance; FindObjectOfType returns null
-        // so the legacy delegation path was a silent no-op. MainMenu = build index 0.
+        // MainMenu = build index 1 (0 is now CoreScene — see EditorBuildSettings boot order).
         private void OnMainMenu()
         {
-            SceneManager.LoadScene(0);
+            SceneManager.LoadScene(1);
         }
 
         private void OnQuit()

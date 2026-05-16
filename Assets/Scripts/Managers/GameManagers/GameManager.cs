@@ -15,6 +15,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GridManager gridManager;
     [SerializeField] private GameSaveManager saveManager;
 
+    void Awake()
+    {
+        // T1.0.2 — persist across additive scene loads (CoreScene shell pattern, DEC-A29).
+        // Hub stays in CityScene but survives unload sequence during zoom transition.
+        DontDestroyOnLoad(this.gameObject);
+    }
+
     void Start()
     {
         // Fallback resolves so CreateNewGame path doesn't NPE on saveManager.NewGame()

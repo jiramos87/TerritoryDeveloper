@@ -30,6 +30,7 @@
       <ui:Button name="hud-auto" class="text-btn" text="AUTO"/>
       <ui:Button name="hud-map" class="text-btn" text="MAP" tooltip="Open full mini-map panel (bottom-right)"/>
       <ui:Button name="hud-budget" class="text-btn" text="BUDGET"/>
+      <ui:Button name="hud-leave-city" class="text-btn" text="LEAVE CITY" tooltip="Zoom out to region view"/>
     </ui:VisualElement>
   </ui:VisualElement>
 </ui:UXML>

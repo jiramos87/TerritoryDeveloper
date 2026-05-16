@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:uie="UnityEditor.UIElements"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <Style src="ConfirmTransitionPanel.uss"/>
+  <ui:VisualElement name="confirm-transition-backdrop" class="confirm-transition__backdrop">
+    <ui:VisualElement name="confirm-transition-panel" class="confirm-transition__panel">
+      <ui:Label name="confirm-transition-title" class="confirm-transition__title" text="Leave city for region view?"/>
+      <ui:VisualElement name="confirm-transition-buttons" class="confirm-transition__buttons">
+        <ui:Button name="confirm-transition-yes" class="confirm-transition__btn confirm-transition__btn--yes" text="Yes"/>
+        <ui:Button name="confirm-transition-no" class="confirm-transition__btn confirm-transition__btn--no" text="No"/>
+      </ui:VisualElement>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>
