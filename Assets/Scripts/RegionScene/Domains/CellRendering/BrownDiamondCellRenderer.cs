@@ -27,7 +27,6 @@ namespace Territory.RegionScene.CellRendering
         /// <inheritdoc/>
         public void Render(RegionCell cell, PlayerCityState optionalCityState)
         {
-            if (cell == null) return;
             int x = cell.X;
             int y = cell.Y;
             if (x < 0 || x >= _gridSize || y < 0 || y >= _gridSize) return;

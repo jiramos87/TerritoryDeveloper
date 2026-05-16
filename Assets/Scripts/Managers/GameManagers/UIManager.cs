@@ -589,8 +589,10 @@ public partial class UIManager : MonoBehaviour
         {
             ClosePopup(popupStack.Peek());
         }
-        else if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex == 1)
+        else if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex == 2)
         {
+            // Build order (post city-region-zoom-transition Stage 1): 0=CoreScene, 1=MainMenu, 2=CityScene, 3=RegionScene.
+            // Esc-pause fallback fires only in CityScene.
             OpenPopup(PopupType.PauseMenu);
         }
         else

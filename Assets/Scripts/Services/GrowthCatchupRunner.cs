@@ -1,4 +1,4 @@
-using Territory.Domain.Growth;
+using Domains.Growth;
 
 namespace Territory.Services
 {

@@ -9,7 +9,7 @@ using Territory.RegionScene.Evolution;
 namespace Territory.RegionScene.Persistence
 {
     /// <summary>Writes + loads &lt;saveName&gt;.region.json sidecar alongside GameSaveData. Registered into ServiceRegistry from RegionManager.Start.</summary>
-    public sealed class RegionSaveService : MonoBehaviour
+    public sealed class RegionSaveService : MonoBehaviour, IRegionTickStamper
     {
         private RegionData _regionData;
         private string _basePath;

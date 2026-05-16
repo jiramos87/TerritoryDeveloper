@@ -7,7 +7,6 @@ using UnityEngine;
 using Territory.Persistence;
 using Territory.SceneManagement;
 using Territory.Services;
-using Territory.RegionScene.Persistence;
 using Domains.Registry;
 
 namespace Territory.Managers
@@ -29,7 +28,7 @@ namespace Territory.Managers
         private string _saveDir;
         private ServiceRegistry _registry;
         private TickClock _tickClock;
-        private RegionSaveService _regionSaveService;
+        private IRegionTickStamper _regionSaveService;
 
         void Awake()
         {
@@ -43,9 +42,13 @@ namespace Territory.Managers
 
         void Start()
         {
-            // Stage 7.0 — resolve TickClock + RegionSaveService for lastTouchedTicks stamping.
-            _tickClock        = FindObjectOfType<TickClock>();
-            _regionSaveService = FindObjectOfType<RegionSaveService>();
+            // Stage 7.0 — resolve TickClock + IRegionTickStamper for lastTouchedTicks stamping.
+            // Interface lookup avoids a direct dep on RegionScene asmdef (cyclic).
+            _tickClock = FindObjectOfType<TickClock>();
+            foreach (var mb in FindObjectsOfType<MonoBehaviour>())
+            {
+                if (mb is IRegionTickStamper stamper) { _regionSaveService = stamper; break; }
+            }
         }
 
         // ── ISaveCoordinator ─────────────────────────────────────────────────

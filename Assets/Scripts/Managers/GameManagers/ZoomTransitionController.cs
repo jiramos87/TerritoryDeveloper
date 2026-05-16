@@ -69,7 +69,8 @@ namespace Territory.SceneManagement
         private InputLockService _inputLock;
         private Territory.Services.TickClock _tickClock;
         private Territory.Services.IGrowthCatchupRunner _growthCatchupRunner;
-        private Territory.RegionScene.Persistence.RegionSaveService _regionSaveService;
+        private IRegionTickStamper _regionSaveService;
+        private GameSaveManager _gameSaveManager;
 
         void Awake()
         {
@@ -85,7 +86,12 @@ namespace Territory.SceneManagement
             _streamingPipeline   = FindObjectOfType<CellStreamingPipeline>();
             _inputLock           = FindObjectOfType<InputLockService>();
             _tickClock           = FindObjectOfType<Territory.Services.TickClock>();
-            _regionSaveService   = FindObjectOfType<Territory.RegionScene.Persistence.RegionSaveService>();
+            _regionSaveService   = null;
+            foreach (var mb in FindObjectsOfType<MonoBehaviour>())
+            {
+                if (mb is IRegionTickStamper stamper) { _regionSaveService = stamper; break; }
+            }
+            _gameSaveManager     = FindObjectOfType<GameSaveManager>();
             _growthCatchupRunner = new Territory.Services.GrowthCatchupRunner();
 
             // Wire FirstRingLoaded → InputLockService.Unlock.
@@ -110,6 +116,24 @@ namespace Territory.SceneManagement
             }
 
             SetState(TransitionState.Saving);
+
+            // Auto-save: write canonical GameSaveData via GameSaveManager before transition.
+            // Filename = "autosave-leave-city" — overwrites previous auto-save on each Leave City.
+            if (_gameSaveManager != null)
+            {
+                try
+                {
+                    _gameSaveManager.SaveGame("autosave-leave-city");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[ZoomTransitionController] Auto-save failed: {ex.Message}");
+                    SetState(TransitionState.Idle);
+                    _errorToast?.Show(ToastKind.SaveFailed);
+                    OnTransitionCanceledSaveFailed?.Invoke();
+                    return TransitionResult.Failed;
+                }
+            }
 
             // Stage 2: invoke SaveCoordinator.SavePair before advancing to TweeningOut.
             if (_saveCoordinator != null)
@@ -237,11 +261,11 @@ namespace Territory.SceneManagement
             {
                 long loadedTick = _regionSaveService.LoadedLastTouchedTicks;
                 uint seed       = _regionSaveService.LoadedGrowthSeed;
-                long elapsed    = _tickClock.CurrentTick - loadedTick;
-                if (elapsed > 0)
+                long elapsedTicks = _tickClock.CurrentTick - loadedTick;
+                if (elapsedTicks > 0)
                 {
-                    var dormant  = new Territory.Domain.Growth.WorldSnapshot(null, loadedTick, seed);
-                    _growthCatchupRunner.Catchup(dormant, elapsed); // result discarded — sim owns pop state
+                    var dormant  = new Domains.Growth.WorldSnapshot(null, loadedTick, seed);
+                    _growthCatchupRunner.Catchup(dormant, elapsedTicks); // result discarded — sim owns pop state
                 }
             }
 
