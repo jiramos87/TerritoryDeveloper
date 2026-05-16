@@ -15,6 +15,7 @@ public class InterstateConformanceService
 
     private readonly ITerrainManager _terrain;
 
+    /// <summary>Construct conformance service with terrain reference.</summary>
     public InterstateConformanceService(ITerrainManager terrain)
     {
         _terrain = terrain;
@@ -24,6 +25,7 @@ public class InterstateConformanceService
     // Border helpers
     // ------------------------------------------------------------------
 
+    /// <summary>Borders (0..3) with at least one interstate-valid land cell.</summary>
     public List<int> GetBordersWithLand(int w, int h, HeightMap heightMap)
     {
         var list = new List<int>();
@@ -35,6 +37,7 @@ public class InterstateConformanceService
         return list;
     }
 
+    /// <summary>True if border has any valid interstate cell.</summary>
     public bool HasAnyValidCellOnBorder(int border, int w, int h, HeightMap heightMap)
     {
         switch (border)
@@ -59,6 +62,7 @@ public class InterstateConformanceService
         return false;
     }
 
+    /// <summary>True if cell allowed as interstate origin (height>0 + slope allowed).</summary>
     public bool IsCellAllowedForInterstate(int x, int y, int w, int h, HeightMap heightMap, bool checkSlopes)
     {
         if (heightMap.GetHeight(x, y) <= 0)
@@ -72,6 +76,7 @@ public class InterstateConformanceService
         return true;
     }
 
+    /// <summary>List valid interstate border cells on given border.</summary>
     public List<Vector2Int> GetValidBorderCells(int border, int w, int h, HeightMap heightMap)
     {
         var candidates = new List<Vector2Int>();
@@ -97,6 +102,7 @@ public class InterstateConformanceService
         return candidates;
     }
 
+    /// <summary>Border cells preferring non-water-slope; sorted by endpoint quality.</summary>
     public List<Vector2Int> GetValidBorderCellsWithPreference(int border, int w, int h, HeightMap heightMap)
     {
         var raw = GetValidBorderCells(border, w, h, heightMap);
@@ -117,6 +123,7 @@ public class InterstateConformanceService
         return filtered;
     }
 
+    /// <summary>Random top-third sample from sorted border candidates; null if empty.</summary>
     public Vector2Int? GetValidBorderCell(int border, int w, int h, HeightMap heightMap)
     {
         var candidates = GetValidBorderCellsWithPreference(border, w, h, heightMap);
@@ -126,6 +133,7 @@ public class InterstateConformanceService
         return candidates[idx];
     }
 
+    /// <summary>Sort cells by descending interstate endpoint score; tiebreak by xy.</summary>
     public void SortBorderCellsByInterstateEndpointQuality(List<Vector2Int> cells, int w, int h, HeightMap heightMap)
     {
         if (cells == null || cells.Count < 2) return;
@@ -140,6 +148,7 @@ public class InterstateConformanceService
         });
     }
 
+    /// <summary>Score border cell — prefers low height + flat surroundings + small first step.</summary>
     public int ComputeInterstateBorderEndpointScore(Vector2Int c, int w, int h, HeightMap heightMap)
     {
         if (heightMap == null || !heightMap.IsValidPosition(c.x, c.y))
@@ -215,6 +224,7 @@ public class InterstateConformanceService
     // Bridge validation
     // ------------------------------------------------------------------
 
+    /// <summary>True if path crosses water then lands within max bridge width.</summary>
     public bool IsValidBridgeSegment(List<Vector2Int> path, Vector2Int waterCell, Vector2Int end, int w, int h, HeightMap heightMap)
     {
         if (path.Count == 0) return false;
@@ -247,6 +257,7 @@ public class InterstateConformanceService
         return false;
     }
 
+    /// <summary>True if bridge segment from start cell crosses ≤ max water tiles to land.</summary>
     public bool IsValidBridgeSegmentFrom(Vector2Int from, Vector2Int waterCell, Vector2Int end, int w, int h, HeightMap heightMap)
     {
         if (heightMap.GetHeight(waterCell.x, waterCell.y) != 0) return false;
@@ -277,6 +288,7 @@ public class InterstateConformanceService
         return false;
     }
 
+    /// <summary>True if single step from→to valid (slope/height/bridge).</summary>
     public bool IsDirectStepValid(Vector2Int from, Vector2Int to, int w, int h, HeightMap heightMap, Vector2Int pathEnd)
     {
         if (to.x < 0 || to.x >= w || to.y < 0 || to.y >= h) return false;
@@ -292,6 +304,7 @@ public class InterstateConformanceService
     // Static direction helpers
     // ------------------------------------------------------------------
 
+    /// <summary>First inward step from border cell; null if not on border.</summary>
     public static Vector2Int? GetFirstStepFromBorder(Vector2Int start, int w, int h)
     {
         if (start.y == 0) return new Vector2Int(start.x, 1);
