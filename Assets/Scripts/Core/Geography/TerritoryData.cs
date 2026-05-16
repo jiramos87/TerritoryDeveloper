@@ -10,6 +10,13 @@ namespace Territory.Geography
 [System.Serializable]
 public class TerritoryData
 {
+    // Population brackets — village < town < city < metropolis. Upper bound exclusive (System.Random.Next semantics).
+    private const int VillagePopMin = 500;
+    private const int VillagePopMaxExclusive = 5001;
+    private const int TownPopMaxExclusive = 50001;
+    private const int CityPopMaxExclusive = 500001;
+    private const int MetropolisPopMaxExclusive = 2000001;
+
     public int gridX;
     public int gridY;
     public string cityName;
@@ -135,22 +142,22 @@ public class TerritoryData
         if (roll < 0.30)
         {
             data.category = CityCategory.Village;
-            data.population = rng.Next(500, 5001);
+            data.population = rng.Next(VillagePopMin, VillagePopMaxExclusive);
         }
         else if (roll < 0.65)
         {
             data.category = CityCategory.Town;
-            data.population = rng.Next(5001, 50001);
+            data.population = rng.Next(VillagePopMaxExclusive, TownPopMaxExclusive);
         }
         else if (roll < 0.90)
         {
             data.category = CityCategory.City;
-            data.population = rng.Next(50001, 500001);
+            data.population = rng.Next(TownPopMaxExclusive, CityPopMaxExclusive);
         }
         else
         {
             data.category = CityCategory.Metropolis;
-            data.population = rng.Next(500001, 2000001);
+            data.population = rng.Next(CityPopMaxExclusive, MetropolisPopMaxExclusive);
         }
 
         return data;

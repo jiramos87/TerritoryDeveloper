@@ -17,6 +17,8 @@ namespace Territory.Testing
     public static class ScenarioDescriptorRuntimeApplier
     {
         const string ExpectedArtifact = "scenario_descriptor_v1";
+        const int ScenarioGridSize = 32;
+        const int ScenarioGridCellCount = ScenarioGridSize * ScenarioGridSize;
 
         /// <summary>
         /// Parse JSON + mutate loaded scene: terrain, water, roads, optional time/city overlay.
@@ -44,7 +46,7 @@ namespace Territory.Testing
                 return false;
             }
 
-            if (d.map == null || d.map.width != 32 || d.map.height != 32)
+            if (d.map == null || d.map.width != ScenarioGridSize || d.map.height != ScenarioGridSize)
             {
                 error = "descriptor rejected: map must be 32×32 for v1 scenario builder";
                 return false;
@@ -75,7 +77,7 @@ namespace Territory.Testing
                 return false;
             }
 
-            if (gridManager.width != 32 || gridManager.height != 32)
+            if (gridManager.width != ScenarioGridSize || gridManager.height != ScenarioGridSize)
             {
                 error = "descriptor apply failed: loaded grid must be 32×32";
                 return false;
@@ -97,26 +99,26 @@ namespace Territory.Testing
                     return false;
                 }
 
-                for (int x = 0; x < 32; x++)
+                for (int x = 0; x < ScenarioGridSize; x++)
                 {
-                    for (int y = 0; y < 32; y++)
+                    for (int y = 0; y < ScenarioGridSize; y++)
                         heightMap.SetHeight(x, y, h);
                 }
             }
             else if (d.terrain.mode == "rowMajor")
             {
                 int[] flat = d.terrain.heightsRowMajor;
-                if (flat == null || flat.Length != 32 * 32)
+                if (flat == null || flat.Length != ScenarioGridCellCount)
                 {
                     error = "descriptor rejected: terrain.heightsRowMajor must have length 1024 (y * 32 + x order)";
                     return false;
                 }
 
-                for (int y = 0; y < 32; y++)
+                for (int y = 0; y < ScenarioGridSize; y++)
                 {
-                    for (int x = 0; x < 32; x++)
+                    for (int x = 0; x < ScenarioGridSize; x++)
                     {
-                        int v = flat[y * 32 + x];
+                        int v = flat[y * ScenarioGridSize + x];
                         heightMap.SetHeight(x, y, v);
                     }
                 }
@@ -130,7 +132,7 @@ namespace Territory.Testing
             terrainManager.ApplyHeightMapToGrid();
 
             if (d.waterMapData != null && d.waterMapData.waterBodyIds != null
-                                       && d.waterMapData.waterBodyIds.Length == 32 * 32)
+                                       && d.waterMapData.waterBodyIds.Length == ScenarioGridCellCount)
             {
                 if (waterManager == null)
                 {
@@ -138,7 +140,7 @@ namespace Territory.Testing
                     return false;
                 }
 
-                waterManager.RestoreWaterMapFromSaveData(d.waterMapData, 32, 32, gridManager.GetGridData());
+                waterManager.RestoreWaterMapFromSaveData(d.waterMapData, ScenarioGridSize, ScenarioGridSize, gridManager.GetGridData());
                 waterManager.MigrateWaterBodyIdsAfterGridRestore();
                 terrainManager.RefreshShoreTerrainAfterWaterUpdate(waterManager);
             }

@@ -21,6 +21,14 @@ namespace Domains.Roads.Services
 /// </summary>
 public class RoadPlacementService
 {
+    private const int FallbackMaxSteps = 256;
+    private const int FallbackMaxGridDimension = 1000;
+    private const float RoadTileR = 0.78f;
+    private const float RoadTileG = 0.78f;
+    private const float RoadTileB = 0.88f;
+
+    private static readonly Color RoadTileColor = new Color(RoadTileR, RoadTileG, RoadTileB, 1f);
+
     #region Injected dependencies
     private IGridManager _grid;
     private ITerrainManager _terrain;
@@ -623,7 +631,7 @@ public class RoadPlacementService
         GameObject prefab = resolved.prefab ?? _roadMgr?.roadTilePrefab1;
         GameObject roadTile = Object.Instantiate(prefab, resolved.worldPos, Quaternion.identity);
         roadTile.transform.SetParent(cellComponent.gameObject.transform);
-        roadTile.GetComponent<SpriteRenderer>().color = new Color(0.78f, 0.78f, 0.88f, 1f);
+        roadTile.GetComponent<SpriteRenderer>().color = RoadTileColor;
 
         Zone zone = roadTile.AddComponent<Zone>();
         zone.zoneType = Zone.ZoneType.Road;
@@ -655,7 +663,7 @@ public class RoadPlacementService
         roadTile.transform.SetParent(cellComponent.gameObject.transform);
 
         roadTile.GetComponent<SpriteRenderer>().color = isInterstate
-            ? new Color(0.78f, 0.78f, 0.88f, 1f)
+            ? RoadTileColor
             : new Color(1, 1, 1, 1);
 
         Zone zone = roadTile.AddComponent<Zone>();
@@ -696,7 +704,7 @@ public class RoadPlacementService
         roadTile.transform.SetParent(cellComponent.gameObject.transform);
 
         roadTile.GetComponent<SpriteRenderer>().color = isInterstate
-            ? new Color(0.78f, 0.78f, 0.88f, 1f)
+            ? RoadTileColor
             : new Color(1, 1, 1, 1);
 
         Zone roadZone = roadTile.AddComponent<Zone>();
@@ -738,7 +746,7 @@ public class RoadPlacementService
         roadTile.transform.SetParent(cellComponent.gameObject.transform);
 
         roadTile.GetComponent<SpriteRenderer>().color = keepInterstateTint
-            ? new Color(0.78f, 0.78f, 0.88f, 1f)
+            ? RoadTileColor
             : new Color(1, 1, 1, 1);
 
         Zone roadZone = roadTile.AddComponent<Zone>();
@@ -1108,7 +1116,7 @@ public class RoadPlacementService
         int cx2 = nx2, cy2 = ny2;
         result.Add(new Vector2(cx2, cy2));
         var gridMgr = _grid as GridManager;
-        int maxSteps = gridMgr != null ? Mathf.Max(gridMgr.width, gridMgr.height) + 2 : 256;
+        int maxSteps = gridMgr != null ? Mathf.Max(gridMgr.width, gridMgr.height) + 2 : FallbackMaxSteps;
         for (int step = 0; step < maxSteps; step++)
         {
             int ax = cx2 + ddx, ay = cy2 + ddy;
@@ -1157,7 +1165,7 @@ public class RoadPlacementService
         int cx3 = lx2, cy3 = ly2;
         var result = new List<Vector2>(path);
         var gridMgr = _grid as GridManager;
-        int maxSteps = gridMgr != null ? Mathf.Max(gridMgr.width, gridMgr.height) + 2 : 256;
+        int maxSteps = gridMgr != null ? Mathf.Max(gridMgr.width, gridMgr.height) + 2 : FallbackMaxSteps;
         for (int step = 0; step < maxSteps; step++)
         {
             int nx3 = cx3 + dx2, ny3 = cy3 + dy2;
@@ -1285,8 +1293,8 @@ public class RoadPlacementService
     List<Vector2> GetLineBresenham(Vector2 start, Vector2 end)
     {
         var gridMgr = _grid as GridManager;
-        int w = gridMgr != null ? gridMgr.width - 1 : 1000;
-        int h = gridMgr != null ? gridMgr.height - 1 : 1000;
+        int w = gridMgr != null ? gridMgr.width - 1 : FallbackMaxGridDimension;
+        int h = gridMgr != null ? gridMgr.height - 1 : FallbackMaxGridDimension;
         int x0 = Mathf.Clamp((int)start.x, 0, w), y0 = Mathf.Clamp((int)start.y, 0, h);
         int x1 = Mathf.Clamp((int)end.x, 0, w), y1 = Mathf.Clamp((int)end.y, 0, h);
         int dx = Mathf.Abs(x1 - x0), dy = Mathf.Abs(y1 - y0);
@@ -1343,7 +1351,7 @@ public class RoadPlacementService
         GameObject roadTile = Object.Instantiate(correctRoadPrefab, worldPos, Quaternion.identity);
         roadTile.transform.SetParent(cellComponentCheck.gameObject.transform);
         roadTile.GetComponent<SpriteRenderer>().color = cellComponentCheck.isInterstate
-            ? new Color(0.78f, 0.78f, 0.88f, 1f) : new Color(1, 1, 1, 1);
+            ? RoadTileColor : new Color(1, 1, 1, 1);
 
         Zone zone = roadTile.AddComponent<Zone>();
         zone.zoneType = Zone.ZoneType.Road;

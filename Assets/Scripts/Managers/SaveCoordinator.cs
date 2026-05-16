@@ -22,6 +22,8 @@ namespace Territory.Managers
     /// <summary>CoreScene hub — atomic paired .city + .region write. Backup protocol: .bak before write; delete on success; restore on fail. Invariant #3: resolve deps in Start.</summary>
     public class SaveCoordinator : MonoBehaviour, ISaveCoordinator
     {
+        private const int InitialSnapshotGridSize = 64;
+
         private string _saveDir;
         private ServiceRegistry _registry;
 
@@ -159,13 +161,13 @@ namespace Territory.Managers
 
         byte[] BuildInitialCitySnapshot(string saveId)
         {
-            var obj = new { saveId, schemaVersion = 1, kind = "city", initial = true, gridWidth = 64, gridHeight = 64 };
+            var obj = new { saveId, schemaVersion = 1, kind = "city", initial = true, gridWidth = InitialSnapshotGridSize, gridHeight = InitialSnapshotGridSize };
             return Encoding.UTF8.GetBytes(JsonShim.Serialize(obj));
         }
 
         byte[] BuildInitialRegionSnapshot(string saveId)
         {
-            var obj = new { saveId, schemaVersion = 1, kind = "region", initial = true, gridWidth = 64, gridHeight = 64, playerAnchorX = 0, playerAnchorY = 0 };
+            var obj = new { saveId, schemaVersion = 1, kind = "region", initial = true, gridWidth = InitialSnapshotGridSize, gridHeight = InitialSnapshotGridSize, playerAnchorX = 0, playerAnchorY = 0 };
             return Encoding.UTF8.GetBytes(JsonShim.Serialize(obj));
         }
 
