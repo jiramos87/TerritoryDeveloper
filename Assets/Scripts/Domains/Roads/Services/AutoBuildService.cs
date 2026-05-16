@@ -59,6 +59,7 @@ public class AutoBuildService
 
     private struct StreetProject { public Vector2Int tip; public Vector2Int dir; public int targetLength; }
 
+    /// <summary>Construct auto-build service — wires sub-services + dependencies.</summary>
     public AutoBuildService(
         IGridManager gridManager, IRoadManager roadManager,
         IGrowthBudgetManager growthBudgetManager, ICityStatsAuto cityStats,
@@ -77,6 +78,7 @@ public class AutoBuildService
         _candidateScoring = new AutoBuildCandidateScoringService(gridManager, urbanCentroidService, _simRules);
     }
 
+    /// <summary>Re-wire dependencies after registry resolve.</summary>
     public void RefreshDependencies(
         IGridManager gridManager, IRoadManager roadManager,
         IGrowthBudgetManager growthBudgetManager, ICityStatsAuto cityStats,
@@ -102,6 +104,7 @@ public class AutoBuildService
 
     private bool PlaceRoadTileInBatch(Vector2 pos) => _roadManager.PlaceRoadTileAt(pos);
 
+    /// <summary>Flush pending road prefab refreshes after batch placement.</summary>
     public void FlushBatchRoadPrefabRefresh()
     {
         if (_batchPlacedFromResolvedRoadCells.Count == 0 || _roadManager == null) return;
@@ -109,6 +112,7 @@ public class AutoBuildService
         _batchPlacedFromResolvedRoadCells.Clear();
     }
 
+    /// <summary>Per-tick: spend road growth budget, place street projects, flush batch.</summary>
     public void ProcessTick()
     {
         if (_growthBudgetManager == null || _roadManager == null || _gridManager == null || _cityStats == null) return;
