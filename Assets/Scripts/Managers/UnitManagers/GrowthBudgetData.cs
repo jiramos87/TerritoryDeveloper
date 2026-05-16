@@ -8,14 +8,16 @@ namespace Territory.Simulation
 [System.Serializable]
 public class GrowthBudgetData
 {
+    private const int DefaultEqualSplitPercent = 25;
+
     /// <summary>Legacy: fixed dollar amount. Kept for save/load compat; migrated to growthBudgetPercent on load.</summary>
     public int totalGrowthBudget = 5000;
     /// <summary>User pref: % of projected monthly income for growth (0-100).</summary>
     public int growthBudgetPercent = 10;
-    public int roadBudgetPercent = 25;
-    public int energyBudgetPercent = 25;
-    public int waterBudgetPercent = 25;
-    public int zoningBudgetPercent = 25;
+    public int roadBudgetPercent = DefaultEqualSplitPercent;
+    public int energyBudgetPercent = DefaultEqualSplitPercent;
+    public int waterBudgetPercent = DefaultEqualSplitPercent;
+    public int zoningBudgetPercent = DefaultEqualSplitPercent;
 
     public int roadSpentThisCycle;
     public int energySpentThisCycle;

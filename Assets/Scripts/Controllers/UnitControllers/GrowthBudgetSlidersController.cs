@@ -11,6 +11,8 @@ namespace Territory.UI
 /// </summary>
 public class GrowthBudgetSlidersController : MonoBehaviour
 {
+    private const int PercentMax = 100;
+
     public CityStats cityStats;
     public GrowthBudgetManager growthBudgetManager;
 
@@ -40,7 +42,7 @@ public class GrowthBudgetSlidersController : MonoBehaviour
         if (totalBudgetSlider != null)
         {
             totalBudgetSlider.minValue = 0;
-            totalBudgetSlider.maxValue = 100;
+            totalBudgetSlider.maxValue = PercentMax;
             totalBudgetSlider.wholeNumbers = true;
             totalBudgetSlider.onValueChanged.AddListener(OnTotalBudgetChanged);
         }
@@ -81,25 +83,25 @@ public class GrowthBudgetSlidersController : MonoBehaviour
     void OnRoadPercentChanged()
     {
         if (isInternalAdjustment || growthBudgetManager == null || roadPercentSlider == null) return;
-        RedistributeCategoryPercent(GrowthCategory.Roads, Mathf.Clamp(Mathf.RoundToInt(roadPercentSlider.value), 0, 100));
+        RedistributeCategoryPercent(GrowthCategory.Roads, Mathf.Clamp(Mathf.RoundToInt(roadPercentSlider.value), 0, PercentMax));
     }
 
     void OnEnergyPercentChanged()
     {
         if (isInternalAdjustment || growthBudgetManager == null || energyPercentSlider == null) return;
-        RedistributeCategoryPercent(GrowthCategory.Energy, Mathf.Clamp(Mathf.RoundToInt(energyPercentSlider.value), 0, 100));
+        RedistributeCategoryPercent(GrowthCategory.Energy, Mathf.Clamp(Mathf.RoundToInt(energyPercentSlider.value), 0, PercentMax));
     }
 
     void OnWaterPercentChanged()
     {
         if (isInternalAdjustment || growthBudgetManager == null || waterPercentSlider == null) return;
-        RedistributeCategoryPercent(GrowthCategory.Water, Mathf.Clamp(Mathf.RoundToInt(waterPercentSlider.value), 0, 100));
+        RedistributeCategoryPercent(GrowthCategory.Water, Mathf.Clamp(Mathf.RoundToInt(waterPercentSlider.value), 0, PercentMax));
     }
 
     void OnZoningPercentChanged()
     {
         if (isInternalAdjustment || growthBudgetManager == null || zoningPercentSlider == null) return;
-        RedistributeCategoryPercent(GrowthCategory.Zoning, Mathf.Clamp(Mathf.RoundToInt(zoningPercentSlider.value), 0, 100));
+        RedistributeCategoryPercent(GrowthCategory.Zoning, Mathf.Clamp(Mathf.RoundToInt(zoningPercentSlider.value), 0, PercentMax));
     }
 
     /// <summary>
@@ -120,7 +122,7 @@ public class GrowthBudgetSlidersController : MonoBehaviour
             case GrowthCategory.Zoning: z = newValue; break;
         }
 
-        int remainder = 100 - newValue;
+        int remainder = PercentMax - newValue;
         if (remainder < 0) remainder = 0;
 
         int otherR = changed == GrowthCategory.Roads ? 0 : r;
@@ -145,12 +147,12 @@ public class GrowthBudgetSlidersController : MonoBehaviour
             if (changed != GrowthCategory.Water) w = Mathf.RoundToInt(remainder * (float)otherW / otherSum);
             if (changed != GrowthCategory.Zoning) z = remainder - (changed == GrowthCategory.Roads ? 0 : r) - (changed == GrowthCategory.Energy ? 0 : e) - (changed == GrowthCategory.Water ? 0 : w);
             int sum = r + e + w + z;
-            if (sum != 100)
+            if (sum != PercentMax)
             {
-                if (changed != GrowthCategory.Roads) r = Mathf.Clamp(r + (100 - sum), 0, 100);
-                else if (changed != GrowthCategory.Energy) e = Mathf.Clamp(e + (100 - sum), 0, 100);
-                else if (changed != GrowthCategory.Water) w = Mathf.Clamp(w + (100 - sum), 0, 100);
-                else z = Mathf.Clamp(z + (100 - sum), 0, 100);
+                if (changed != GrowthCategory.Roads) r = Mathf.Clamp(r + (PercentMax - sum), 0, PercentMax);
+                else if (changed != GrowthCategory.Energy) e = Mathf.Clamp(e + (PercentMax - sum), 0, PercentMax);
+                else if (changed != GrowthCategory.Water) w = Mathf.Clamp(w + (PercentMax - sum), 0, PercentMax);
+                else z = Mathf.Clamp(z + (PercentMax - sum), 0, PercentMax);
             }
         }
 
@@ -160,13 +162,13 @@ public class GrowthBudgetSlidersController : MonoBehaviour
     void ApplyRedistributedPercents(int road, int energy, int water, int zoning)
     {
         int sum = road + energy + water + zoning;
-        if (sum != 100)
+        if (sum != PercentMax)
         {
-            road = Mathf.Clamp(road * 100 / Mathf.Max(1, sum), 0, 100);
-            energy = Mathf.Clamp(energy * 100 / Mathf.Max(1, sum), 0, 100);
-            water = Mathf.Clamp(water * 100 / Mathf.Max(1, sum), 0, 100);
-            zoning = 100 - road - energy - water;
-            zoning = Mathf.Clamp(zoning, 0, 100);
+            road = Mathf.Clamp(road * PercentMax / Mathf.Max(1, sum), 0, PercentMax);
+            energy = Mathf.Clamp(energy * PercentMax / Mathf.Max(1, sum), 0, PercentMax);
+            water = Mathf.Clamp(water * PercentMax / Mathf.Max(1, sum), 0, PercentMax);
+            zoning = PercentMax - road - energy - water;
+            zoning = Mathf.Clamp(zoning, 0, PercentMax);
         }
 
         if (growthBudgetManager != null)
@@ -197,12 +199,12 @@ public class GrowthBudgetSlidersController : MonoBehaviour
         int w = growthBudgetManager.GetCategoryPercent(GrowthCategory.Water);
         int z = growthBudgetManager.GetCategoryPercent(GrowthCategory.Zoning);
         int sum = r + e + w + z;
-        if (sum != 100 && sum > 0)
+        if (sum != PercentMax && sum > 0)
         {
-            r = Mathf.RoundToInt(100f * r / sum);
-            e = Mathf.RoundToInt(100f * e / sum);
-            w = Mathf.RoundToInt(100f * w / sum);
-            z = 100 - r - e - w;
+            r = Mathf.RoundToInt((float)PercentMax * r / sum);
+            e = Mathf.RoundToInt((float)PercentMax * e / sum);
+            w = Mathf.RoundToInt((float)PercentMax * w / sum);
+            z = PercentMax - r - e - w;
             growthBudgetManager.SetCategoryPercent(GrowthCategory.Roads, r);
             growthBudgetManager.SetCategoryPercent(GrowthCategory.Energy, e);
             growthBudgetManager.SetCategoryPercent(GrowthCategory.Water, w);

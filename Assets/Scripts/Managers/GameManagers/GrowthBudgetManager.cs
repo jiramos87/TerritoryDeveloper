@@ -11,6 +11,9 @@ namespace Territory.Simulation
 /// </summary>
 public class GrowthBudgetManager : MonoBehaviour, IGrowthBudgetManager
 {
+    private const int PercentMax = 100;
+    private const int LegacyMigrationFallbackPercent = 10;
+
     public CityStats cityStats;
     public EconomyManager economyManager;
     public GrowthBudgetData data = new GrowthBudgetData();
@@ -32,21 +35,21 @@ public class GrowthBudgetManager : MonoBehaviour, IGrowthBudgetManager
         if (data.growthBudgetPercent == 0 && data.totalGrowthBudget > 0)
         {
             int money = cityStats != null ? cityStats.money : 20000;
-            data.growthBudgetPercent = Mathf.Clamp(money > 0 ? (data.totalGrowthBudget * 100 / money) : 10, 0, 100);
+            data.growthBudgetPercent = Mathf.Clamp(money > 0 ? (data.totalGrowthBudget * PercentMax / money) : LegacyMigrationFallbackPercent, 0, PercentMax);
         }
         else if (data.growthBudgetPercent == 0)
         {
-            data.growthBudgetPercent = 10;
+            data.growthBudgetPercent = LegacyMigrationFallbackPercent;
         }
     }
 
     public void EnsureBudgetValid()
     {
-        data.growthBudgetPercent = Mathf.Clamp(data.growthBudgetPercent, 0, 100);
-        data.roadBudgetPercent = Mathf.Clamp(data.roadBudgetPercent, 0, 100);
-        data.energyBudgetPercent = Mathf.Clamp(data.energyBudgetPercent, 0, 100);
-        data.waterBudgetPercent = Mathf.Clamp(data.waterBudgetPercent, 0, 100);
-        data.zoningBudgetPercent = Mathf.Clamp(data.zoningBudgetPercent, 0, 100);
+        data.growthBudgetPercent = Mathf.Clamp(data.growthBudgetPercent, 0, PercentMax);
+        data.roadBudgetPercent = Mathf.Clamp(data.roadBudgetPercent, 0, PercentMax);
+        data.energyBudgetPercent = Mathf.Clamp(data.energyBudgetPercent, 0, PercentMax);
+        data.waterBudgetPercent = Mathf.Clamp(data.waterBudgetPercent, 0, PercentMax);
+        data.zoningBudgetPercent = Mathf.Clamp(data.zoningBudgetPercent, 0, PercentMax);
     }
 
     /// <summary>Min available budget per category when percent &gt; 0 → growth never fully stops mid-month.</summary>
@@ -56,7 +59,7 @@ public class GrowthBudgetManager : MonoBehaviour, IGrowthBudgetManager
     {
         int total = GetTotalBudget();
         int pct = GetPercent(cat);
-        int budgetForCat = total * pct / 100;
+        int budgetForCat = total * pct / PercentMax;
         int spent = GetSpent(cat);
         int available = Mathf.Max(0, budgetForCat - spent);
         if (pct > 0 && minAvailablePerCategory > 0 && available < minAvailablePerCategory)
@@ -96,17 +99,17 @@ public class GrowthBudgetManager : MonoBehaviour, IGrowthBudgetManager
     void ComputeAndCacheBudget()
     {
         if (cityStats == null) return;
-        int pct = Mathf.Clamp(data.growthBudgetPercent, 0, 100);
+        int pct = Mathf.Clamp(data.growthBudgetPercent, 0, PercentMax);
         int projectedNet = economyManager != null ? economyManager.GetMonthlyIncomeDelta() : 0;
         int baseAmount = projectedNet > 0 ? projectedNet : cityStats.money;
-        cachedEffectiveTotalBudget = baseAmount * pct / 100;
+        cachedEffectiveTotalBudget = baseAmount * pct / PercentMax;
         cacheValid = true;
     }
 
     /// <summary>Set growth budget % of projected net monthly cash flow (tax − maintenance), 0–100. Falls back to city money when projection not positive.</summary>
     public void SetGrowthBudgetPercent(int percent)
     {
-        data.growthBudgetPercent = Mathf.Clamp(percent, 0, 100);
+        data.growthBudgetPercent = Mathf.Clamp(percent, 0, PercentMax);
         cacheValid = false;
     }
 
@@ -115,7 +118,7 @@ public class GrowthBudgetManager : MonoBehaviour, IGrowthBudgetManager
 
     public void SetCategoryPercent(GrowthCategory cat, int pct)
     {
-        pct = Mathf.Clamp(pct, 0, 100);
+        pct = Mathf.Clamp(pct, 0, PercentMax);
         switch (cat)
         {
             case GrowthCategory.Roads: data.roadBudgetPercent = pct; break;
