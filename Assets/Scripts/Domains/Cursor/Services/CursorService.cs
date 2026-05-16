@@ -34,6 +34,7 @@ namespace Domains.Cursor.Services
         // ── Texture scaling cache ────────────────────────────────────────────────
         private Texture2D _scaledBulldozerTexture;
 
+        /// <summary>Construct CursorService with hub reference.</summary>
         public CursorService(ICursorHub hub)
         {
             _hub = hub;
@@ -47,6 +48,7 @@ namespace Domains.Cursor.Services
 
         // ── Cursor texture ────────────────────────────────────────────────────────
 
+        /// <summary>Switch cursor to bulldozer texture (scaled half-size).</summary>
         public void SetBullDozerCursor()
         {
             var tex = GetScaledBulldozerTexture();
@@ -57,6 +59,7 @@ namespace Domains.Cursor.Services
                 UnityEngine.Cursor.SetCursor(_activeCursorTexture, _activeCursorHotSpot, CursorMode.Auto);
         }
 
+        /// <summary>Reset cursor to default hub texture.</summary>
         public void SetDefaultCursor()
         {
             _activeCursorTexture = null;
@@ -64,6 +67,7 @@ namespace Domains.Cursor.Services
             UnityEngine.Cursor.SetCursor(_hub.CursorTexture, Vector2.zero, CursorMode.Auto);
         }
 
+        /// <summary>Switch cursor to details inspection texture.</summary>
         public void SetDetailsCursor()
         {
             _activeCursorTexture = _hub.DetailsTexture;
@@ -74,6 +78,7 @@ namespace Domains.Cursor.Services
 
         // ── Preview ────────────────────────────────────────────────────────────────
 
+        /// <summary>Spawn ghost preview for building prefab; tint + strip colliders.</summary>
         public void ShowBuildingPreview(GameObject buildingPrefab, int buildingSize = 1)
         {
             try
@@ -105,6 +110,7 @@ namespace Domains.Cursor.Services
             }
         }
 
+        /// <summary>Destroy current preview ghost + clear cached cell.</summary>
         public void RemovePreview()
         {
             _currentRoadGhostPrefab = null;
@@ -119,6 +125,7 @@ namespace Domains.Cursor.Services
 
         // ── Update tick ───────────────────────────────────────────────────────────
 
+        /// <summary>Per-frame: move preview to mouse cell, swap road ghost on shape change, fire placement result.</summary>
         public void UpdatePreview(Camera cam)
         {
             if (_previewInstance == null)
@@ -197,6 +204,7 @@ namespace Domains.Cursor.Services
 
         // ── Placement tint ────────────────────────────────────────────────────────
 
+        /// <summary>Tint preview green/red by placement result; fire reason changed event.</summary>
         public void ApplyPreviewTint(PlacementResult result)
         {
             if (_previewInstance == null) return;
