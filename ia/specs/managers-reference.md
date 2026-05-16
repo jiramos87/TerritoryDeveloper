@@ -6,8 +6,8 @@ slices_via: spec_section
 ---
 # Managers & Services — Reference
 
-> Complete reference of all managers and helper services: responsibilities, dependencies, and patterns.
-> For the full dependency map, see `ARCHITECTURE.md`.
+> Complete reference of all managers + helper services: responsibilities, dependencies, patterns.
+> Full dependency map → `ARCHITECTURE.md`.
 
 ## Manager Responsibilities
 
@@ -62,76 +62,76 @@ slices_via: spec_section
 
 > **Glossary index:** `glossary.md` cites this section as **mgrs §Zones**.
 >
-> Domain model for RCI zoning, building placement, and multi-cell footprints. For AUTO **street** walkability over light zoning, see `isometric-geography-system.md` §13.9.
+> Domain model for RCI zoning, building placement, multi-cell footprints. AUTO **street** walkability over light zoning → `isometric-geography-system.md` §13.9.
 
 ### RCI model
 
-- **Residential (R), Commercial (C), Industrial (I)** are the three zone categories. Each drives different demand, employment, and building sets in the economy layer (`DemandManager`, `ZoneManager`).
-- Zoning is placed per cell; buildings spawn on zoned cells when simulation and demand allow.
+- **Residential (R), Commercial (C), Industrial (I)** = three zone categories. Each drives different demand, employment, building sets in economy layer (`DemandManager`, `ZoneManager`).
+- Zoning placed per cell; buildings spawn on zoned cells when simulation + demand allow.
 
 ### Zone lifecycle
 
-1. **Empty developable cell** — grass, forest, or other land the player or AUTO may zone.
-2. **Zoned cell** — a `Zone` component marks the cell with a zone type and density tier (light / medium / heavy where applicable).
-3. **Building** — when growth rules fire, a building prefab is placed on the zone footprint; the zone tracks level and building reference.
-4. **Upgrade** — `GrowthManager` may replace a building with a larger variant when property value / demand supports it (see backlog issues for happiness and property value).
+1. **Empty developable cell** — grass, forest, or other land player or AUTO may zone.
+2. **Zoned cell** — `Zone` component marks cell with zone type + density tier (light / medium / heavy where applicable).
+3. **Building** — growth rules fire → building prefab placed on zone footprint; zone tracks level + building reference.
+4. **Upgrade** — `GrowthManager` may replace building with larger variant when property value / demand supports (see backlog issues for happiness + property value).
 
 ### Zone density
 
-- **Light / medium / heavy** tiers control which building prefabs and footprints are eligible. Higher tiers generally mean larger or denser structures.
-- AUTO simulation treats **undeveloped light zoning** (light tier, **no** building spawned) as pass-through terrain for **street** pathfinding only — see geography spec §13.9 and `AutoSimulationRoadRules`.
+- **Light / medium / heavy** tiers control which building prefabs + footprints eligible. Higher tiers generally = larger or denser structures.
+- AUTO simulation treats **undeveloped light zoning** (light tier, **no** building spawned) as pass-through terrain for **street** pathfinding only — see geography spec §13.9 + `AutoSimulationRoadRules`.
 
-### Pivot cell and multi-cell buildings
+### Pivot cell + multi-cell buildings
 
-- Buildings may occupy **1×1** or **2×2** (and utility footprints as designed) cells.
-- The **pivot cell** is the anchor cell for a multi-cell building. Other footprint cells reference the pivot for sorting, save data, and demolition. Non-pivot cells must stay consistent with the pivot’s building reference.
+- Buildings may occupy **1×1** or **2×2** (+ utility footprints as designed) cells.
+- **Pivot cell** = anchor cell for multi-cell building. Other footprint cells reference pivot for sorting, save data, demolition. Non-pivot cells must stay consistent with pivot's building reference.
 
 ### Building footprint
 
-The set of grid cells covered by a single building instance (one tile or a rectangle/multi-tile utility layout). Bulldozing, sorting, save/load, and zone growth treat the footprint as one unit anchored at the **pivot cell**.
+Set of grid cells covered by single building instance (one tile or rectangle / multi-tile utility layout). Bulldozing, sorting, save/load, zone growth treat footprint as one unit anchored at **pivot cell**.
 
-### Building placement and restore
+### Building placement + restore
 
-- Runtime placement and load-game restore go through `BuildingPlacementService` and `GridManager` restore paths. Visual sorting on load follows geography spec §7.4 (visual restore).
+- Runtime placement + load-game restore go through `BuildingPlacementService` + `GridManager` restore paths. Visual sorting on load follows geography spec §7.4 (visual restore).
 
 ## Demand (R / C / I)
 
 > **Glossary index:** `glossary.md` cites this section as **mgrs §Demand**.
 
-Residential, commercial, and industrial **demand** scores express how strongly each zone type wants to grow. They are derived from population, employment, forest cover, taxes, and related aggregates (`DemandManager`, `CityStats`, `EmploymentManager`). The demand bar in the UI and `AutoZoningManager` use these values when choosing where to zone.
+Residential, commercial, industrial **demand** scores express how strongly each zone type wants to grow. Derived from population, employment, forest cover, taxes, related aggregates (`DemandManager`, `CityStats`, `EmploymentManager`). Demand bar in UI + `AutoZoningManager` use these values when choosing where to zone.
 
-On each in-game **day**, after employment and pollution updates, `CityStats` computes a **happiness** target (including **tax** pressure from the **highest** R/C/I rate above a comfort band), lerps the displayed score toward that target, then `EmploymentManager.RefreshRCIDemandAfterDailyStats()` runs `DemandManager.UpdateRCIDemand` so **demand** sees **same-tick** tax and happiness targets. **Per-sector** tax pressure scales each R/C/I demand channel by that sector’s rate on `EconomyManager` (tunable on `DemandManager`). A **city-wide** multiplier from the happiness **target** (not only the lerped display value) further scales all three channels. Changing **tax** from the HUD also calls `CityStats.RefreshHappinessAfterPolicyChange()` so the score and **demand** update without waiting for the calendar **day**.
+On each in-game **day**, after employment + pollution updates, `CityStats` computes **happiness** target (including **tax** pressure from **highest** R/C/I rate above comfort band), lerps displayed score toward target, then `EmploymentManager.RefreshRCIDemandAfterDailyStats()` runs `DemandManager.UpdateRCIDemand` so **demand** sees **same-tick** tax + happiness targets. **Per-sector** tax pressure scales each R/C/I demand channel by that sector's rate on `EconomyManager` (tunable on `DemandManager`). **City-wide** multiplier from happiness **target** (not only lerped display value) further scales all three channels. Changing **tax** from HUD also calls `CityStats.RefreshHappinessAfterPolicyChange()` so score + **demand** update without waiting for calendar **day**.
 
-**Happiness** — City-wide 0–100 satisfaction score recalculated each **day** and on **tax** UI changes from employment rate, **highest** of the three **tax** rates (penalty above a comfort threshold), service coverage, forest bonus, development base, and pollution penalty; converges smoothly via lerp. Tax vs development vs service weights are tunable on the **`CityStats`** component (Inspector). Feeds back into R/C/I demand via the target-based multiplier above (`CityStats`, `DemandManager`).
+**Happiness** — City-wide 0–100 satisfaction score recalculated each **day** + on **tax** UI changes from employment rate, **highest** of three **tax** rates (penalty above comfort threshold), service coverage, forest bonus, development base, pollution penalty; converges smoothly via lerp. Tax vs development vs service weights tunable on **`CityStats`** component (Inspector). Feeds back into R/C/I demand via target-based multiplier above (`CityStats`, `DemandManager`).
 
-**Tax base** — RCI development and population contribute to taxable capacity read by `EconomyManager` / `CityStats`; **tax** rates reduce appetite through **happiness** (**highest** sector rate vs comfort band) and **per-sector demand** scaling, while income flows through monthly collection.
+**Tax base** — RCI development + population contribute to taxable capacity read by `EconomyManager` / `CityStats`; **tax** rates reduce appetite through **happiness** (**highest** sector rate vs comfort band) + **per-sector demand** scaling, while income flows through monthly collection.
 
-**Monthly maintenance** — On calendar day 1 (via `TimeManager` → `EconomyManager.ProcessDailyEconomy` → `ProcessMonthlyEconomy`), after monthly **tax base** income is credited, `EconomyManager` charges **street** upkeep from `CityStats.roadCount` and **utility building** upkeep from `CityStats.GetRegisteredPowerPlantCount()` (v1: **power plants** only). Successful payment posts an informational **game notification** with a category breakdown; if the treasury cannot afford the full amount, no debit occurs and a **game notification** error explains the shortfall. Tunable per-road and per-plant costs live on `EconomyManager`. **Growth budget** projections subtract this maintenance from projected tax when computing net monthly cash flow.
+**Monthly maintenance** — On calendar day 1 (via `TimeManager` → `EconomyManager.ProcessDailyEconomy` → `ProcessMonthlyEconomy`), after monthly **tax base** income credited, `EconomyManager` charges **street** upkeep from `CityStats.roadCount` + **utility building** upkeep from `CityStats.GetRegisteredPowerPlantCount()` (v1: **power plants** only). Successful payment posts informational **game notification** with category breakdown; treasury can't afford full amount → no debit + **game notification** error explains shortfall. Tunable per-road + per-plant costs live on `EconomyManager`. **Growth budget** projections subtract maintenance from projected tax when computing net monthly cash flow.
 
-**Desirability** — per-cell attractiveness for zoning and AUTO growth based on terrain context (e.g. proximity to water, forests), computed after geography initialization. See `ARCHITECTURE.md` (initialization order, `GeographyManager` desirability pass) when changing how cells become more or less attractive.
+**Desirability** — per-cell attractiveness for zoning + AUTO growth based on terrain context (e.g. proximity to water, forests), computed after geography initialization. See `ARCHITECTURE.md` (initialization order, `GeographyManager` desirability pass) when changing how cells become more or less attractive.
 
 ## World features
 
 > **Glossary index:** `glossary.md` cites this section as **mgrs §World**.
 
-- **Forest** — Vegetation on land in **sparse**, **medium**, or **dense** states; affects demand and map tools (`ForestManager`).
-- **Regional map** — Neighboring cities in the wider region; ties to regional systems and UI (`RegionalMapManager`).
-- **Utility building** — Service structures (e.g. water treatment, power plants), distinct from RCI. Placement, multi-cell footprints, and AUTO placement follow `AutoResourcePlanner`, `ZoneManager`, and the same pivot rules as RCI buildings where applicable.
-- **Pollution** — City-wide environmental degradation. Sources: industrial **buildings** (heavy > medium > light contribution), polluting **utility buildings** (power plants — nuclear emits medium pollution, fossil-fuel plants emit high; future plants vary). Sinks: **forest** coverage absorbs pollution (diminishing returns at scale), future parks. Geographic and climatic base pollution planned for later. Pollution feeds into the **happiness** formula as a negative factor.
+- **Forest** — Vegetation on land in **sparse**, **medium**, or **dense** states; affects demand + map tools (`ForestManager`).
+- **Regional map** — Neighboring cities in wider region; ties to regional systems + UI (`RegionalMapManager`).
+- **Utility building** — Service structures (e.g. water treatment, power plants), distinct from RCI. Placement, multi-cell footprints, AUTO placement follow `AutoResourcePlanner`, `ZoneManager`, same pivot rules as RCI buildings where applicable.
+- **Pollution** — City-wide environmental degradation. Sources: industrial **buildings** (heavy > medium > light contribution), polluting **utility buildings** (power plants — nuclear emits medium pollution, fossil-fuel plants emit high; future plants vary). Sinks: **forest** coverage absorbs pollution (diminishing returns at scale), future parks. Geographic + climatic base pollution planned for later. Pollution feeds into **happiness** formula as negative factor.
 
 ## Game notifications
 
 > **Glossary index:** `glossary.md` cites this section as **mgrs §Notifications**.
 
-In-game toasts and alerts (funds, placement errors, hints). Delivered only through **`GameNotificationManager.Instance`** — the project’s sole notification singleton. See **Architectural patterns** below for access rules.
+In-game toasts + alerts (funds, placement errors, hints). Delivered only through **`GameNotificationManager.Instance`** — project's sole notification singleton. See **Architectural patterns** below for access rules.
 
 ## Architectural patterns
 
-- Every manager is a **MonoBehaviour** living as a component on a scene GameObject.
+- Every manager = **MonoBehaviour** living as component on scene GameObject.
 - **Never** instantiate managers with `new` — always scene components.
-- **GridManager** is the central hub — all cell operations go through it.
+- **GridManager** = central hub — all cell operations go through it.
 - Notifications: `GameNotificationManager.Instance` (only singleton).
-- **CityStats** is the global data aggregator — read city-wide stats from here.
+- **CityStats** = global data aggregator — read city-wide stats from here.
 - Dependencies: `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`.
 
 ## Obsolete
