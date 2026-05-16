@@ -27,6 +27,7 @@ public class AutoBuildSimRulesService
 
     public const int MaxBridgeWaterTiles = 5;
 
+    /// <summary>Construct sim-rules service — grid + terrain + centroid.</summary>
     public AutoBuildSimRulesService(
         IGridManager gridManager,
         ITerrainManager terrainManager,
@@ -37,6 +38,7 @@ public class AutoBuildSimRulesService
         _urbanCentroidService = urbanCentroidService;
     }
 
+    /// <summary>Re-wire dependencies after registry resolve.</summary>
     public void RefreshDependencies(
         IGridManager gridManager,
         ITerrainManager terrainManager,
@@ -47,6 +49,7 @@ public class AutoBuildSimRulesService
         _urbanCentroidService = urbanCentroidService;
     }
 
+    /// <summary>True if cell can host an auto-placed road tile (land or water bridge).</summary>
     public bool IsCellPlaceableForRoad(int x, int y)
     {
         CityCell c = _gridManager.GetCell(x, y);
@@ -59,6 +62,7 @@ public class AutoBuildSimRulesService
         return _terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true);
     }
 
+    /// <summary>Reason text for why cell fails IsCellPlaceableForRoad.</summary>
     public string GetCellPlaceableRejectReason(int x, int y)
     {
         CityCell c = _gridManager.GetCell(x, y);
@@ -73,6 +77,7 @@ public class AutoBuildSimRulesService
         return "unknown";
     }
 
+    /// <summary>True if cell slope kind permits a road in given direction.</summary>
     public bool IsSuitableForRoad(int x, int y, Vector2Int streetDir)
     {
         CityCell c = _gridManager.GetCell(x, y);
@@ -103,6 +108,7 @@ public class AutoBuildSimRulesService
         }
     }
 
+    /// <summary>True if cell beyond tip+len*dir blocked by water or slope.</summary>
     public bool IsDirectionBlockedBySlopeOrWater(Vector2Int tip, Vector2Int dir, int len)
     {
         int bx = tip.x + len * dir.x, by = tip.y + len * dir.y;
@@ -115,6 +121,7 @@ public class AutoBuildSimRulesService
         return slope != TerrainSlopeType.Flat;
     }
 
+    /// <summary>Count of cardinal grass/forest neighbors at road cell.</summary>
     public int CountGrassNeighbors(Vector2Int roadPos)
     {
         int count = 0;
@@ -128,12 +135,14 @@ public class AutoBuildSimRulesService
         return count;
     }
 
+    /// <summary>True if edge cell sits on an interstate.</summary>
     public bool IsEdgeOnInterstate(Vector2Int edge)
     {
         CityCell c = _gridManager.GetCell(edge.x, edge.y);
         return c != null && c.isInterstate;
     }
 
+    /// <summary>True if parallel road exists within minSpacing perpendicular to dir.</summary>
     public bool HasParallelRoadTooClose(Vector2Int edge, Vector2Int dir, int minSpacing, HashSet<Vector2Int> roadSet, Vector2Int? excludeAlongDir = null)
     {
         Vector2Int perp = new Vector2Int(-dir.y, dir.x);
@@ -168,6 +177,7 @@ public class AutoBuildSimRulesService
         return false;
     }
 
+    /// <summary>Mean cell desirability along direction over sampleCount steps.</summary>
     public float GetAverageDesirabilityInDirection(Vector2Int start, Vector2Int dir, int sampleCount)
     {
         float sum = 0f;
@@ -189,6 +199,7 @@ public class AutoBuildSimRulesService
         return count > 0 ? sum / count : 0f;
     }
 
+    /// <summary>Count grass/forest cells within radius along sampleLen path.</summary>
     public int CountUnzonedCellsNearPath(Vector2Int start, Vector2Int dir, int sampleLen, int radius)
     {
         int count = 0;
@@ -214,6 +225,7 @@ public class AutoBuildSimRulesService
         return count;
     }
 
+    /// <summary>True if roads flank both sides of edge within parallelSpacing.</summary>
     public bool IsDirectionEnclosed(Vector2Int edge, Vector2Int dir, int parallelSpacing, HashSet<Vector2Int> roadSet)
     {
         Vector2Int perp = new Vector2Int(-dir.y, dir.x);
@@ -232,6 +244,7 @@ public class AutoBuildSimRulesService
         return hasRoadLeft && hasRoadRight;
     }
 
+    /// <summary>Score direction = 2×desirability + unzoned − 50 if enclosed.</summary>
     public float CalculateDirectionUtility(Vector2Int edge, Vector2Int dir, int sampleLen, int parallelSpacing, HashSet<Vector2Int> roadSet)
     {
         float desir = GetAverageDesirabilityInDirection(edge, dir, sampleLen);
@@ -240,6 +253,7 @@ public class AutoBuildSimRulesService
         return desir * 2f + unzoned * 1f - (enclosed ? 50f : 0f);
     }
 
+    /// <summary>Ring-priority score (Inner highest).</summary>
     public static int GetRingPriority(UrbanRing ring)
     {
         switch (ring)
@@ -252,6 +266,7 @@ public class AutoBuildSimRulesService
         }
     }
 
+    /// <summary>Inner ring min edge spacing override; else passthrough.</summary>
     public int GetEffectiveMinEdgeSpacing(UrbanRing ring, int minEdgeSpacing, int coreInnerMinEdgeSpacing)
     {
         if ((ring == UrbanRing.Inner) && minEdgeSpacing > coreInnerMinEdgeSpacing)
@@ -259,6 +274,7 @@ public class AutoBuildSimRulesService
         return minEdgeSpacing;
     }
 
+    /// <summary>Random parallel spacing in [min,max+1]; fallback to fixed.</summary>
     public static int GetEffectiveParallelSpacing(RingStreetParams p)
     {
         return p.parallelSpacingMax > p.parallelSpacingMin
@@ -266,6 +282,7 @@ public class AutoBuildSimRulesService
             : p.parallelSpacing;
     }
 
+    /// <summary>Count inner-ring cells in edge list via centroid service.</summary>
     public int CountInnerEdges(List<Vector2Int> edges)
     {
         if (_urbanCentroidService == null || edges == null) return 0;
