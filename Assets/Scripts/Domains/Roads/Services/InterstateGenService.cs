@@ -22,6 +22,7 @@ public class InterstateGenService
     private readonly IRoadManager _roads;
     private readonly InterstateConformanceService _conformance;
 
+    /// <summary>Construct interstate gen service — grid + terrain + roads + conformance.</summary>
     public InterstateGenService(IGridManager grid, ITerrainManager terrain, IRoadManager roads, InterstateConformanceService conformance)
     {
         _grid = grid;
@@ -44,6 +45,7 @@ public class InterstateGenService
     // Route generation (stochastic + deterministic)
     // ------------------------------------------------------------------
 
+    /// <summary>Pick border pair + A* path between borders; return route + entry/exit.</summary>
     public List<Vector2Int> GenerateInterstateRoute(int attemptOffset, ref Vector2Int? entryPoint, ref Vector2Int? exitPoint, ref int entryBorder, ref int exitBorder)
     {
         var positions = new List<Vector2Int>();
@@ -125,6 +127,7 @@ public class InterstateGenService
     // Path cost
     // ------------------------------------------------------------------
 
+    /// <summary>Sum per-step path cost from height/slope/water table.</summary>
     public int ComputePathCost(List<Vector2Int> path, HeightMap heightMap)
     {
         if (path == null || path.Count < 2 || heightMap == null || _terrain == null) return int.MaxValue;
@@ -148,6 +151,7 @@ public class InterstateGenService
     // A* pathfinding
     // ------------------------------------------------------------------
 
+    /// <summary>A* path between border cells; smooth + parallel-offset retry on hill cross.</summary>
     public List<Vector2Int> FindInterstatePathAStar(Vector2Int start, Vector2Int end, int w, int h, HeightMap heightMap)
     {
         var path = PickLowerCostInterstateAStarPath(start, end, w, h, heightMap);
