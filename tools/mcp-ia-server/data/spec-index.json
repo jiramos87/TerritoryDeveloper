@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-26T17:08:35.656Z",
+  "last_generated": "2026-05-16T19:03:13.038Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -1154,8 +1154,8 @@
           "line_start": 79
         },
         {
-          "section_id": "pivot-cell-and-multi-cell-buildings",
-          "title": "Pivot cell and multi-cell buildings",
+          "section_id": "pivot-cell-multi-cell-buildings",
+          "title": "Pivot cell + multi-cell buildings",
           "depth": 3,
           "line_start": 84
         },
@@ -1166,8 +1166,8 @@
           "line_start": 89
         },
         {
-          "section_id": "building-placement-and-restore",
-          "title": "Building placement and restore",
+          "section_id": "building-placement-restore",
+          "title": "Building placement + restore",
           "depth": 3,
           "line_start": 93
         },
@@ -1370,8 +1370,8 @@
           "line_start": 11
         },
         {
-          "section_id": "urban-centroid-and-growth-rings",
-          "title": "Urban centroid and growth rings",
+          "section_id": "urban-centroid-growth-rings",
+          "title": "Urban centroid + growth rings",
           "depth": 3,
           "line_start": 23
         },
