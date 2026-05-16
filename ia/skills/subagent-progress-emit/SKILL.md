@@ -39,15 +39,15 @@ One stderr line per phase entry, literal shape:
 ⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}
 ```
 
-- `⟦ ⟧` — Unicode math brackets (U+27E6 / U+27E7). Reserved as canonical regex-stable delimiter. Forbidden in skill body prose outside the emission line itself — reserved purely so the parent agent's stderr reader can `grep -E '^⟦PROGRESS⟧'` without false positives from prose.
-- `skill_name` — value of top-level `name:` field in the emitting skill's frontmatter.
-- `phase_index` — 1-based index into the skill's `phases:` array for the phase being entered.
-- `phase_total` — `phases.length` of the same array.
+- `⟦ ⟧` — Unicode math brackets (U+27E6 / U+27E7). Reserved canonical regex-stable delimiter. Forbidden in skill body prose outside emission line itself — reserved so parent agent's stderr reader can `grep -E '^⟦PROGRESS⟧'` without false positives from prose.
+- `skill_name` — value of top-level `name:` field in emitting skill's frontmatter.
+- `phase_index` — 1-based index into skill's `phases:` array for phase being entered.
+- `phase_total` — `phases.length` of same array.
 - `phase_name` — array element at index `phase_index − 1`, verbatim.
 
 ## Frontmatter convention
 
-Every lifecycle `SKILL.md` carries a top-level `phases:` YAML array listing phase names in the exact order they execute in the skill body. Each array entry is a short human-readable label matching one `### Phase N — {label}` heading in the body. Example:
+Every lifecycle `SKILL.md` carries top-level `phases:` YAML array listing phase names in exact order they execute in skill body. Each array entry = short human-readable label matching one `### Phase N — {label}` heading in body. Example:
 
 ```yaml
 phases:
@@ -57,13 +57,13 @@ phases:
   - "Hand-off"
 ```
 
-Body headings MUST be `### Phase N — {label}` where `{label}` equals the array entry verbatim (trimmed). `validate:frontmatter` asserts 1:1 drift-free parity between array and body headings; mismatch fails strict mode.
+Body headings MUST be `### Phase N — {label}` where `{label}` equals array entry verbatim (trimmed). `validate:frontmatter` asserts 1:1 drift-free parity between array + body headings; mismatch fails strict mode.
 
 ## Emission contract
 
-A subagent reads its own frontmatter `phases:` on boot. On entering each phase, it writes ONE stderr line in the canonical shape and no others. No stdout emission, no MCP tool call, no log-file write. The parent agent surfaces matching stderr lines verbatim to the user terminal.
+Subagent reads own frontmatter `phases:` on boot. On entering each phase, writes ONE stderr line in canonical shape + no others. No stdout emission, no MCP tool call, no log-file write. Parent agent surfaces matching stderr lines verbatim to user terminal.
 
-Per-skill emission boilerplate is zero — the `@`-loaded common preamble handles the mechanics. Skills do not inline their own emission code; they simply carry the `phases:` array and let the preamble do the work.
+Per-skill emission boilerplate = zero — `@`-loaded common preamble handles mechanics. Skills do not inline own emission code; simply carry `phases:` array + let preamble do work.
 
 ## Scope — lifecycle vs non-lifecycle
 
@@ -81,10 +81,10 @@ Validator exemption: `check-frontmatter.mjs` only enforces the `phases:` ↔ bod
 
 ## Delimiter reservation
 
-The token `⟦PROGRESS⟧` and the bracket pair `⟦ ⟧` are reserved across every file under `ia/skills/**/SKILL.md` body prose, agent bodies, command bodies, and rule docs. Prose MUST NOT use these characters for any other purpose. `validate:all` greps for off-contract occurrences outside the canonical emission line.
+Token `⟦PROGRESS⟧` + bracket pair `⟦ ⟧` reserved across every file under `ia/skills/**/SKILL.md` body prose, agent bodies, command bodies, rule docs. Prose MUST NOT use these characters for any other purpose. `validate:all` greps for off-contract occurrences outside canonical emission line.
 
 ## No runtime state
 
-This skill has no phases of its own. It is a preamble declaring a contract. `phases: []` in its frontmatter is deliberate — validators skip parity-check when array is empty.
+Skill has no phases of own. = Preamble declaring contract. `phases: []` in frontmatter deliberate — validators skip parity-check when array empty.
 
 ## Changelog
