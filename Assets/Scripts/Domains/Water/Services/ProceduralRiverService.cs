@@ -48,6 +48,7 @@ namespace Domains.Water.Services
             /// <summary>Shallow carve target before longitudinal clamp. <c>-1</c> if section has no bed.</summary>
             public int CandidateBedHeight = -1;
 
+            /// <summary>Iterate left bank → bed cells → right bank.</summary>
             public IEnumerable<Vector2Int> AllCorridorCells()
             {
                 if (HasLeft) yield return LeftBank;
@@ -86,6 +87,7 @@ namespace Domains.Water.Services
 
         // ── Entry spacing guard ─────────────────────────────────────────────────
 
+        /// <summary>True if candidate too close to a same-axis existing river entry on its border.</summary>
         public static bool IsEntryTooCloseToExistingStarts(Vector2Int candidate, bool northSouth, int gw, int gh, List<Vector2Int> sameAxisEntryStarts, int minSep)
         {
             if (sameAxisEntryStarts == null || sameAxisEntryStarts.Count == 0 || minSep <= 0)
@@ -112,11 +114,13 @@ namespace Domains.Water.Services
 
         // ── Map guard ───────────────────────────────────────────────────────────
 
+        /// <summary>True if grid large enough to host rivers with border margin.</summary>
         public static bool CanPlaceRiversWithMargin(int gw, int gh)
             => gw >= 2 * RiverBorderMargin + 1 && gh >= 2 * RiverBorderMargin + 1;
 
         // ── Footprint bounds ────────────────────────────────────────────────────
 
+        /// <summary>Compute clipped bounding rect of footprint plus 2-cell halo.</summary>
         public static void GetFootprintBounds(HashSet<Vector2Int> footprint, int gw, int gh,
             out int minX, out int minY, out int maxX, out int maxY)
         {
@@ -137,6 +141,7 @@ namespace Domains.Water.Services
         // ── Cross-section builder ───────────────────────────────────────────────
 
         /// <param name="segmentIndex">Index along centerline. Entry/exit allow border footprint only here.</param>
+        /// <summary>Build per-segment river cross-section — bed + optional banks.</summary>
         public static RiverCrossSectionData BuildCrossSection(WaterMap wm, int gw, int gh,
             Vector2Int prev, Vector2Int cur, Vector2Int next,
             int bedWidth, bool flowIsNorthSouth, bool flowPositive,
@@ -272,6 +277,7 @@ namespace Domains.Water.Services
 
         // ── Border allowance ────────────────────────────────────────────────────
 
+        /// <summary>True if footprint cell allowed on border at given segment position.</summary>
         public static bool IsFootprintCellAllowedOnBorder(int wx, int wy, int gw, int gh,
             bool flowIsNorthSouth, bool flowPositive, bool isFirstSegment, bool isLastSegment)
         {
@@ -306,6 +312,7 @@ namespace Domains.Water.Services
 
         // ── Centerline BFS ──────────────────────────────────────────────────────
 
+        /// <summary>Build centerline path via BFS along chosen axis.</summary>
         public static List<Vector2Int> TryBuildCenterline(WaterMap wm, HeightMap hm, int gw, int gh,
             int maxL, bool nsAxis, bool flowPositive, System.Random rnd,
             HashSet<Vector2Int> avoid, List<Vector2Int> sameAxisEntryStarts, int minEntrySeparationOnBorder)
@@ -315,6 +322,7 @@ namespace Domains.Water.Services
             return TryBfsEdgeToEdge(wm, hm, gw, gh, maxL, false, flowPositive, rnd, avoid, sameAxisEntryStarts, minEntrySeparationOnBorder);
         }
 
+        /// <summary>BFS edge-to-edge path; respects margin + avoid set + entry separation.</summary>
         public static List<Vector2Int> TryBfsEdgeToEdge(WaterMap wm, HeightMap hm, int gw, int gh,
             int maxL, bool northSouth, bool flowPositive, System.Random rnd,
             HashSet<Vector2Int> avoid, List<Vector2Int> sameAxisEntryStarts, int minEntrySeparationOnBorder)
@@ -376,6 +384,7 @@ namespace Domains.Water.Services
             return null;
         }
 
+        /// <summary>Enqueue river BFS neighbor if dry, within margin, height-step valid.</summary>
         public static void TryEnqueueRiverNeighbor(
             WaterMap wm, HeightMap hm, int gw, int gh, int margin,
             bool northSouth, bool flowPositive,
@@ -423,6 +432,7 @@ namespace Domains.Water.Services
             q.Enqueue(np);
         }
 
+        /// <summary>Fisher-Yates shuffle on int array.</summary>
         public static void ShuffleOrder(System.Random rnd, int[] arr)
         {
             for (int i = arr.Length - 1; i > 0; i--)
@@ -482,6 +492,7 @@ namespace Domains.Water.Services
             return new Vector2Int(-1, -1);
         }
 
+        /// <summary>Walk cameFrom backward → forward path list start..goal.</summary>
         public static List<Vector2Int> ReconstructPath(Dictionary<Vector2Int, Vector2Int> cameFrom,
             Vector2Int start, Vector2Int goal)
         {
@@ -493,6 +504,7 @@ namespace Domains.Water.Services
             return path;
         }
 
+        /// <summary>True if |Δh| ≤ 1 between cardinal neighbors.</summary>
         public static bool CardinalStepHeightOk(HeightMap hm, int x0, int y0, int x1, int y1)
         {
             int h0 = hm.GetHeight(x0, y0);
