@@ -14,19 +14,19 @@ description: >
 
 # Stage sizing gate
 
-> **Scope note:** "sizing gate" and "cardinality gate" are distinct guard layers on the Stage/Task
-> hierarchy (per `ia/rules/project-hierarchy.md`). They are NOT the retired prose-Gate concept
-> (folded into Stage Exit criteria pre-refactor). The cardinality gate bounds task count (≥2 hard /
+> **Scope note:** "sizing gate" + "cardinality gate" = distinct guard layers on Stage/Task
+> hierarchy (per `ia/rules/project-hierarchy.md`). NOT the retired prose-Gate concept
+> (folded into Stage Exit criteria pre-refactor). Cardinality gate bounds task count (≥2 hard /
 > ≤6 soft); this rule gates task-cluster complexity for bulk-verify + bulk-code-review feasibility.
 
 ## §1 Purpose
 
-Stage decomposition and Stage filing agents must verify that a drafted task cluster is feasible to
-bulk-verify (Path A + optional Path B) and bulk-code-review in a single Opus pass. This rule
-provides 6 analytic heuristics for that check. Failure triggers a recurse-split protocol: the Stage
-is partitioned into X.Y.A / X.Y.B sub-stages before filing proceeds.
+Stage decomposition + Stage filing agents must verify drafted task cluster feasible to
+bulk-verify (Path A + optional Path B) + bulk-code-review in single Opus pass. Rule
+provides 6 analytic heuristics for check. Failure triggers recurse-split protocol: Stage
+partitioned into X.Y.A / X.Y.B sub-stages before filing proceeds.
 
-Applies to: NEW Stage drafts only. Existing filed Stages are grandfathered; do NOT apply
+Applies to: NEW Stage drafts only. Existing filed Stages grandfathered; do NOT apply
 retroactively.
 
 **Layer ordering:**
@@ -36,8 +36,8 @@ retroactively.
 
 ## §2 Heuristics table
 
-Evaluate each heuristic in sequence. Each returns PASS / WARN / FAIL with a one-line rationale
-citing the heuristic id (H1–H6).
+Evaluate each heuristic in sequence. Each returns PASS / WARN / FAIL with one-line rationale
+citing heuristic id (H1–H6).
 
 | ID | Heuristic | PASS | WARN | FAIL | Estimation source |
 |----|-----------|------|------|------|-------------------|
@@ -59,7 +59,7 @@ citing the heuristic id (H1–H6).
 
 ### 3.1 Split proposal
 
-On gate FAIL, the calling agent emits a split recommendation block:
+On gate FAIL, calling agent emits split recommendation block:
 
 ```
 SIZING GATE FAIL — Stage {X.Y}
@@ -72,17 +72,17 @@ Action required: reauthor each sub-stage; run sizing gate on each before filing.
 
 Partition strategy (priority order):
 
-1. **Subsystem cut (H1 fail):** group tasks by their dominant subsystem layer. Assign each
+1. **Subsystem cut (H1 fail):** group tasks by dominant subsystem layer. Assign each
    cohesive cluster to one sub-stage.
 2. **Verify-path cut (H2 fail):** group all Path A tasks in one sub-stage; Path B tasks in
    another.
 3. **DAG cut (H4 fail):** cut at fan-out node; upstream tasks form sub-stage A; downstream B.
-4. **LOC cut (H3 fail):** split largest task group evenly until each sub-stage is under budget.
-5. **Invariant cut (H5/H6 fail):** isolate invariant-touching tasks in their own sub-stage; keep
+4. **LOC cut (H3 fail):** split largest task group evenly until each sub-stage under budget.
+5. **Invariant cut (H5/H6 fail):** isolate invariant-touching tasks in own sub-stage; keep
    read-only tasks separate.
 
-Sub-stage naming: `X.Y.A`, `X.Y.B` (append letter suffix to the parent Stage id). If parent
-already has a letter suffix (e.g. `X.Y.A`), escalate to user — triple-split signals step-level
+Sub-stage naming: `X.Y.A`, `X.Y.B` (append letter suffix to parent Stage id). Parent
+already has letter suffix (e.g. `X.Y.A`) → escalate to user — triple-split signals step-level
 scope problem.
 
 ### 3.2 Recurse budget
@@ -98,16 +98,16 @@ scope problem.
   > (b) Re-scope at Step level — move some goals to a later Step.
   > Context: Stage {X.Y.B} gate FAIL ({heuristic ids}); second consecutive auto-split exhausted."
 
-  Wait for user decision before proceeding. Do NOT auto-split a third time.
+  Wait for user decision before proceeding. Do NOT auto-split third time.
 
-- **Waiver path:** if user chooses (a), record waiver in master plan Stage block:
+- **Waiver path:** user chooses (a) → record waiver in master plan Stage block:
   `<!-- sizing-gate-waiver: {reason}; accepted {YYYY-MM-DD} -->`. Gate not re-evaluated for
   this Stage on subsequent runs.
 
 ### 3.3 Grandfathering
 
 Sizing gate applies to Stage drafts only. Already-filed Stages (Status ≠ Draft / _pending_)
-are NOT subject to retroactive evaluation. Gate verdict = N/A for filed Stages.
+NOT subject to retroactive evaluation. Gate verdict = N/A for filed Stages.
 
 ## §4 Cross-references
 
