@@ -1,10 +1,10 @@
 # Master-plan structure — canonical
 
-**Purpose:** single source of truth for every `ia/projects/*-master-plan.md` orchestrator. Defines the file shape, Stage block shape, Task table shape, Status enum, lifecycle flip matrix, and cardinality rules. Every skill that authors, extends, decomposes, files, or closes a Stage cites this doc.
+**Purpose:** Single source of truth for every `ia/projects/*-master-plan.md` orchestrator. Defines file shape, Stage block shape, Task table shape, Status enum, lifecycle flip matrix, cardinality rules. Every skill authoring, extending, decomposing, filing, or closing Stage cites this doc.
 
-**Scope:** orchestrator docs only (`*-master-plan.md`). Per-issue project specs (`ia/projects/{ISSUE_ID}.md`) follow `ia/templates/project-spec-template.md` + `ia/rules/plan-apply-pair-contract.md` — NOT this doc.
+**Scope:** Orchestrator docs only (`*-master-plan.md`). Per-issue project specs (`ia/projects/{ISSUE_ID}.md`) follow `ia/templates/project-spec-template.md` + `ia/rules/plan-apply-pair-contract.md` — NOT this doc.
 
-**Authority:** this file + [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) are authoritative. [`ia/templates/master-plan-template.md`](../templates/master-plan-template.md) is the seed fixture — conforms to this doc. Any skill with inline structure definition is DRIFT; must defer here.
+**Authority:** This file + [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) authoritative. [`ia/templates/master-plan-template.md`](../templates/master-plan-template.md) = seed fixture — conforms to this doc. Any skill with inline structure definition = DRIFT; must defer here.
 
 ---
 
@@ -18,11 +18,11 @@ master plan (file)
 
 **Removed (post lifecycle-refactor — do NOT reintroduce):**
 
-- `### Step N` headings — deleted. Stages are flat siblings under `## Stages`.
-- `#### Stage N.M` (H4) — Stages are H3, not H4.
+- `### Step N` headings — deleted. Stages = flat siblings under `## Stages`.
+- `#### Stage N.M` (H4) — Stages = H3, not H4.
 - `**Phases:**` checkbox blocks inside Stage — deleted. One Stage = one atomic shippable unit, decomposed directly into Tasks.
-- `Phase` column in Task table — deleted. Table is 5 columns, not 6.
-- Stage skeletons / "decomposition deferred" blocks — `master-plan-new` decomposes ALL Stages at author time. Lazy-decompose fires only when a new Stage skeleton is intentionally appended by `master-plan-extend` with a deferred marker — `stage-decompose` expands it in place.
+- `Phase` column in Task table — deleted. Table = 5 columns, not 6.
+- Stage skeletons / "decomposition deferred" blocks — `master-plan-new` decomposes ALL Stages at author time. Lazy-decompose fires only when new Stage skeleton intentionally appended by `master-plan-extend` with deferred marker — `stage-decompose` expands in place.
 
 ---
 
@@ -34,7 +34,7 @@ master plan (file)
 ia/projects/{slug}-master-plan.md
 ```
 
-`{slug}` = kebab-case domain handle (e.g. `sprite-gen`, `grid-asset-visual-registry`). Never numbered — numbers belong to Stages, not the file.
+`{slug}` = kebab-case domain handle (e.g. `sprite-gen`, `grid-asset-visual-registry`). Never numbered — numbers belong to Stages, not file.
 
 ### 2.2 Top-level headings (required, in order)
 
