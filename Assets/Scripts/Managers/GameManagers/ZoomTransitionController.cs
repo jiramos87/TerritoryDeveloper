@@ -2,6 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using Territory.Managers;
+using Territory.Persistence;
+using Territory.UI.Panels;
 
 namespace Territory.SceneManagement
 {
@@ -24,23 +27,34 @@ namespace Territory.SceneManagement
     {
         TransitionState State { get; }
         event Action<TransitionState> StateChanged;
+        event Action OnTransitionCanceledSaveFailed;
         Task<TransitionResult> RequestTransition(IsoSceneContext target, CancellationToken ct);
     }
 
-    /// <summary>CoreScene hub — drives City↔Region zoom transition state machine. Placeholder tween = instant cut (Stage 4 lands PrimeTween). Invariant #3: resolve deps in Start.</summary>
+    /// <summary>CoreScene hub — drives City↔Region zoom transition state machine. Stage 2: SaveCoordinator wired in Saving state. Invariant #3: resolve deps in Start.</summary>
     public class ZoomTransitionController : MonoBehaviour, IZoomTransitionController
     {
         public TransitionState State { get; private set; } = TransitionState.Idle;
         public event Action<TransitionState> StateChanged;
 
-        private SceneOrchestratorManager _orchestrator;
+        /// <summary>Fired when save fails and transition cancels back to Idle.</summary>
+        public event Action OnTransitionCanceledSaveFailed;
 
-        // Optional: auto-confirm gate for test/tracer use (true = skip confirm panel)
+        private SceneOrchestratorManager _orchestrator;
+        private ISaveCoordinator _saveCoordinator;
+        private ErrorToastController _errorToast;
+
+        // Auto-confirm gate for test/tracer use (true = skip confirm panel).
         public bool AutoConfirm { get; set; } = false;
+
+        // SaveId used for the current transition's paired write.
+        public string CurrentSaveId { get; set; } = "autosave";
 
         void Start()
         {
-            _orchestrator = FindObjectOfType<SceneOrchestratorManager>();
+            _orchestrator    = FindObjectOfType<SceneOrchestratorManager>();
+            _saveCoordinator = FindObjectOfType<SaveCoordinator>();
+            _errorToast      = FindObjectOfType<ErrorToastController>();
         }
 
         /// <summary>Request a scene transition to <paramref name="target"/>. State machine: Idle→AwaitConfirm→Saving→TweeningOut→AwaitLoad→Landing→Idle.</summary>
@@ -56,18 +70,41 @@ namespace Territory.SceneManagement
             if (!AutoConfirm)
             {
                 // Real path: ConfirmTransitionPanelController drives AutoConfirm=true then re-calls.
-                // For tracer: caller sets AutoConfirm=true before RequestTransition.
                 return TransitionResult.Cancelled;
             }
 
             SetState(TransitionState.Saving);
-            await Task.Yield(); // placeholder — SaveCoordinator lands Stage 2
+
+            // Stage 2: invoke SaveCoordinator.SavePair before advancing to TweeningOut.
+            if (_saveCoordinator != null)
+            {
+                try
+                {
+                    await _saveCoordinator.SavePair(CurrentSaveId, IsoSceneContext.City, ct);
+                }
+                catch (SaveFailedException ex)
+                {
+                    Debug.LogWarning($"[ZoomTransitionController] SavePair failed: {ex.Message}");
+                    SetState(TransitionState.Idle);
+                    _errorToast?.Show(ToastKind.SaveFailed);
+                    OnTransitionCanceledSaveFailed?.Invoke();
+                    return TransitionResult.Failed;
+                }
+                catch (OperationCanceledException)
+                {
+                    SetState(TransitionState.Idle);
+                    return TransitionResult.Cancelled;
+                }
+            }
+            else
+            {
+                await Task.Yield();
+            }
 
             SetState(TransitionState.TweeningOut);
             await Task.Yield(); // placeholder — PrimeTween lands Stage 4
 
             SetState(TransitionState.AwaitLoad);
-            // Load target scene additive via orchestrator
             string targetScene = target == IsoSceneContext.Region ? "RegionScene" : "CityScene";
             if (_orchestrator != null)
             {

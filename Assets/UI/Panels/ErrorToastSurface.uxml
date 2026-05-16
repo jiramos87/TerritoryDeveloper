@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML
+    xmlns:ui="UnityEngine.UIElements"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+    editor-extension-mode="False">
+  <Style src="ErrorToastSurface.uss"/>
+  <ui:VisualElement name="error-toast-root" class="error-toast__root">
+    <ui:VisualElement name="error-toast-banner" class="error-toast__banner">
+      <ui:Label name="error-toast-title" class="error-toast__title" text="Save Failed"/>
+      <ui:Label name="error-toast-body" class="error-toast__body" text="Your progress could not be saved. Please try again."/>
+      <ui:Button name="error-toast-dismiss" class="error-toast__dismiss" text="Dismiss"/>
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>
