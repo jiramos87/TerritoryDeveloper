@@ -19,6 +19,7 @@ namespace Domains.Grid.Services
         /// <summary>Offset so roads render above adjacent terrain (depth step = 100). Prevents "buried" interstate/road look.</summary>
         public const int ROAD_SORTING_OFFSET = 106;
 
+        /// <summary>Construct sorting-order service with grid reference.</summary>
         public GridSortingOrderService(IGridManager grid)
         {
             this.grid = grid;
