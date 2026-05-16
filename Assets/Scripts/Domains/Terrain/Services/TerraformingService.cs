@@ -22,6 +22,7 @@ namespace Domains.Terrain.Services
         private readonly System.Func<int, int, bool> _isWaterSlopeCell;
         private readonly System.Func<int, int, Territory.Terrain.TerrainSlopeType> _getTerrainSlopeTypeAt;
 
+        /// <summary>Construct terraforming facade with dependencies.</summary>
         public TerraformingService(
             System.Func<Territory.Terrain.HeightMap> getHeightMap,
             System.Func<int, int, bool> isRegisteredOpenWaterAt,
