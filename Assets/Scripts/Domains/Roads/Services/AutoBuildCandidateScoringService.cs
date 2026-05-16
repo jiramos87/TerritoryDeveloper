@@ -20,6 +20,7 @@ public class AutoBuildCandidateScoringService
     private IUrbanCentroidService _urbanCentroidService;
     private AutoBuildSimRulesService _simRules;
 
+    /// <summary>Construct candidate-scoring service — grid + centroid + sim rules.</summary>
     public AutoBuildCandidateScoringService(
         IGridManager gridManager,
         IUrbanCentroidService urbanCentroidService,
@@ -30,6 +31,7 @@ public class AutoBuildCandidateScoringService
         _simRules = simRules;
     }
 
+    /// <summary>Re-wire dependencies after registry resolve.</summary>
     public void RefreshDependencies(
         IGridManager gridManager,
         IUrbanCentroidService urbanCentroidService,
@@ -40,6 +42,7 @@ public class AutoBuildCandidateScoringService
         _simRules = simRules;
     }
 
+    /// <summary>Dominant road direction at edge cell (cardinal neighbor majority).</summary>
     public Vector2Int GetRoadDirectionAtEdge(Vector2Int edge, HashSet<Vector2Int> roadSet)
     {
         int roadX = 0, roadY = 0;
@@ -60,6 +63,7 @@ public class AutoBuildCandidateScoringService
         return new Vector2Int(0, roadY > 0 ? 1 : -1);
     }
 
+    /// <summary>Walk start→dir; count placeable cells; bridge over water within max span.</summary>
     public int HowFarWeCanBuild(Vector2Int start, Vector2Int dir)
     {
         int count = 0;
@@ -100,6 +104,7 @@ public class AutoBuildCandidateScoringService
         return count;
     }
 
+    /// <summary>BFS-partition road positions into connected clusters.</summary>
     public List<List<Vector2Int>> GetRoadClusters(List<Vector2Int> all)
     {
         int[] dx = AutoBuildSimRulesService.Dx;
@@ -133,6 +138,7 @@ public class AutoBuildCandidateScoringService
         return clusters;
     }
 
+    /// <summary>Find straight road segments — extend in both directions; dedupe canonical form.</summary>
     public List<(Vector2Int origin, Vector2Int dir, int length)> GetStraightSegmentsFromGrid(HashSet<Vector2Int> roadSet, List<Vector2Int> edges)
     {
         var segments = new List<(Vector2Int origin, Vector2Int dir, int length)>();
@@ -177,6 +183,7 @@ public class AutoBuildCandidateScoringService
         return segments;
     }
 
+    /// <summary>True if perpendicular gap on both sides blocked by structures along segment.</summary>
     public bool IsSegmentFullyBlocked(Vector2Int origin, Vector2Int dir, int length, HashSet<Vector2Int> roadSet)
     {
         Vector2Int perp = new Vector2Int(-dir.y, dir.x);
