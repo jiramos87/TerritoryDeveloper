@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xsi:noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
+    <ui:VisualElement name="tween-spinner-overlay" class="tween-spinner-overlay tween-spinner-overlay--hidden">
+        <ui:VisualElement name="tween-spinner-icon" class="tween-spinner-overlay__spinner" />
+    </ui:VisualElement>
+</ui:UXML>
