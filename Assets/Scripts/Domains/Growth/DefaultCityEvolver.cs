@@ -1,6 +1,6 @@
 using System;
 
-namespace Territory.Domain.Growth
+namespace Domains.Growth
 {
     /// <summary>Default ICityEvolver — deterministic LCG-based population advance per tick. Each zone grows by seeded pseudo-random fraction of current pop.</summary>
     public sealed class DefaultCityEvolver : ICityEvolver

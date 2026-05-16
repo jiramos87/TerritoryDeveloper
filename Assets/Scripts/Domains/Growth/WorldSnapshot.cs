@@ -1,6 +1,6 @@
 using System;
 
-namespace Territory.Domain.Growth
+namespace Domains.Growth
 {
     /// <summary>Lightweight value-type snapshot of world population data used by GrowthCatchupRunner. Decoupled from Unity scene objects.</summary>
     [Serializable]

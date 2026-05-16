@@ -1,4 +1,4 @@
-namespace Territory.Domain.Growth
+namespace Domains.Growth
 {
     /// <summary>Contract for city population evolution during growth catch-up. Lifted from multi-scale Stage 9.0 shape; adapted to per-scene FS save model.</summary>
     public interface ICityEvolver

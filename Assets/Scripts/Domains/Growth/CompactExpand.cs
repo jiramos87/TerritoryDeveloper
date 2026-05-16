@@ -1,6 +1,6 @@
 using System;
 
-namespace Territory.Domain.Growth
+namespace Domains.Growth
 {
     /// <summary>Compact/Expand transformer rescued from multi-scale T12.3. Compact = serialize dormant city to compressed form; Expand = re-inflate after catchup.</summary>
     public static class CompactExpand
