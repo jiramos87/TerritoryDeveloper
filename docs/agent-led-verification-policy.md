@@ -1,18 +1,18 @@
 # Agent-led verification policy
 
-> **IA placement:** This document is part of the **Information Architecture** stack. Overview and layer diagram: [`docs/information-architecture-overview.md`](information-architecture-overview.md). Day-to-day workflow: [`AGENTS.md`](../AGENTS.md). **Cursor rule (always-on):** [`ia/rules/agent-verification-directives.md`](../ia/rules/agent-verification-directives.md).
+> **IA placement:** Doc part of **Information Architecture** stack. Overview + layer diagram: [`docs/information-architecture-overview.md`](information-architecture-overview.md). Day-to-day workflow: [`AGENTS.md`](../AGENTS.md). **Cursor rule (always-on):** [`ia/rules/agent-verification-directives.md`](../ia/rules/agent-verification-directives.md).
 
 ## Purpose
 
-During **implementation** and **fix** work with Cursor agents on this repository, the **Unity Editor**, **Play Mode**, and **save-shaped scenarios** are **test surfaces** — not production. The **owner** treats agent-driven runs as disposable: closing or restarting the Editor to unblock **Path A** (**Agent test mode batch**) or **Path B** (**IDE agent bridge**) is acceptable when pursuing a closed **implement → verify** loop. **Human normal-game QA** remains the final gate per [`AGENTS.md`](../AGENTS.md).
+During **implementation** + **fix** work with Cursor agents on repo, **Unity Editor**, **Play Mode**, **save-shaped scenarios** = **test surfaces** — not production. **Owner** treats agent-driven runs as disposable: closing / restarting Editor to unblock **Path A** (**Agent test mode batch**) or **Path B** (**IDE agent bridge**) acceptable when pursuing closed **implement → verify** loop. **Human normal-game QA** remains final gate per [`AGENTS.md`](../AGENTS.md).
 
 ## Integration expectations
 
-- **Prefer proving over assuming:** When **Postgres** and **Unity** are available, agents should **attempt** **glossary** **IDE agent bridge** commands after **`npm run db:bridge-preflight`**, not decline by default because of wall-clock cost.
-- **Environment:** Use full agent capabilities (terminal, MCP, network) as allowed by the host. If a sandbox blocks a step, **retry** with broader permissions or report the **host** error — do not treat “might be slow” as a skip reason.
-- **Timeouts:** **`unity_bridge_command`** supports **`timeout_ms`** up to **120000** (120 seconds; `UNITY_BRIDGE_TIMEOUT_MS_MAX`). Use **`40000`** for the **initial** agent-led call. On timeout, follow the **timeout escalation protocol** below. Waiting for **Unity** or **Play Mode** is normal (same idea as **E2E** tests).
-- **Editor launch:** If the Unity Editor is not running, agents should run **`npm run unity:ensure-editor`** (macOS; exit 0 = ready, exit 2 = not macOS, exit 3 = binary not found) **before** concluding that the human must open Unity. The script launches the Editor on `REPO_ROOT` and waits up to 90 s for the lockfile.
-- **Path A — project lock:** **`npm run unity:testmode-batch`** starts a **second** Unity process. If the **Unity Editor** already has **`REPO_ROOT`** open, batchmode aborts (*"another Unity instance is running"*, often exit **134**). **Before Path A**, agents **must** release the lock: preferred one-liner **`npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32`** (runs **`tools/scripts/unity-quit-project.sh`** first), or quit the Editor manually / run **`tools/scripts/unity-quit-project.sh`** then invoke batch without **`--quit-editor-first`**. **Both Path A and Path B in one session:** run **Path A** first (with **`--quit-editor-first`** when the Editor might be open), then **`npm run unity:ensure-editor`** (macOS) so **Path B** has an Editor on **`REPO_ROOT`** again.
+- **Prefer proving over assuming:** **Postgres** + **Unity** available → agents must **attempt** **glossary** **IDE agent bridge** commands after **`npm run db:bridge-preflight`**, not decline by default for wall-clock cost.
+- **Environment:** Use full agent capabilities (terminal, MCP, network) as allowed by host. Sandbox blocks step → **retry** with broader permissions or report **host** error — do not treat "might be slow" as skip reason.
+- **Timeouts:** **`unity_bridge_command`** supports **`timeout_ms`** up to **120000** (120 seconds; `UNITY_BRIDGE_TIMEOUT_MS_MAX`). Use **`40000`** for **initial** agent-led call. On timeout, follow **timeout escalation protocol** below. Waiting for **Unity** or **Play Mode** normal (same idea as **E2E** tests).
+- **Editor launch:** Unity Editor not running → agents must run **`npm run unity:ensure-editor`** (macOS; exit 0 = ready, exit 2 = not macOS, exit 3 = binary not found) **before** concluding human must open Unity. Script launches Editor on `REPO_ROOT` + waits up to 90 s for lockfile.
+- **Path A — project lock:** **`npm run unity:testmode-batch`** starts **second** Unity process. **Unity Editor** already has **`REPO_ROOT`** open → batchmode aborts (*"another Unity instance is running"*, often exit **134**). **Before Path A**, agents **must** release lock: preferred one-liner **`npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32`** (runs **`tools/scripts/unity-quit-project.sh`** first), or quit Editor manually / run **`tools/scripts/unity-quit-project.sh`** then invoke batch without **`--quit-editor-first`**. **Both Path A + Path B in one session:** run **Path A** first (with **`--quit-editor-first`** when Editor might be open), then **`npm run unity:ensure-editor`** (macOS) so **Path B** has Editor on **`REPO_ROOT`** again.
 
 ## Stop hook enforcement
 
@@ -20,7 +20,7 @@ The **Verification block** requirement above is enforced by a Claude Code **Stop
 
 ## Verification block (required in agent completion messages)
 
-When reporting **Verification** after substantive implementation (especially when **§7b** / **Load pipeline** / **test mode** applies), include **all** of the following that were run:
+When reporting **Verification** after substantive implementation (especially when **§7b** / **Load pipeline** / **test mode** applies), include **all** of following that were run:
 
 | Check | Report |
 |-------|--------|
@@ -30,30 +30,30 @@ When reporting **Verification** after substantive implementation (especially whe
 | **Path A — Agent test mode batch** | `npm run unity:testmode-batch` — exit code; path to newest **`tools/reports/agent-testmode-batch-*.json`** and **`ok` / `exit_code`** (report **`schema_version`** **2** may include **`city_stats`** and golden fields). Use **`--quit-editor-first`** when an Editor might hold **`REPO_ROOT`** (see **Path A — project lock** above). Optional **`--golden-path`** (forwarded **`-testGoldenPath`**) asserts integer **CityStats** fields against a committed JSON — mismatch → exit **8**. Example: **`npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32`**. Full matrix, **CI** tick bounds, golden regeneration: [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md); stage **31c** trace: [`projects/TECH-31c-verification-pipeline.md`](../projects/TECH-31c-verification-pipeline.md). |
 | **Path B — IDE agent bridge** | After **`db:bridge-preflight`**: acquire play_mode lease via **`unity_bridge_lease(acquire)`** → at least **`get_play_mode_status`** or full **`enter_play_mode`** → **`debug_context_bundle`** (optional) → **`exit_play_mode`** → **`unity_bridge_lease(release)`** with **`timeout_ms`:** **`40000`** (initial; follow **timeout escalation protocol** on timeout) — **`ok`**, **`error`**, or **`timeout`** plus **`command_id`** if present. If lease returns **`lease_unavailable`**, retry every 60 s up to 10 min then report **`play_mode_lease: skipped_busy`**. |
 
-If **Path B** was not run, state **why** (e.g. no Editor, preflight non-zero) — do not omit the row.
+**Path B** not run → state **why** (e.g. no Editor, preflight non-zero) — do not omit row.
 
 **Skills:** [`ia/skills/agent-test-mode-verify/SKILL.md`](../ia/skills/agent-test-mode-verify/SKILL.md), [`ia/skills/ide-bridge-evidence/SKILL.md`](../ia/skills/ide-bridge-evidence/SKILL.md), [`ia/skills/close-dev-loop/SKILL.md`](../ia/skills/close-dev-loop/SKILL.md).
 
 ## Close Dev Loop vs bridge export sugar
 
-- **`close-dev-loop`** ([`ia/skills/close-dev-loop/SKILL.md`](../ia/skills/close-dev-loop/SKILL.md)) — full before/after loop using **`debug_context_bundle`** in Play Mode (Moore export + optional Game view screenshot + console + **`anomaly_count`**). Use for visual/terrain regressions and acceptance-style evidence when the rich bundle is worth the token and Play Mode cost.
-- **`unity_export_cell_chunk`** / **`unity_export_sorting_debug`** ([`docs/mcp-ia-server.md`](mcp-ia-server.md) — **Bridge export sugar tools**) — thin MCP wrappers around **`export_cell_chunk`** / **`export_sorting_debug`** only: same **`agent_bridge_job`** queue and JSON response as **`unity_bridge_command`**, less call boilerplate. Use for bounded **Editor** JSON exports (e.g. sorting math checks with **`spec_section`** **geo** §7 via [`ia/skills/debug-sorting-order/SKILL.md`](../ia/skills/debug-sorting-order/SKILL.md)).
-- **Registry staging** — older one-shot CLI (`npm run db:bridge-agent-context`, etc.) still hits the same bridge path; it does not replace **`debug_context_bundle`** for layered evidence. Prefer the skills above instead of duplicating policy text in chat.
+- **`close-dev-loop`** ([`ia/skills/close-dev-loop/SKILL.md`](../ia/skills/close-dev-loop/SKILL.md)) — full before/after loop using **`debug_context_bundle`** in Play Mode (Moore export + optional Game view screenshot + console + **`anomaly_count`**). Use for visual/terrain regressions + acceptance-style evidence when rich bundle worth token + Play Mode cost.
+- **`unity_export_cell_chunk`** / **`unity_export_sorting_debug`** ([`docs/mcp-ia-server.md`](mcp-ia-server.md) — **Bridge export sugar tools**) — thin MCP wrappers around **`export_cell_chunk`** / **`export_sorting_debug`** only: same **`agent_bridge_job`** queue + JSON response as **`unity_bridge_command`**, less call boilerplate. Use for bounded **Editor** JSON exports (e.g. sorting math checks with **`spec_section`** **geo** §7 via [`ia/skills/debug-sorting-order/SKILL.md`](../ia/skills/debug-sorting-order/SKILL.md)).
+- **Registry staging** — older one-shot CLI (`npm run db:bridge-agent-context`, etc.) still hits same bridge path; does not replace **`debug_context_bundle`** for layered evidence. Prefer skills above instead of duplicating policy text in chat.
 
 ## Multi-agent concurrency (Play Mode lease)
 
-When multiple agent sessions share one Unity Editor and Postgres instance, use **`unity_bridge_lease`** (migration `0010_agent_bridge_lease.sql`) to serialize Play Mode access:
+Multiple agent sessions share one Unity Editor + Postgres instance → use **`unity_bridge_lease`** (migration `0010_agent_bridge_lease.sql`) to serialize Play Mode access:
 
-1. **Before `enter_play_mode`** — call `unity_bridge_lease(action: acquire, agent_id: "{ISSUE_ID}", kind: play_mode)`. Store the returned `lease_id`.
+1. **Before `enter_play_mode`** — call `unity_bridge_lease(action: acquire, agent_id: "{ISSUE_ID}", kind: play_mode)`. Store returned `lease_id`.
 2. **After `exit_play_mode`** — call `unity_bridge_lease(action: release, lease_id: "{lease_id}")`.
-3. **On `lease_unavailable`** — wait 60 s, retry. After 10 min total, skip Play Mode evidence and report `play_mode_lease: skipped_busy` in the Verification block.
-4. **TTL safety** — leases expire after 8 min. A crashed agent's lease self-clears; call `unity_bridge_lease(action: status)` to confirm before waiting.
+3. **On `lease_unavailable`** — wait 60 s, retry. After 10 min total, skip Play Mode evidence + report `play_mode_lease: skipped_busy` in Verification block.
+4. **TTL safety** — leases expire after 8 min. Crashed agent's lease self-clears; call `unity_bridge_lease(action: status)` to confirm before waiting.
 
-Non-Play-Mode commands (`export_agent_context`, `get_compilation_status`, `get_console_logs`, `economy_balance_snapshot`, `prefab_manifest`) do **not** require a lease — the Postgres FIFO queue serializes them naturally. `npm run unity:compile-check` (batchmode) is fully independent and never requires a lease.
+Non-Play-Mode commands (`export_agent_context`, `get_compilation_status`, `get_console_logs`, `economy_balance_snapshot`, `prefab_manifest`) do **not** require lease — Postgres FIFO queue serializes naturally. `npm run unity:compile-check` (batchmode) fully independent + never requires lease.
 
 ## Escalation taxonomy — `gap_reason` for `verdict: escalated`
 
-Closed-loop agent verify is the default. When an agent cannot close a verification gap, the Verification block MUST include an `escalation` object with a typed `gap_reason`:
+Closed-loop agent verify = default. Agent cannot close verification gap → Verification block MUST include `escalation` object with typed `gap_reason`:
 
 | `gap_reason` | Meaning | Required fields | Next action |
 |--------------|---------|-----------------|-------------|
@@ -63,25 +63,25 @@ Closed-loop agent verify is the default. When an agent cannot close a verificati
 
 **Rules:**
 
-1. Agents MUST NOT escalate as `human_judgment_required` when a missing bridge kind could close the loop. Before picking a `gap_reason`, cross-check the current kind enum in [`Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`](../Assets/Scripts/Editor/AgentBridgeCommandRunner.cs). If a mutation kind is missing, `gap_reason = bridge_kind_missing` with `missing_kind` + `tooling_issue_id`. **TECH-412 landed** 20 mutation kinds (Edit Mode only) covering component, GameObject, scene, prefab, and asset lifecycle plus a `execute_menu_item` catch-all — before escalating, verify the needed kind is not already in `AgentBridgeCommandRunner.Mutations.cs` (full list: `attach_component`, `remove_component`, `assign_serialized_field`, `create_gameobject`, `delete_gameobject`, `find_gameobject`, `set_transform`, `set_gameobject_active`, `set_gameobject_parent`, `save_scene`, `open_scene`, `new_scene`, `instantiate_prefab`, `apply_prefab_overrides`, `create_scriptable_object`, `modify_scriptable_object`, `refresh_asset_database`, `move_asset`, `delete_asset`, `execute_menu_item`).
-2. `bridge_kind_missing` escalations MUST cite an open BACKLOG issue (or file one) so the gap is tracked. File a new TECH when a genuinely missing kind is identified; TECH-412 is now closed (landed).
-3. Human-in-loop messages MUST name the concrete reason. Do NOT write generic "Human review required" — write "Escalated: `bridge_kind_missing` — `<missing_kind>` — tracked in <TECH-id>" (or equivalent).
+1. Agents MUST NOT escalate as `human_judgment_required` when missing bridge kind could close loop. Before picking `gap_reason`, cross-check current kind enum in [`Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`](../Assets/Scripts/Editor/AgentBridgeCommandRunner.cs). Mutation kind missing → `gap_reason = bridge_kind_missing` with `missing_kind` + `tooling_issue_id`. **TECH-412 landed** 20 mutation kinds (Edit Mode only) covering component, GameObject, scene, prefab, asset lifecycle plus `execute_menu_item` catch-all — before escalating, verify needed kind not already in `AgentBridgeCommandRunner.Mutations.cs` (full list: `attach_component`, `remove_component`, `assign_serialized_field`, `create_gameobject`, `delete_gameobject`, `find_gameobject`, `set_transform`, `set_gameobject_active`, `set_gameobject_parent`, `save_scene`, `open_scene`, `new_scene`, `instantiate_prefab`, `apply_prefab_overrides`, `create_scriptable_object`, `modify_scriptable_object`, `refresh_asset_database`, `move_asset`, `delete_asset`, `execute_menu_item`).
+2. `bridge_kind_missing` escalations MUST cite open BACKLOG issue (or file one) so gap tracked. File new TECH when genuinely missing kind identified; TECH-412 now closed (landed).
+3. Human-in-loop messages MUST name concrete reason. Do NOT write generic "Human review required" — write "Escalated: `bridge_kind_missing` — `<missing_kind>` — tracked in <TECH-id>" (or equivalent).
 4. Full JSON shape: [`ia/skills/verify-loop/SKILL.md`](../ia/skills/verify-loop/SKILL.md) § Step 7.
 
 ## Timeout escalation protocol
 
-When a **`unity_bridge_command`** call returns **`timeout`**, follow this ordered recovery before concluding "human needed":
+**`unity_bridge_command`** call returns **`timeout`** → follow ordered recovery before concluding "human needed":
 
-1. **First call** — use **`timeout_ms`:** **`40000`** (40 s, the recommended agent-led default).
-2. **On timeout** — run **`npm run unity:ensure-editor`** (exit 0 = Editor running or just launched; exit 2 = not macOS; exit 3 = Unity binary not found). On exit 0, proceed to step 3. On non-zero, report the exit code and escalate to the human.
-3. **Retry** — repeat the bridge command with **`timeout_ms`:** **`60000`** (60 s). This accommodates Editor startup + domain reload + `AgentBridgeCommandRunner` initialization.
-4. **On second timeout** — run **`npm run db:bridge-preflight`** and check Console logs (**`get_console_logs`** if the Editor responds). Report findings and escalate to the human.
+1. **First call** — use **`timeout_ms`:** **`40000`** (40 s, recommended agent-led default).
+2. **On timeout** — run **`npm run unity:ensure-editor`** (exit 0 = Editor running or just launched; exit 2 = not macOS; exit 3 = Unity binary not found). On exit 0, proceed to step 3. On non-zero, report exit code + escalate to human.
+3. **Retry** — repeat bridge command with **`timeout_ms`:** **`60000`** (60 s). Accommodates Editor startup + domain reload + `AgentBridgeCommandRunner` initialization.
+4. **On second timeout** — run **`npm run db:bridge-preflight`** + check Console logs (**`get_console_logs`** if Editor responds). Report findings + escalate to human.
 
-The ceiling is **120 s** (`UNITY_BRIDGE_TIMEOUT_MS_MAX`); the escalation protocol intentionally stops at **60 s** to avoid silent long waits. Do not retry more than once.
+Ceiling = **120 s** (`UNITY_BRIDGE_TIMEOUT_MS_MAX`); escalation protocol intentionally stops at **60 s** to avoid silent long waits. Do not retry more than once.
 
-## territory-ia MCP and **`timeout_ms`**
+## territory-ia MCP + **`timeout_ms`**
 
-The **`unity_bridge_command`** / **`unity_compile`** **120 s** ceiling is enforced in [`tools/mcp-ia-server/src/tools/unity-bridge-command.ts`](../tools/mcp-ia-server/src/tools/unity-bridge-command.ts) (`UNITY_BRIDGE_TIMEOUT_MS_MAX`). After pulling a change that adjusts this cap, **restart the territory-ia MCP server** (or reload the Cursor window) so the host picks up the new tool schema — otherwise the client may still validate **`timeout_ms`** against the old maximum.
+**`unity_bridge_command`** / **`unity_compile`** **120 s** ceiling enforced in [`tools/mcp-ia-server/src/tools/unity-bridge-command.ts`](../tools/mcp-ia-server/src/tools/unity-bridge-command.ts) (`UNITY_BRIDGE_TIMEOUT_MS_MAX`). After pulling change adjusting cap, **restart territory-ia MCP server** (or reload Cursor window) so host picks up new tool schema — otherwise client may still validate **`timeout_ms`** against old maximum.
 
 ## validate:all sub-chain — IA gate validators
 
@@ -264,6 +264,6 @@ the JSONL path in that plan's Stage 1.
 
 ## Cursor Memory (optional)
 
-Paste the following into **Cursor → Memory** if you want the same policy across projects or sessions without opening this repo:
+Paste into **Cursor → Memory** for same policy across projects / sessions without opening repo:
 
 - Territory Developer: During agent implementation, Unity is a **test** environment; **attempt** **Agent test mode batch** and **IDE agent bridge** verification; for **Path A**, release the **project lock** first (**`npm run unity:testmode-batch -- --quit-editor-first …`** or quit Editor), then **`unity:ensure-editor`** before **Path B** if needed; use **`timeout_ms` 40000** initial for bridge commands, follow **timeout escalation protocol** on timeout (`npm run unity:ensure-editor` → retry 60 s); report **Verification** with **validate:all**, **compile-check** if C# changed, **batch JSON result**, and **bridge** outcome. **IA** overview: `docs/information-architecture-overview.md`; policy: `docs/agent-led-verification-policy.md`.

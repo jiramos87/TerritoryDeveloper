@@ -6,7 +6,7 @@ slices_via: spec_section
 ---
 # Simulation System — Reference Spec
 
-> Deep reference for the automatic simulation pipeline: tick order, AUTO systems, growth, and dependencies.
+> Deep reference for automatic simulation pipeline: tick order, AUTO systems, growth, dependencies.
 
 ## Tick execution order
 
@@ -18,13 +18,13 @@ slices_via: spec_section
 4. `AutoZoningManager` — zones cells adjacent to **streets**/**interstates**
 5. `AutoResourcePlanner` — plans resource buildings (water, power)
 
-City-sim depth Bucket 2 inserts a **signal phase** between steps 2 and 3 (producers → separable Gaussian diffusion → district rollup → consumers, run by `SignalTickScheduler`). Contract + 12-entry inventory + rollup taxonomy live in [`simulation-signals.md`](simulation-signals.md).
+City-sim depth Bucket 2 inserts **signal phase** between steps 2 + 3 (producers → separable Gaussian diffusion → district rollup → consumers, run by `SignalTickScheduler`). Contract + 12-entry inventory + rollup taxonomy → [`simulation-signals.md`](simulation-signals.md).
 
-### Urban centroid and growth rings
+### Urban centroid + growth rings
 
-> **Glossary index:** `glossary.md` cites this subsection as **sim §Rings**.
+> **Glossary index:** `glossary.md` cites subsection as **sim §Rings**.
 
-Each tick, `UrbanCentroidService.RecalculateFromGrid` updates the **urban centroid** (development-weighted center of the city) and **ring metrics** — distance bands from that center. `AutoRoadBuilder` and `AutoZoningManager` use centroid and rings to bias growth (typically stronger near the core, weaker in outer rings; tuning in [`BACKLOG.md`](../../BACKLOG.md)). Ring logic is separate from the obsolete UrbanizationProposal system (see below).
+Each tick, `UrbanCentroidService.RecalculateFromGrid` updates **urban centroid** (development-weighted center of city) + **ring metrics** — distance bands from that center. `AutoRoadBuilder` + `AutoZoningManager` use centroid + rings to bias growth (typically stronger near core, weaker in outer rings; tuning in [`BACKLOG.md`](../../BACKLOG.md)). Ring logic separate from obsolete UrbanizationProposal system (see below).
 
 ## System dependencies
 
@@ -39,21 +39,21 @@ Each tick, `UrbanCentroidService.RecalculateFromGrid` updates the **urban centro
 
 ## Road reservation for AUTO zoning
 
-Each tick, `AutoZoningManager` builds a set from `GridManager.GetRoadExtensionCells()` and `GetRoadAxialCorridorCells()` and does **not zone** those cells, so axial strips stay clear for `AutoRoadBuilder`. See geography spec §13.9.
+Each tick, `AutoZoningManager` builds set from `GridManager.GetRoadExtensionCells()` + `GetRoadAxialCorridorCells()` + does **not zone** those cells, so axial strips stay clear for `AutoRoadBuilder`. See geography spec §13.9.
 
-Segment-strip zoning covers perp strips at `k = 0` (origin end, true endpoints only — T-joint origins skipped) through `k = L - 1` (far end). Cells at segment endpoints that were skipped in prior builds, or cells previously inside the road reservation that later exit it as the city grows, are reconsidered by a post-tick frontier re-scan: `AutoZoningManager` iterates all road-edge positions and attempts `CanZoneCell` on each cardinal neighbor under the remaining tick budget. Reservation cells remain untouchable throughout.
+Segment-strip zoning covers perp strips at `k = 0` (origin end, true endpoints only — T-joint origins skipped) through `k = L - 1` (far end). Cells at segment endpoints skipped in prior builds, or cells previously inside road reservation that later exit it as city grows, reconsidered by post-tick frontier re-scan: `AutoZoningManager` iterates all road-edge positions + attempts `CanZoneCell` on each cardinal neighbor under remaining tick budget. Reservation cells remain untouchable throughout.
 
 ## AUTO street placement rules
 
-- AUTO **streets** use the same **road validation pipeline** as manual **street** draw: `PathTerraformPlan` + Phase-1 + `Apply`.
+- AUTO **streets** use same **road validation pipeline** as manual **street** draw: `PathTerraformPlan` + Phase-1 + `Apply`.
 - Water crossings require full segment budget in one tick; `AutoRoadBuilder` reverts if it cannot place every tile.
-- After batch placement, junction prefabs are refreshed via `RefreshRoadPrefabsAfterBatchPlacement` (once per tick, deduped).
+- After batch placement, junction prefabs refreshed via `RefreshRoadPrefabsAfterBatchPlacement` (once per tick, deduped).
 
 ## Obsolete system — UrbanizationProposal
 
-`UrbanizationProposalManager` and related proposal UI are **obsolete** — intentionally not called from `ProcessSimulationTick()`. **NEVER re-enable.** Full removal is tracked on [`BACKLOG.md`](../../BACKLOG.md); **glossary** **Urbanization proposal**.
+`UrbanizationProposalManager` + related proposal UI = **obsolete** — intentionally not called from `ProcessSimulationTick()`. **NEVER re-enable.** Full removal tracked on [`BACKLOG.md`](../../BACKLOG.md); **glossary** **Urbanization proposal**.
 
-`UrbanCentroidService` and ring-based AUTO growth **remain supported** — they are NOT part of the obsolete proposal system.
+`UrbanCentroidService` + ring-based AUTO growth **remain supported** — NOT part of obsolete proposal system.
 
 ## Key files
 
@@ -71,6 +71,6 @@ Segment-strip zoning covers perp strips at `k = 0` (origin end, true endpoints o
 
 ## Calendar and monthly economy
 
-Outside `ProcessSimulationTick`, `TimeManager` advances the **simulation** date each in-game **day** and calls `CityStats.PerformDailyUpdates()` **before** zoning placement and `ProcessSimulationTick()`. That daily pass updates employment, statistics, forest stats, pollution, **happiness** (target + lerp), then refreshes R/C/I **demand** so **tax** and **happiness** targets apply on the **same** day to **demand** (see **managers-reference** **Demand (R / C / I)**).
+Outside `ProcessSimulationTick`, `TimeManager` advances **simulation** date each in-game **day** + calls `CityStats.PerformDailyUpdates()` **before** zoning placement + `ProcessSimulationTick()`. Daily pass updates employment, statistics, forest stats, pollution, **happiness** (target + lerp), then refreshes R/C/I **demand** so **tax** + **happiness** targets apply on **same** day to **demand** (see **managers-reference** **Demand (R / C / I)**).
 
-On calendar day 1, after the daily pass, `TimeManager` also calls `EconomyManager.ProcessDailyEconomy()`. On the first day of each in-game calendar month, `EconomyManager` runs **tax base** collection then **monthly maintenance** (order matters: income before upkeep). This is separate from per-tick **AUTO** work but shares **CityStats** treasury and **game notification** feedback.
+On calendar day 1, after daily pass, `TimeManager` also calls `EconomyManager.ProcessDailyEconomy()`. On first day of each in-game calendar month, `EconomyManager` runs **tax base** collection then **monthly maintenance** (order matters: income before upkeep). Separate from per-tick **AUTO** work but shares **CityStats** treasury + **game notification** feedback.

@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-05-15T21:35:21.463Z",
+  "last_generated": "2026-05-16T19:27:46.573Z",
   "graph": {
     "`Assets/Scripts/Managers/GameManagers/SubTypePickerModal.cs`": {
       "related": [
@@ -824,8 +824,8 @@
         },
         {
           "spec": "managers-reference",
-          "section_id": "pivot-cell-and-multi-cell-buildings",
-          "section_title": "Pivot cell and multi-cell buildings"
+          "section_id": "pivot-cell-multi-cell-buildings",
+          "section_title": "Pivot cell + multi-cell buildings"
         },
         {
           "spec": "managers-reference",
@@ -1455,8 +1455,8 @@
         },
         {
           "spec": "managers-reference",
-          "section_id": "pivot-cell-and-multi-cell-buildings",
-          "section_title": "Pivot cell and multi-cell buildings"
+          "section_id": "pivot-cell-multi-cell-buildings",
+          "section_title": "Pivot cell + multi-cell buildings"
         },
         {
           "spec": "managers-reference",
@@ -4528,8 +4528,8 @@
         },
         {
           "spec": "managers-reference",
-          "section_id": "pivot-cell-and-multi-cell-buildings",
-          "section_title": "Pivot cell and multi-cell buildings"
+          "section_id": "pivot-cell-multi-cell-buildings",
+          "section_title": "Pivot cell + multi-cell buildings"
         },
         {
           "spec": "managers-reference",
@@ -5487,8 +5487,8 @@
         },
         {
           "spec": "managers-reference",
-          "section_id": "pivot-cell-and-multi-cell-buildings",
-          "section_title": "Pivot cell and multi-cell buildings"
+          "section_id": "pivot-cell-multi-cell-buildings",
+          "section_title": "Pivot cell + multi-cell buildings"
         },
         {
           "spec": "persistence-system",
@@ -6904,8 +6904,8 @@
         },
         {
           "spec": "simulation-system",
-          "section_id": "urban-centroid-and-growth-rings",
-          "section_title": "Urban centroid and growth rings"
+          "section_id": "urban-centroid-growth-rings",
+          "section_title": "Urban centroid + growth rings"
         },
         {
           "spec": "simulation-system",
@@ -7074,8 +7074,8 @@
         },
         {
           "spec": "managers-reference",
-          "section_id": "building-placement-and-restore",
-          "section_title": "Building placement and restore"
+          "section_id": "building-placement-restore",
+          "section_title": "Building placement + restore"
         }
       ]
     },

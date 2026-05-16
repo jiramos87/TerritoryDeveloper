@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-05-15T21:35:21.286Z",
+  "last_generated": "2026-05-16T19:27:46.383Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -395,121 +395,121 @@
           "section_id": "6",
           "title": "6. Composition junctions",
           "depth": 2,
-          "line_start": 221
+          "line_start": 219
         },
         {
           "section_id": "6.1",
           "title": "6.1 `panel_child`",
           "depth": 3,
-          "line_start": 223
+          "line_start": 221
         },
         {
           "section_id": "6.2",
           "title": "6.2 `pool_member`",
           "depth": 3,
-          "line_start": 238
+          "line_start": 236
         },
         {
           "section_id": "7",
           "title": "7. Render run lifecycle",
           "depth": 2,
-          "line_start": 258
+          "line_start": 256
         },
         {
           "section_id": "7.1",
           "title": "7.1 Tables",
           "depth": 3,
-          "line_start": 262
+          "line_start": 260
         },
         {
           "section_id": "7.2",
           "title": "7.2 Replay semantics",
           "depth": 3,
-          "line_start": 290
+          "line_start": 288
         },
         {
           "section_id": "8",
           "title": "8. Archetype authoring",
           "depth": 2,
-          "line_start": 296
+          "line_start": 294
         },
         {
           "section_id": "9",
           "title": "9. Blob resolver protocol",
           "depth": 2,
-          "line_start": 304
+          "line_start": 302
         },
         {
           "section_id": "9.1",
           "title": "9.1 URI shape",
           "depth": 3,
-          "line_start": 308
+          "line_start": 306
         },
         {
           "section_id": "9.2",
           "title": "9.2 Resolver implementations",
           "depth": 3,
-          "line_start": 312
+          "line_start": 310
         },
         {
           "section_id": "9.3",
           "title": "9.3 Promote action",
           "depth": 3,
-          "line_start": 319
+          "line_start": 317
         },
         {
           "section_id": "9.4",
           "title": "9.4 Validation",
           "depth": 3,
-          "line_start": 323
+          "line_start": 321
         },
         {
           "section_id": "10",
           "title": "10. Capability matrix",
           "depth": 2,
-          "line_start": 327
+          "line_start": 325
         },
         {
           "section_id": "10.1",
           "title": "10.1 Tables",
           "depth": 3,
-          "line_start": 331
+          "line_start": 329
         },
         {
           "section_id": "10.2",
           "title": "10.2 Seed roles + capabilities (MVP)",
           "depth": 3,
-          "line_start": 353
+          "line_start": 351
         },
         {
           "section_id": "10.3",
           "title": "10.3 Route gating",
           "depth": 3,
-          "line_start": 361
+          "line_start": 359
         },
         {
           "section_id": "10.4",
           "title": "10.4 Audit log",
           "depth": 3,
-          "line_start": 367
+          "line_start": 365
         },
         {
           "section_id": "11",
           "title": "11. Bridge composite surface",
           "depth": 2,
-          "line_start": 382
+          "line_start": 380
         },
         {
           "section_id": "12",
           "title": "12. Decision pointers (canonical)",
           "depth": 2,
-          "line_start": 390
+          "line_start": 388
         },
         {
           "section_id": "13",
           "title": "13. Future extensions (post-MVP)",
           "depth": 2,
-          "line_start": 414
+          "line_start": 412
         }
       ]
     },
@@ -1424,8 +1424,8 @@
           "line_start": 79
         },
         {
-          "section_id": "pivot-cell-and-multi-cell-buildings",
-          "title": "Pivot cell and multi-cell buildings",
+          "section_id": "pivot-cell-multi-cell-buildings",
+          "title": "Pivot cell + multi-cell buildings",
           "depth": 3,
           "line_start": 84
         },
@@ -1436,8 +1436,8 @@
           "line_start": 89
         },
         {
-          "section_id": "building-placement-and-restore",
-          "title": "Building placement and restore",
+          "section_id": "building-placement-restore",
+          "title": "Building placement + restore",
           "depth": 3,
           "line_start": 93
         },
@@ -1640,8 +1640,8 @@
           "line_start": 11
         },
         {
-          "section_id": "urban-centroid-and-growth-rings",
-          "title": "Urban centroid and growth rings",
+          "section_id": "urban-centroid-growth-rings",
+          "title": "Urban centroid + growth rings",
           "depth": 3,
           "line_start": 23
         },

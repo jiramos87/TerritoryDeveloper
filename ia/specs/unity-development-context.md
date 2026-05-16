@@ -6,7 +6,7 @@ slices_via: spec_section
 ---
 # Unity development context — Territory Developer
 
-> First-party **Unity** and **Editor** conventions for this repository: **MonoBehaviour** wiring, **Inspector** usage, dependency resolution, and 2D rendering fields. Does **not** replace [`isometric-geography-system.md`](isometric-geography-system.md) for **Sorting order** math, terrain, or roads.
+> First-party **Unity** + **Editor** conventions for repo: **MonoBehaviour** wiring, **Inspector** usage, dependency resolution, 2D rendering fields. Does **not** replace [`isometric-geography-system.md`](isometric-geography-system.md) for **Sorting order** math, terrain, or roads.
 
 ## Table of contents
 
@@ -26,45 +26,45 @@ slices_via: spec_section
 
 ## 1. Purpose and scope
 
-**Audience:** Contributors and IDE agents working in `Assets/Scripts/` and **Unity** scenes.
+**Audience:** Contributors + IDE agents working in `Assets/Scripts/` + **Unity** scenes.
 
-**Default:** Prefer this spec, [`ia/rules/project-overview.md`](../rules/project-overview.md), [`ia/rules/invariants.md`](../rules/invariants.md), [`ia/rules/coding-conventions.md`](../rules/coding-conventions.md), and **territory-ia** tools (`spec_section`, `glossary_discover`, etc.) before generic **Unity** web documentation.
+**Default:** Prefer this spec, [`ia/rules/project-overview.md`](../rules/project-overview.md), [`ia/rules/invariants.md`](../rules/invariants.md), [`ia/rules/coding-conventions.md`](../rules/coding-conventions.md), + **territory-ia** tools (`spec_section`, `glossary_discover`, etc.) before generic **Unity** web documentation.
 
-**When to use external docs:** Version-specific APIs, bugs, or platform details not stated in this repo.
+**When to use external docs:** Version-specific APIs, bugs, or platform details not stated in repo.
 
-**Out of scope here:** Full **Unity** manual text; authoritative **cell** geometry, **HeightMap**, **road preparation family**, water, cliffs, and **Sorting order** formulas — see [`isometric-geography-system.md`](isometric-geography-system.md) and linked specs.
+**Out of scope here:** Full **Unity** manual text; authoritative **cell** geometry, **HeightMap**, **road preparation family**, water, cliffs, **Sorting order** formulas — see [`isometric-geography-system.md`](isometric-geography-system.md) + linked specs.
 
-**Territory-ia and exports:** This file is registered as **`unity-development-context`** (aliases **`unity`**, **`unityctx`**) for **`spec_outline`** / **`spec_section`**. **Open** roadmap items (DB-backed MCP slices, mechanical repo checks, **Editor** export follow-ups) live in [`BACKLOG.md`](../../BACKLOG.md) — verify status there, not in this spec. **Shipped** **Editor** JSON/Markdown exports are summarized in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md); **expected menus, prerequisites, and outputs** are defined in **§10** below. Treat output paths and tool names for in-flight work as **planned** until the corresponding **BACKLOG** row ships. If menus or **Sorting** export fail in practice, file or update the relevant **open** row in [`BACKLOG.md`](../../BACKLOG.md).
+**Territory-ia + exports:** File registered as **`unity-development-context`** (aliases **`unity`**, **`unityctx`**) for **`spec_outline`** / **`spec_section`**. **Open** roadmap items (DB-backed MCP slices, mechanical repo checks, **Editor** export follow-ups) → [`BACKLOG.md`](../../BACKLOG.md) — verify status there, not in this spec. **Shipped** **Editor** JSON/Markdown exports summarized in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md); **expected menus, prerequisites, outputs** defined in **§10** below. Treat output paths + tool names for in-flight work as **planned** until corresponding **BACKLOG** row ships. Menus or **Sorting** export fail in practice → file or update relevant **open** row in [`BACKLOG.md`](../../BACKLOG.md).
 
 ---
 
 ## 2. MonoBehaviour lifecycle
 
-Managers and controllers are **scene** `MonoBehaviour` components; they are **not** constructed with `new`. See [`ia/rules/invariants.md`](../rules/invariants.md) — *IF creating a new manager → THEN MonoBehaviour scene component, never `new`*.
+Managers + controllers = **scene** `MonoBehaviour` components; **not** constructed with `new`. See [`ia/rules/invariants.md`](../rules/invariants.md) — *IF creating new manager → THEN MonoBehaviour scene component, never `new`*.
 
-**`Awake`:** Use for self-setup and for resolving references that must exist before other scripts’ `Start` when order is guaranteed by **Unity** (same scene) or by **Script Execution Order** (see §6). Example: **`ZoneManager`** builds its zone prefab dictionary in **`Awake`** so lookups are ready before dependent **`Start`** logic ([`ZoneManager.cs`](../../Assets/Scripts/Managers/GameManagers/ZoneManager.cs)).
+**`Awake`:** Use for self-setup + resolving references that must exist before other scripts' `Start` when order guaranteed by **Unity** (same scene) or **Script Execution Order** (see §6). Example: **`ZoneManager`** builds zone prefab dictionary in **`Awake`** so lookups ready before dependent **`Start`** logic ([`ZoneManager.cs`](../../Assets/Scripts/Managers/GameManagers/ZoneManager.cs)).
 
-**`OnEnable`:** Runs when the component becomes enabled (after **`Awake`** on first activation, and again whenever the object is re-enabled). Use for event subscriptions or **`UI`** that must react to enable/disable. This gameplay codebase rarely overrides **`OnEnable`** on managers; prefer **`Awake`** / **`Start`** unless you need enable-cycle behavior.
+**`OnEnable`:** Runs when component becomes enabled (after **`Awake`** on first activation, + again whenever object re-enabled). Use for event subscriptions or **`UI`** reacting to enable/disable. Gameplay codebase rarely overrides **`OnEnable`** on managers; prefer **`Awake`** / **`Start`** unless enable-cycle behavior needed.
 
-**`Start`:** Use for logic that depends on other components having finished **`Awake`**, when those components are in the same scene and no custom execution order is set. Some types defer **`FindObjectOfType`** to **`Start`** so sibling **`Awake`** chains can finish first — e.g. **`WaterManager`** assigns **`gridManager`** in **`Start`** if null ([`WaterManager.cs`](../../Assets/Scripts/Managers/GameManagers/WaterManager.cs)). **`ZoneManager.Start`** double-checks prefab initialization after **`Awake`** ([`ZoneManager.cs`](../../Assets/Scripts/Managers/GameManagers/ZoneManager.cs)).
+**`Start`:** Use for logic depending on other components having finished **`Awake`**, when components in same scene + no custom execution order. Some types defer **`FindObjectOfType`** to **`Start`** so sibling **`Awake`** chains finish first — e.g. **`WaterManager`** assigns **`gridManager`** in **`Start`** if null ([`WaterManager.cs`](../../Assets/Scripts/Managers/GameManagers/WaterManager.cs)). **`ZoneManager.Start`** double-checks prefab initialization after **`Awake`** ([`ZoneManager.cs`](../../Assets/Scripts/Managers/GameManagers/ZoneManager.cs)).
 
-**Coroutines, `Invoke`, and delayed work:** **`GameBootstrap`** yields one frame then runs **New Game** / **Load** intent via **`StartCoroutine(ProcessStartIntent())`** ([`GameBootstrap.cs`](../../Assets/Scripts/Managers/GameManagers/GameBootstrap.cs)). **`UIManager`** uses **`Invoke`** and **`StartCoroutine`** for timed UI (e.g. tooltip hide) ([`UIManager.cs`](../../Assets/Scripts/Managers/GameManagers/UIManager.cs)). **`ForestManager`** defers visual updates with a coroutine ([`ForestManager.cs`](../../Assets/Scripts/Managers/GameManagers/ForestManager.cs)). **`GameNotificationManager`** sequences fades with coroutines ([`GameNotificationManager.cs`](../../Assets/Scripts/Managers/GameManagers/GameNotificationManager.cs)).
+**Coroutines, `Invoke`, delayed work:** **`GameBootstrap`** yields one frame then runs **New Game** / **Load** intent via **`StartCoroutine(ProcessStartIntent())`** ([`GameBootstrap.cs`](../../Assets/Scripts/Managers/GameManagers/GameBootstrap.cs)). **`UIManager`** uses **`Invoke`** + **`StartCoroutine`** for timed UI (e.g. tooltip hide) ([`UIManager.cs`](../../Assets/Scripts/Managers/GameManagers/UIManager.cs)). **`ForestManager`** defers visual updates with coroutine ([`ForestManager.cs`](../../Assets/Scripts/Managers/GameManagers/ForestManager.cs)). **`GameNotificationManager`** sequences fades with coroutines ([`GameNotificationManager.cs`](../../Assets/Scripts/Managers/GameManagers/GameNotificationManager.cs)).
 
-**Caching:** Resolve dependencies once during initialization; do not query the scene every frame (§7).
+**Caching:** Resolve dependencies once during initialization; do not query scene every frame (§7).
 
-**Where to look next:** Manager responsibilities and dependencies are summarized in [`managers-reference.md`](managers-reference.md) — link there instead of duplicating tables.
+**Where to look next:** Manager responsibilities + dependencies summarized in [`managers-reference.md`](managers-reference.md) — link there instead of duplicating tables.
 
 ---
 
 ## 3. Inspector, SerializeField, and dependency resolution
 
-**Target pattern (guardrail):** `[SerializeField] private` fields for dependencies, with `FindObjectOfType<T>()` **fallback** in `Awake` (or a helper called from `Awake`) when the **Inspector** reference is missing. See [`ia/rules/invariants.md`](../rules/invariants.md) guardrail: *IF adding a manager reference → THEN `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`*.
+**Target pattern (guardrail):** `[SerializeField] private` fields for dependencies, with `FindObjectOfType<T>()` **fallback** in `Awake` (or helper called from `Awake`) when **Inspector** reference missing. See [`ia/rules/invariants.md`](../rules/invariants.md) guardrail: *IF adding manager reference → THEN `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`*.
 
-**In-repo example (recommended shape):** `GameDebugInfoBuilder` keeps optional managers as `[SerializeField] private` and resolves them in `Awake` via `ResolveRefsIfNeeded()` using `FindObjectOfType` when null ([`GameDebugInfoBuilder.cs`](../../Assets/Scripts/Managers/GameManagers/GameDebugInfoBuilder.cs)). A search under `Assets/Scripts/Managers/` currently surfaces that type as the clearest full match for **`[SerializeField] private` manager refs + `FindObjectOfType`**; many other types still use public **Inspector** fields or private fields **without** `[SerializeField]` and resolve peers in **`Start`** (e.g. **`DemandManager`** — [`DemandManager.cs`](../../Assets/Scripts/Managers/GameManagers/DemandManager.cs)).
+**In-repo example (recommended shape):** `GameDebugInfoBuilder` keeps optional managers as `[SerializeField] private` + resolves in `Awake` via `ResolveRefsIfNeeded()` using `FindObjectOfType` when null ([`GameDebugInfoBuilder.cs`](../../Assets/Scripts/Managers/GameManagers/GameDebugInfoBuilder.cs)). Search under `Assets/Scripts/Managers/` currently surfaces that type as clearest full match for **`[SerializeField] private` manager refs + `FindObjectOfType`**; many other types still use public **Inspector** fields or private fields **without** `[SerializeField]` + resolve peers in **`Start`** (e.g. **`DemandManager`** — [`DemandManager.cs`](../../Assets/Scripts/Managers/GameManagers/DemandManager.cs)).
 
-**Legacy / mixed style:** Many managers still expose `public GridManager gridManager` (and similar) wired in the **Inspector**, with `FindObjectOfType` in `Awake` if null — e.g. `InterstateManager` ([`InterstateManager.cs`](../../Assets/Scripts/Managers/GameManagers/InterstateManager.cs)), `TerraformingService` ([`TerraformingService.cs`](../../Assets/Scripts/Managers/GameManagers/TerraformingService.cs)). Prefer **`SerializeField` private** for **new** fields so encapsulation matches **coding-conventions**; refactor public dependency fields only when touching the type for other reasons.
+**Legacy / mixed style:** Many managers still expose `public GridManager gridManager` (+ similar) wired in **Inspector**, with `FindObjectOfType` in `Awake` if null — e.g. `InterstateManager` ([`InterstateManager.cs`](../../Assets/Scripts/Managers/GameManagers/InterstateManager.cs)), `TerraformingService` ([`TerraformingService.cs`](../../Assets/Scripts/Managers/GameManagers/TerraformingService.cs)). Prefer **`SerializeField` private** for **new** fields so encapsulation matches **coding-conventions**; refactor public dependency fields only when touching type for other reasons.
 
-**Third-party stacks:** Do **not** document **Addressables** (or similar) here unless usage appears under `Assets/Scripts/` — the current snapshot has **no** **Addressables** references there; re-check with search before adding package-specific guidance.
+**Third-party stacks:** Do **not** document **Addressables** (or similar) here unless usage appears under `Assets/Scripts/` — current snapshot has **no** **Addressables** references there; re-check with search before adding package-specific guidance.
 
 **Invariant:** Never call `FindObjectOfType` from `Update` or other per-frame paths — cache in `Awake` / `Start`. See [`ia/rules/invariants.md`](../rules/invariants.md).
 
@@ -72,11 +72,11 @@ Managers and controllers are **scene** `MonoBehaviour` components; they are **no
 
 ## 4. Scenes, prefabs, and renaming
 
-- **Missing references:** After moving or renaming scripts, **prefabs** and scenes can show “Missing (Mono Script)”. Reassign scripts or use **Unity**’s script mapping / metadata repair; agents should not assume GUID stability across branches without checking **YAML** / **meta** if merges broke links.
-- **`.meta` and GUIDs:** **Unity** stores script and asset identity in `.meta` files. Duplicating a **prefab** or asset in the file system without letting the **Editor** regenerate **meta** can produce duplicate GUIDs or broken references — prefer duplicate inside the **Editor**, or run a deliberate GUID repair workflow.
-- **Scene / prefab YAML:** Serialized scenes and **prefabs** are text **YAML**; merge conflicts can drop component blocks or scramble **fileID** references. Resolve conflicts in the **Editor** when possible; after manual **YAML** edits, open the asset in **Unity** to validate.
-- **Renaming types:** Prefer updating `/// <summary>` and **XML docs** on the class when behavior changes ([`ia/rules/coding-conventions.md`](../rules/coding-conventions.md)).
-- **Managers in scenes:** Core gameplay types live under `Assets/Scripts/Managers/` per [`ia/rules/project-overview.md`](../rules/project-overview.md); scene wiring is **Inspector**-driven — document new mandatory references on the relevant **Manager** when adding dependencies.
+- **Missing references:** After moving / renaming scripts, **prefabs** + scenes can show "Missing (Mono Script)". Reassign scripts or use **Unity**'s script mapping / metadata repair; agents must not assume GUID stability across branches without checking **YAML** / **meta** if merges broke links.
+- **`.meta` + GUIDs:** **Unity** stores script + asset identity in `.meta` files. Duplicating **prefab** or asset in filesystem without letting **Editor** regenerate **meta** can produce duplicate GUIDs or broken references — prefer duplicate inside **Editor**, or run deliberate GUID repair workflow.
+- **Scene / prefab YAML:** Serialized scenes + **prefabs** = text **YAML**; merge conflicts can drop component blocks or scramble **fileID** references. Resolve conflicts in **Editor** when possible; after manual **YAML** edits, open asset in **Unity** to validate.
+- **Renaming types:** Prefer updating `/// <summary>` + **XML docs** on class when behavior changes ([`ia/rules/coding-conventions.md`](../rules/coding-conventions.md)).
+- **Managers in scenes:** Core gameplay types live under `Assets/Scripts/Managers/` per [`ia/rules/project-overview.md`](../rules/project-overview.md); scene wiring = **Inspector**-driven — document new mandatory references on relevant **Manager** when adding dependencies.
 
 ---
 
