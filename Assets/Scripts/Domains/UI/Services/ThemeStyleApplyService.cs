@@ -12,6 +12,7 @@ namespace Domains.UI.Services
     public class ThemeStyleApplyService
     {
         // ─── Text style apply ────────────────────────────────────────────────────
+        /// <summary>Style hero stat row — caption labels + display value text.</summary>
         public void ApplyHeroStatRow(Text valueText, int fontSizeCaption, Color textSecondary, int fontSizeDisplay, Color textPrimary)
         {
             if (valueText == null) return;
@@ -21,6 +22,7 @@ namespace Domains.UI.Services
             valueText.supportRichText = true;
         }
 
+        /// <summary>Style toolbar money text — size + tint + overflow.</summary>
         public void ApplyToolbarMoneyRow(Text valueText, int menuButtonFontSize, Color textPrimary)
         {
             if (valueText == null) return;
@@ -31,6 +33,7 @@ namespace Domains.UI.Services
             valueText.verticalOverflow = VerticalWrapMode.Truncate;
         }
 
+        /// <summary>Style body stat row — body text + optional sibling caption labels.</summary>
         public void ApplyBodyStatRow(Text textField, int fontSizeBody, Color textPrimary, int fontSizeCaption, Color textSecondary, bool styleSiblingLabels = true)
         {
             if (textField == null) return;
@@ -40,6 +43,7 @@ namespace Domains.UI.Services
             textField.supportRichText = true;
         }
 
+        /// <summary>Style caption text — size + secondary color.</summary>
         public void ApplyCaptionText(Text textField, int fontSizeCaption, Color textSecondary)
         {
             if (textField == null) return;
@@ -47,6 +51,7 @@ namespace Domains.UI.Services
             textField.color = textSecondary;
         }
 
+        /// <summary>Style cell-data panel coords text — color + wrap + alignment.</summary>
         public void ApplyCellDataPanelTextStyle(Text gridCoordinatesText, int fontSizeCaption)
         {
             if (gridCoordinatesText == null) return;
@@ -57,6 +62,7 @@ namespace Domains.UI.Services
             gridCoordinatesText.alignment = TextAnchor.UpperLeft;
         }
 
+        /// <summary>Style sibling label texts of value transform.</summary>
         public static void StyleSiblingLabelTexts(Transform valueTransform, int captionSize, Color captionColor)
         {
             Transform parent = valueTransform.parent;
@@ -114,6 +120,7 @@ namespace Domains.UI.Services
             CreateDividerStripe(taxPanel, "Fe50TaxDividerLower", stripeSprite, borderSubtle, new Vector2(0f, -40f), new Vector2(200f, 1f));
         }
 
+        /// <summary>Tint load-game + insufficient-funds modal root + first child surface.</summary>
         public void ApplyLoadGameAndFundsPanels(GameObject loadGameMenu, GameObject insufficientFundsPanel, Color modalDimmerColor, Color surfaceCardHud)
         {
             if (loadGameMenu != null)
