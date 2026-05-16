@@ -216,6 +216,7 @@ namespace Domains.UI.Services
 
         // ── Desirability color ───────────────────────────────────────────────────────
 
+        /// <summary>Lerp desirability color from low→high palette at value.</summary>
         public Color GetDesirabilityColor(float desirability)
         {
             float range = _desirabilityMax - _desirabilityMin;
@@ -227,6 +228,7 @@ namespace Domains.UI.Services
 
         // ── Forest color ─────────────────────────────────────────────────────────────
 
+        /// <summary>Pick palette color for forest type.</summary>
         public static Color GetForestColor(Forest.ForestType forestType)
         {
             switch (forestType)
@@ -299,6 +301,7 @@ namespace Domains.UI.Services
 
         // ── Zone classifiers ─────────────────────────────────────────────────────────
 
+        /// <summary>True if zone is any building variant.</summary>
         public static bool IsBuilding(Zone.ZoneType zt)
         {
             return zt == Zone.ZoneType.Building ||
@@ -307,28 +310,33 @@ namespace Domains.UI.Services
                    zt == Zone.ZoneType.IndustrialLightBuilding  || zt == Zone.ZoneType.IndustrialMediumBuilding  || zt == Zone.ZoneType.IndustrialHeavyBuilding;
         }
 
+        /// <summary>True if zone is state-service building variant.</summary>
         public static bool IsStateServiceBuilding(Zone.ZoneType zt)
         {
             return zt == Zone.ZoneType.StateServiceLightBuilding || zt == Zone.ZoneType.StateServiceMediumBuilding ||
                    zt == Zone.ZoneType.StateServiceHeavyBuilding;
         }
 
+        /// <summary>True if zone is state-service zoning variant.</summary>
         public static bool IsStateServiceZoning(Zone.ZoneType zt)
         {
             return zt == Zone.ZoneType.StateServiceLightZoning || zt == Zone.ZoneType.StateServiceMediumZoning ||
                    zt == Zone.ZoneType.StateServiceHeavyZoning;
         }
 
+        /// <summary>True if zone is residential zoning variant.</summary>
         public static bool IsResidentialZoning(Zone.ZoneType zt)
         {
             return zt == Zone.ZoneType.ResidentialLightZoning || zt == Zone.ZoneType.ResidentialMediumZoning || zt == Zone.ZoneType.ResidentialHeavyZoning;
         }
 
+        /// <summary>True if zone is commercial zoning variant.</summary>
         public static bool IsCommercialZoning(Zone.ZoneType zt)
         {
             return zt == Zone.ZoneType.CommercialLightZoning || zt == Zone.ZoneType.CommercialMediumZoning || zt == Zone.ZoneType.CommercialHeavyZoning;
         }
 
+        /// <summary>True if zone is industrial zoning variant.</summary>
         public static bool IsIndustrialZoning(Zone.ZoneType zt)
         {
             return zt == Zone.ZoneType.IndustrialLightZoning || zt == Zone.ZoneType.IndustrialMediumZoning || zt == Zone.ZoneType.IndustrialHeavyZoning;
