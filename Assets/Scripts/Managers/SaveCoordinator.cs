@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Territory.Persistence;
 using Territory.SceneManagement;
+using Territory.Services;
+using Territory.RegionScene.Persistence;
 using Domains.Registry;
 
 namespace Territory.Managers
@@ -26,6 +28,8 @@ namespace Territory.Managers
 
         private string _saveDir;
         private ServiceRegistry _registry;
+        private TickClock _tickClock;
+        private RegionSaveService _regionSaveService;
 
         void Awake()
         {
@@ -35,6 +39,13 @@ namespace Territory.Managers
                 _registry.Register<ISaveCoordinator>(this);
             else
                 Debug.LogWarning("[SaveCoordinator] ServiceRegistry not found — ISaveCoordinator not registered.");
+        }
+
+        void Start()
+        {
+            // Stage 7.0 — resolve TickClock + RegionSaveService for lastTouchedTicks stamping.
+            _tickClock        = FindObjectOfType<TickClock>();
+            _regionSaveService = FindObjectOfType<RegionSaveService>();
         }
 
         // ── ISaveCoordinator ─────────────────────────────────────────────────
@@ -60,6 +71,16 @@ namespace Territory.Managers
             catch (Exception ex)
             {
                 throw new SaveFailedException($"SaveCoordinator: backup phase failed for '{saveId}'.", ex);
+            }
+
+            // Stage 7.0 — stamp lastTouchedTicks into RegionSaveService before write.
+            if (_regionSaveService != null && _tickClock != null)
+            {
+                // If growthSeed is 0 (new/migrated save), assign a new seed once.
+                uint seed = _regionSaveService.LoadedGrowthSeed != 0
+                    ? _regionSaveService.LoadedGrowthSeed
+                    : (uint)UnityEngine.Random.Range(1, int.MaxValue);
+                _regionSaveService.StampTicks(_tickClock.CurrentTick, seed);
             }
 
             try

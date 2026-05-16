@@ -16,8 +16,12 @@ namespace Territory.RegionScene.Persistence
         public List<CityOwnershipEntry> cityOwnership;
         /// <summary>Stage 5.0: lazy-created CityData records. Mirrors owningCityId links in cells.</summary>
         public List<CityData> lazyCities;
+        /// <summary>Stage 7.0: deterministic growth seed (uint). Generated once at new-game time; persists forever.</summary>
+        public uint growthSeed;
+        /// <summary>Stage 7.0: TickClock.CurrentTick at last SavePair write. Used to compute elapsedTicks on load.</summary>
+        public long lastTouchedTicks;
 
-        public const int CurrentSchemaVersion = 2;
+        public const int CurrentSchemaVersion = 3;
     }
 
     /// <summary>JsonUtility-compatible key-value pair for city ownership (Dictionary not serializable by JsonUtility).</summary>

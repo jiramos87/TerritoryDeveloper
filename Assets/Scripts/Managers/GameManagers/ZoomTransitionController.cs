@@ -67,6 +67,9 @@ namespace Territory.SceneManagement
         private CrossfadeTriggerEvaluator _crossfade;
         private CellStreamingPipeline _streamingPipeline;
         private InputLockService _inputLock;
+        private Territory.Services.TickClock _tickClock;
+        private Territory.Services.IGrowthCatchupRunner _growthCatchupRunner;
+        private Territory.RegionScene.Persistence.RegionSaveService _regionSaveService;
 
         void Awake()
         {
@@ -75,12 +78,15 @@ namespace Territory.SceneManagement
 
         void Start()
         {
-            _orchestrator      = FindObjectOfType<SceneOrchestratorManager>();
-            _saveCoordinator   = FindObjectOfType<SaveCoordinator>();
-            _errorToast        = FindObjectOfType<ErrorToastController>();
-            _crossfade         = FindObjectOfType<CrossfadeTriggerEvaluator>();
-            _streamingPipeline = FindObjectOfType<CellStreamingPipeline>();
-            _inputLock         = FindObjectOfType<InputLockService>();
+            _orchestrator        = FindObjectOfType<SceneOrchestratorManager>();
+            _saveCoordinator     = FindObjectOfType<SaveCoordinator>();
+            _errorToast          = FindObjectOfType<ErrorToastController>();
+            _crossfade           = FindObjectOfType<CrossfadeTriggerEvaluator>();
+            _streamingPipeline   = FindObjectOfType<CellStreamingPipeline>();
+            _inputLock           = FindObjectOfType<InputLockService>();
+            _tickClock           = FindObjectOfType<Territory.Services.TickClock>();
+            _regionSaveService   = FindObjectOfType<Territory.RegionScene.Persistence.RegionSaveService>();
+            _growthCatchupRunner = new Territory.Services.GrowthCatchupRunner();
 
             // Wire FirstRingLoaded → InputLockService.Unlock.
             if (_streamingPipeline != null && _inputLock != null)
@@ -132,24 +138,29 @@ namespace Territory.SceneManagement
             }
 
             // Stage 4: real InOutCubic tween. City sprites stay live (no cullingMask change).
+            // Stage 7: symmetric — City→Region zooms OUT; Region→City zooms IN.
             SetState(TransitionState.TweeningOut);
             _crossfade?.ResetForNewTransition();
 
+            // Pause TickClock during transition.
+            _tickClock?.Pause();
+
             float tweenDuration = Mathf.Clamp(defaultDuration, 1.5f, capDuration);
-            float startSize     = _cam != null ? _cam.orthographicSize : cityZoom;
+            float startSize     = _cam != null ? _cam.orthographicSize : (target == IsoSceneContext.Region ? cityZoom : regionZoom);
+            float endSize       = target == IsoSceneContext.Region ? regionZoom : cityZoom;
             float elapsed       = 0f;
             bool  capHit        = false;
 
             while (elapsed < tweenDuration)
             {
-                if (ct.IsCancellationRequested) { SetState(TransitionState.Idle); return TransitionResult.Cancelled; }
+                if (ct.IsCancellationRequested) { _tickClock?.Resume(); SetState(TransitionState.Idle); return TransitionResult.Cancelled; }
 
                 elapsed += Time.deltaTime;
                 float t  = Mathf.Clamp01(elapsed / tweenDuration);
                 float eased = EaseInOutCubic(t);
 
                 if (_cam != null)
-                    _cam.orthographicSize = Mathf.LerpUnclamped(startSize, regionZoom, eased);
+                    _cam.orthographicSize = Mathf.LerpUnclamped(startSize, endSize, eased);
 
                 // Raise elapsed event for spinner controller.
                 TweenElapsed?.Invoke(elapsed);
@@ -176,19 +187,42 @@ namespace Territory.SceneManagement
             {
                 Debug.LogWarning("[ZoomTransitionController] 5s cap hit — aborting transition.");
                 _errorToast?.Show(ToastKind.LoadFailed);
+                _tickClock?.Resume();
                 SetState(TransitionState.Idle);
                 return TransitionResult.Failed;
             }
 
-            // Snap to regionZoom on completion.
-            if (_cam != null) _cam.orthographicSize = regionZoom;
+            // Snap to target zoom on completion.
+            if (_cam != null) _cam.orthographicSize = endSize;
 
             SetState(TransitionState.AwaitLoad);
             string targetScene = target == IsoSceneContext.Region ? "RegionScene" : "CityScene";
             if (_orchestrator != null)
             {
-                var op = await _orchestrator.LoadAdditive(targetScene, ct);
-                if (ct.IsCancellationRequested) { SetState(TransitionState.Idle); return TransitionResult.Cancelled; }
+                AsyncOperation op;
+                try
+                {
+                    op = await _orchestrator.LoadAdditive(targetScene, ct);
+                }
+                catch (Exception loadEx)
+                {
+                    Debug.LogWarning($"[ZoomTransitionController] LoadAdditive threw: {loadEx.Message}");
+                    _errorToast?.Show(ToastKind.LoadFailed);
+                    _tickClock?.Resume();
+                    SetState(TransitionState.Idle);
+                    return TransitionResult.Failed;
+                }
+
+                if (op == null)
+                {
+                    // Scene not in build settings — show error, revert.
+                    _errorToast?.Show(ToastKind.LoadFailed);
+                    _tickClock?.Resume();
+                    SetState(TransitionState.Idle);
+                    return TransitionResult.Failed;
+                }
+
+                if (ct.IsCancellationRequested) { _tickClock?.Resume(); SetState(TransitionState.Idle); return TransitionResult.Cancelled; }
                 await _orchestrator.Activate(op);
             }
             else
@@ -197,7 +231,22 @@ namespace Territory.SceneManagement
             }
 
             SetState(TransitionState.Landing);
-            await Task.Yield(); // placeholder — camera center-on-anchor lands Stage 7
+
+            // Stage 7: on landing, run growth catch-up then resume TickClock.
+            if (target == IsoSceneContext.City && _growthCatchupRunner != null && _regionSaveService != null && _tickClock != null)
+            {
+                long loadedTick = _regionSaveService.LoadedLastTouchedTicks;
+                uint seed       = _regionSaveService.LoadedGrowthSeed;
+                long elapsed    = _tickClock.CurrentTick - loadedTick;
+                if (elapsed > 0)
+                {
+                    var dormant  = new Territory.Domain.Growth.WorldSnapshot(null, loadedTick, seed);
+                    _growthCatchupRunner.Catchup(dormant, elapsed); // result discarded — sim owns pop state
+                }
+            }
+
+            _tickClock?.Resume();
+            await Task.Yield(); // final yield for Landing frame
 
             SetState(TransitionState.Idle);
             return TransitionResult.Success;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -13,6 +14,23 @@ namespace Territory.RegionScene.Persistence
         private RegionData _regionData;
         private string _basePath;
         private readonly List<CityData> _lazyCities = new();
+
+        // Stage 7.0 — growth-clock fields stamped by SaveCoordinator on every paired write.
+        private long _lastTouchedTicks;
+        private uint _growthSeed;
+
+        /// <summary>Called by SaveCoordinator.SavePair before WriteSave to stamp current tick + seed into the next write.</summary>
+        public void StampTicks(long currentTick, uint growthSeed)
+        {
+            _lastTouchedTicks = currentTick;
+            _growthSeed       = growthSeed;
+        }
+
+        /// <summary>Growth seed from last loaded save (0 if not yet loaded).</summary>
+        public uint LoadedGrowthSeed => _growthSeed;
+
+        /// <summary>Last-touched tick from last loaded save.</summary>
+        public long LoadedLastTouchedTicks => _lastTouchedTicks;
 
         private void Start()
         {
@@ -81,21 +99,25 @@ namespace Territory.RegionScene.Persistence
             if (file.cells == null) file.cells = System.Array.Empty<RegionCellData>();
             if (file.cityOwnership == null) file.cityOwnership = new List<CityOwnershipEntry>();
             if (file.lazyCities == null) file.lazyCities = new List<CityData>();
+            // v2 → v3: growthSeed + lastTouchedTicks added in Stage 7.0 (default-init on old saves)
+            // growthSeed == 0 on v2 saves → will be assigned a new random seed by SaveCoordinator on next paired write.
             file.schemaVersion = RegionSaveFile.CurrentSchemaVersion;
             return file;
         }
 
         private RegionSaveFile BuildSaveFile()
         {
-            var cells  = _regionData?.AllCells ?? System.Array.Empty<RegionCellData>();
+            var cells  = _regionData?.AllCells ?? Array.Empty<RegionCellData>();
             int gSize  = _regionData?.GridSize ?? 0;
             var file   = new RegionSaveFile
             {
-                schemaVersion  = RegionSaveFile.CurrentSchemaVersion,
-                gridSize       = gSize,
-                cells          = cells,
-                cityOwnership  = new List<CityOwnershipEntry>(),
-                lazyCities     = new List<CityData>(_lazyCities),
+                schemaVersion    = RegionSaveFile.CurrentSchemaVersion,
+                gridSize         = gSize,
+                cells            = cells,
+                cityOwnership    = new List<CityOwnershipEntry>(),
+                lazyCities       = new List<CityData>(_lazyCities),
+                growthSeed       = _growthSeed,
+                lastTouchedTicks = _lastTouchedTicks,
             };
 
             // Populate city ownership from cell owningCityId fields.
@@ -124,6 +146,10 @@ namespace Territory.RegionScene.Persistence
                 foreach (var c in file.lazyCities)
                     if (c != null) _lazyCities.Add(CityData.MigrateLoaded(c));
             }
+
+            // Stage 7.0 — restore growth-clock fields
+            _growthSeed       = file.growthSeed;
+            _lastTouchedTicks = file.lastTouchedTicks;
         }
 
         private string BuildSavePath(string saveName)
