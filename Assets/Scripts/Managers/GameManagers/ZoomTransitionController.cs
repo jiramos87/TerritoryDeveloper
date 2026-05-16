@@ -65,6 +65,8 @@ namespace Territory.SceneManagement
         private ErrorToastController _errorToast;
         private Camera _cam;
         private CrossfadeTriggerEvaluator _crossfade;
+        private CellStreamingPipeline _streamingPipeline;
+        private InputLockService _inputLock;
 
         void Awake()
         {
@@ -73,10 +75,16 @@ namespace Territory.SceneManagement
 
         void Start()
         {
-            _orchestrator    = FindObjectOfType<SceneOrchestratorManager>();
-            _saveCoordinator = FindObjectOfType<SaveCoordinator>();
-            _errorToast      = FindObjectOfType<ErrorToastController>();
-            _crossfade       = FindObjectOfType<CrossfadeTriggerEvaluator>();
+            _orchestrator      = FindObjectOfType<SceneOrchestratorManager>();
+            _saveCoordinator   = FindObjectOfType<SaveCoordinator>();
+            _errorToast        = FindObjectOfType<ErrorToastController>();
+            _crossfade         = FindObjectOfType<CrossfadeTriggerEvaluator>();
+            _streamingPipeline = FindObjectOfType<CellStreamingPipeline>();
+            _inputLock         = FindObjectOfType<InputLockService>();
+
+            // Wire FirstRingLoaded → InputLockService.Unlock.
+            if (_streamingPipeline != null && _inputLock != null)
+                _streamingPipeline.FirstRingLoaded += _inputLock.Unlock;
         }
 
         /// <summary>Request a scene transition to <paramref name="target"/>. State machine: Idle→AwaitConfirm→Saving→TweeningOut→AwaitLoad→Landing→Idle.</summary>
