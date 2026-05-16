@@ -13,6 +13,7 @@ public class InterstateFlowTrackerService
 {
     private readonly IGridManager _grid;
 
+    /// <summary>Construct flow-tracker with grid reference.</summary>
     public InterstateFlowTrackerService(IGridManager grid)
     {
         _grid = grid;
@@ -22,6 +23,7 @@ public class InterstateFlowTrackerService
     // Grid query helpers
     // ------------------------------------------------------------------
 
+    /// <summary>True if cell at (x,y) is an interstate.</summary>
     public bool IsInterstateAt(int x, int y)
     {
         if (_grid == null) return false;
@@ -29,11 +31,13 @@ public class InterstateFlowTrackerService
         return cell != null && cell.isInterstate;
     }
 
+    /// <summary>True if cell at gridPos is an interstate (rounded).</summary>
     public bool IsInterstateAt(Vector2 gridPos)
     {
         return IsInterstateAt(Mathf.RoundToInt(gridPos.x), Mathf.RoundToInt(gridPos.y));
     }
 
+    /// <summary>True if cell at (x,y) is a road tile.</summary>
     public bool IsRoadAt(int gridX, int gridY)
     {
         if (_grid == null) return false;
@@ -45,6 +49,7 @@ public class InterstateFlowTrackerService
     // Rebuild from saved grid state
     // ------------------------------------------------------------------
 
+    /// <summary>Rebuild interstate positions + entry/exit borders from grid state.</summary>
     public void RebuildFromGrid(List<Vector2Int> positions, ref Vector2Int? entryPoint, ref Vector2Int? exitPoint, ref int entryBorder, ref int exitBorder)
     {
         positions.Clear();
@@ -104,6 +109,7 @@ public class InterstateFlowTrackerService
     // Connectivity check
     // ------------------------------------------------------------------
 
+    /// <summary>BFS roads from interstate positions — true if reaches a non-interstate road.</summary>
     public bool CheckInterstateConnectivity(List<Vector2Int> interstatePositions)
     {
         if (_grid == null || interstatePositions.Count == 0) return false;
@@ -147,6 +153,7 @@ public class InterstateFlowTrackerService
     // Street placement eligibility
     // ------------------------------------------------------------------
 
+    /// <summary>True if street can spawn from rounded gridPos cell.</summary>
     public bool CanPlaceStreetFrom(Vector2 gridPosition)
     {
         int x = Mathf.RoundToInt(gridPosition.x);
@@ -154,6 +161,7 @@ public class InterstateFlowTrackerService
         return CanPlaceStreetFrom(x, y);
     }
 
+    /// <summary>True if cell has a cardinal road neighbor — eligible street origin.</summary>
     public bool CanPlaceStreetFrom(int x, int y)
     {
         if (_grid == null) return false;
