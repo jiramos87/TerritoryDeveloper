@@ -18,6 +18,10 @@ namespace Territory.Timing
 /// </summary>
 public class TimeManager : MonoBehaviour
 {
+    private const int StartYear = 2024;
+    private const int StartMonth = 8;
+    private const int StartDay = 27;
+
     [Header("Geography Gate")]
     [SerializeField] private GeographyManager geographyManager;
 
@@ -60,7 +64,7 @@ public class TimeManager : MonoBehaviour
 
     void Start()
     {
-        currentDate = new System.DateTime(2024, 8, 27);
+        currentDate = new System.DateTime(StartYear, StartMonth, StartDay);
         currentDate = currentDate.Date;
         uiManager.UpdateUI();
         // Re-resolve recorder in Start in case adapter auto-created it after our Awake ran.
@@ -236,7 +240,7 @@ public class TimeManager : MonoBehaviour
 
     public void ResetInGameTime()
     {
-        currentDate = new System.DateTime(2024, 8, 27);
+        currentDate = new System.DateTime(StartYear, StartMonth, StartDay);
         if (uiManager != null)
             uiManager.UpdateUI();
     }

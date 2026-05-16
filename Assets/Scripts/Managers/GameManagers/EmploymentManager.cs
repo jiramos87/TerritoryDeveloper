@@ -45,6 +45,8 @@ public class JobData
 /// </summary>
 public class EmploymentManager : MonoBehaviour
 {
+    private const float MaxEmploymentPercent = 100f;
+
     [Header("Employment Statistics")]
     public JobData residentialJobs; // Internal jobs (should be minimal)
     public JobData commercialJobs;
@@ -217,7 +219,7 @@ public class EmploymentManager : MonoBehaviour
 
         // Calculate unemployment
         int unemployedCitizens = totalJobSeekers - totalEmployedCitizens;
-        unemploymentRate = totalJobSeekers > 0 ? (float)unemployedCitizens / totalJobSeekers * 100f : 0f;
+        unemploymentRate = totalJobSeekers > 0 ? (float)unemployedCitizens / totalJobSeekers * MaxEmploymentPercent : 0f;
     }
 
     private ZoneAttributes GetZoneAttributes(Zone.ZoneType zoneType)
@@ -238,7 +240,7 @@ public class EmploymentManager : MonoBehaviour
     public int GetTotalJobs() => commercialJobs.totalJobsCreated + industrialJobs.totalJobsCreated;
     public int GetAvailableJobs() => commercialJobs.availableJobs + industrialJobs.availableJobs; // NEW: Available (not taken) jobs
     public int GetUnemployedCitizens() => totalJobSeekers - totalEmployedCitizens;
-    public float GetEmploymentRate() => 100f - unemploymentRate;
+    public float GetEmploymentRate() => MaxEmploymentPercent - unemploymentRate;
 
     // Additional getters for detailed information
     public int GetResidentialPopulation() => totalPopulation; // All population comes from residential

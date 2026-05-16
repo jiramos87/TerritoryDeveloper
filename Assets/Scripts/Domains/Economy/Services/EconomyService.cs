@@ -18,6 +18,10 @@ namespace Domains.Economy.Services
 /// </summary>
 public class EconomyService
 {
+    // ── Constants ───────────────────────────────────────────────────────────────
+    private const float MaxEconomicHealth = 100f;
+    private const int LowMoneyHealthFloor = 1000;
+
     // ── Wired dependencies ──────────────────────────────────────────────────────
     private CityStats                   _cityStats;
     private GameNotificationManager     _notificationManager;
@@ -370,12 +374,12 @@ public class EconomyService
     public float GetEconomicHealth(int residentialTax, int commercialTax, int industrialTax)
     {
         if (_cityStats == null) return 0f;
-        float health     = 100f;
+        float health     = MaxEconomicHealth;
         float avgTaxRate = (residentialTax + commercialTax + industrialTax) / 3f;
         health -= (avgTaxRate - 10f) * 2f;
         int money = GetCurrentMoney();
-        if (money < 1000) health -= (1000 - money) * 0.01f;
-        return Mathf.Clamp(health, 0f, 100f);
+        if (money < LowMoneyHealthFloor) health -= (LowMoneyHealthFloor - money) * 0.01f;
+        return Mathf.Clamp(health, 0f, MaxEconomicHealth);
     }
 
     /// <summary>Build EconomicSummary snapshot for UI display.</summary>

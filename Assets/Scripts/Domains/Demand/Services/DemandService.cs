@@ -16,6 +16,12 @@ namespace Domains.Demand.Services
     /// </summary>
     public class DemandService
     {
+        // ── Constants ───────────────────────────────────────────────────────────────
+        private const float DemandMin = -100f;
+        private const float DemandMax = 100f;
+        private const float DemandRange = DemandMax - DemandMin;
+        private const float MinTaxDenominator = 0.01f;
+
         // ── Wired dependencies ──────────────────────────────────────────────────────
         private IGridManager     _grid;
         private EmploymentManager _employment;
@@ -158,7 +164,7 @@ namespace Domains.Demand.Services
                 residential.demandLevel = Mathf.Lerp(residential.demandLevel, targetDemand, _demandSmoothingPerDay);
             }
 
-            residential.demandLevel = Mathf.Clamp(residential.demandLevel, -100f, 100f);
+            residential.demandLevel = Mathf.Clamp(residential.demandLevel, DemandMin, DemandMax);
         }
 
         private void UpdateCommercialDemand(DemandData commercial, BuildingTracker tracker)
@@ -173,7 +179,7 @@ namespace Domains.Demand.Services
                 targetDemand += (unemploymentRate - _unemploymentThreshold) * _unemploymentJobBoost;
 
             commercial.demandLevel = Mathf.Lerp(commercial.demandLevel, targetDemand, _demandSmoothingPerDay);
-            commercial.demandLevel = Mathf.Clamp(commercial.demandLevel, -100f, 100f);
+            commercial.demandLevel = Mathf.Clamp(commercial.demandLevel, DemandMin, DemandMax);
         }
 
         private void UpdateIndustrialDemand(DemandData industrial, BuildingTracker tracker)
@@ -195,22 +201,22 @@ namespace Domains.Demand.Services
                 targetDemand += (unemploymentRate - _unemploymentThreshold) * _unemploymentJobBoost;
 
             industrial.demandLevel = Mathf.Lerp(industrial.demandLevel, targetDemand, _demandSmoothingPerDay);
-            industrial.demandLevel = Mathf.Clamp(industrial.demandLevel, -100f, 100f);
+            industrial.demandLevel = Mathf.Clamp(industrial.demandLevel, DemandMin, DemandMax);
         }
 
         private void ApplySectorTaxPressure(DemandData residential, DemandData commercial, DemandData industrial)
         {
             if (_economy == null) return;
             float denom = _maxTaxRateForDemandScale - _comfortableTaxRateForDemand;
-            if (denom <= 0.01f) denom = 0.01f;
+            if (denom <= MinTaxDenominator) denom = MinTaxDenominator;
 
             residential.demandLevel *= GetTaxPressureMultiplier(_economy.residentialIncomeTax, denom);
             commercial.demandLevel  *= GetTaxPressureMultiplier(_economy.commercialIncomeTax,  denom);
             industrial.demandLevel  *= GetTaxPressureMultiplier(_economy.industrialIncomeTax,  denom);
 
-            residential.demandLevel = Mathf.Clamp(residential.demandLevel, -100f, 100f);
-            commercial.demandLevel  = Mathf.Clamp(commercial.demandLevel,  -100f, 100f);
-            industrial.demandLevel  = Mathf.Clamp(industrial.demandLevel,  -100f, 100f);
+            residential.demandLevel = Mathf.Clamp(residential.demandLevel, DemandMin, DemandMax);
+            commercial.demandLevel  = Mathf.Clamp(commercial.demandLevel,  DemandMin, DemandMax);
+            industrial.demandLevel  = Mathf.Clamp(industrial.demandLevel,  DemandMin, DemandMax);
         }
 
         private float GetTaxPressureMultiplier(int taxRatePercent, float denom)
@@ -224,17 +230,17 @@ namespace Domains.Demand.Services
         {
             if (_cityStats == null) return;
             float multiplier = _cityStats.GetHappinessDemandMultiplier();
-            residential.demandLevel = Mathf.Clamp(residential.demandLevel * multiplier, -100f, 100f);
-            commercial.demandLevel  = Mathf.Clamp(commercial.demandLevel  * multiplier, -100f, 100f);
-            industrial.demandLevel  = Mathf.Clamp(industrial.demandLevel  * multiplier, -100f, 100f);
+            residential.demandLevel = Mathf.Clamp(residential.demandLevel * multiplier, DemandMin, DemandMax);
+            commercial.demandLevel  = Mathf.Clamp(commercial.demandLevel  * multiplier, DemandMin, DemandMax);
+            industrial.demandLevel  = Mathf.Clamp(industrial.demandLevel  * multiplier, DemandMin, DemandMax);
         }
 
         private void ApplyExternalDemandModifier(DemandData residential, DemandData commercial, DemandData industrial)
         {
             float multiplier = GetExternalDemandModifier();
-            residential.demandLevel = Mathf.Clamp(residential.demandLevel * multiplier, -100f, 100f);
-            commercial.demandLevel  = Mathf.Clamp(commercial.demandLevel  * multiplier, -100f, 100f);
-            industrial.demandLevel  = Mathf.Clamp(industrial.demandLevel  * multiplier, -100f, 100f);
+            residential.demandLevel = Mathf.Clamp(residential.demandLevel * multiplier, DemandMin, DemandMax);
+            commercial.demandLevel  = Mathf.Clamp(commercial.demandLevel  * multiplier, DemandMin, DemandMax);
+            industrial.demandLevel  = Mathf.Clamp(industrial.demandLevel  * multiplier, DemandMin, DemandMax);
         }
 
         // ── Public query methods ────────────────────────────────────────────────────
@@ -274,7 +280,7 @@ namespace Domains.Demand.Services
                 case Zone.ZoneType.IndustrialHeavyZoning:
                     return industrial.demandLevel;
                 default:
-                    return 100f;
+                    return DemandMax;
             }
         }
 
@@ -289,7 +295,7 @@ namespace Domains.Demand.Services
 
         /// <summary>Map demand level [-100,100] → spawn probability [0,1].</summary>
         public float GetDemandSpawnFactor(float demandLevel)
-            => Mathf.Clamp01((demandLevel + 100f) / 200f);
+            => Mathf.Clamp01((demandLevel - DemandMin) / DemandRange);
 
         /// <summary>True if employment manager reports available jobs > 0.</summary>
         public bool HasAvailableJobs()

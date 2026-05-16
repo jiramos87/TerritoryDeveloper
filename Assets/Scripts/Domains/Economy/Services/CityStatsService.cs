@@ -10,6 +10,13 @@ namespace Domains.Economy.Services
 /// </summary>
 public class CityStatsService : IEconomy
 {
+    // Starting state constants (mirrored from CityStats hub defaults).
+    private const int StartingMoney = 20000;
+    private const float StartingHappiness = 50f;
+    private const int StartYear = 2024;
+    private const int StartMonth = 8;
+    private const int StartDay = 27;
+
     // Core financials
     private int _money;
     private int _population;
@@ -23,7 +30,7 @@ public class CityStatsService : IEconomy
     private int _waterOutput;
 
     // Happiness / Pollution (read-only backing; set externally by signal layer)
-    private float _happiness = 50f;
+    private float _happiness = StartingHappiness;
     private float _pollution;
 
     // Forest
@@ -83,9 +90,9 @@ public class CityStatsService : IEconomy
     /// <summary>Initial state: 20000 money, no population.</summary>
     public CityStatsService()
     {
-        _money = 20000;
+        _money = StartingMoney;
         _population = 0;
-        _currentDate = new DateTime(2024, 8, 27);
+        _currentDate = new DateTime(StartYear, StartMonth, StartDay);
     }
 
     // ---- IEconomy ----
@@ -447,11 +454,11 @@ public class CityStatsService : IEconomy
     public void Reset()
     {
         ResetPowerPlants();
-        _money = 20000;
+        _money = StartingMoney;
         _population = 0;
-        _happiness = 50f;
+        _happiness = StartingHappiness;
         _pollution = 0f;
-        _currentDate = new DateTime(2024, 8, 27);
+        _currentDate = new DateTime(StartYear, StartMonth, StartDay);
         _residentialZoneCount = 0;
         _commercialZoneCount = 0;
         _industrialZoneCount = 0;
