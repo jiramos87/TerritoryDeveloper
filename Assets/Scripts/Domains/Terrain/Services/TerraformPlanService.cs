@@ -22,6 +22,7 @@ namespace Domains.Terrain.Services
         private readonly bool _expandCutThroughAdjacentByOneStep;
         private readonly int _cutThroughMinCellsFromMapEdge;
 
+        /// <summary>Construct terraform plan service with dependencies.</summary>
         public TerraformPlanService(
             System.Func<HeightMap> getHeightMap,
             System.Func<int, int, bool> isRegisteredOpenWaterAt,
