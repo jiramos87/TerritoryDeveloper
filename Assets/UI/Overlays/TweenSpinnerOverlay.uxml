@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement name="tween-spinner-overlay" class="tween-spinner-overlay">
+        <ui:VisualElement name="tween-spinner-backdrop" class="tween-spinner-backdrop" />
+        <ui:VisualElement name="tween-spinner-icon" class="tween-spinner-icon" />
+    </ui:VisualElement>
+</ui:UXML>
