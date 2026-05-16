@@ -23,6 +23,7 @@ namespace Domains.Bridge.Services
         public const float ConformanceColorEpsilon = 1.5f / 255f;
         public const float WcagBodyTextThreshold = 4.5f;
 
+        /// <summary>Apply theme to every ThemedPanel/Label/Button under root before walk.</summary>
         public static void ApplyThemePrePass(Transform root, UiTheme theme)
         {
             var panels = root.GetComponentsInChildren<ThemedPanel>(includeInactive: true);
@@ -45,6 +46,7 @@ namespace Domains.Bridge.Services
             }
         }
 
+        /// <summary>Recursively walk node tree; emit conformance rows per themed component.</summary>
         public static void WalkConformanceNode(
             Transform node,
             Transform root,
@@ -92,6 +94,7 @@ namespace Domains.Bridge.Services
 
         // ── IR index builders ──────────────────────────────────────────────────
 
+        /// <summary>Build slug→panel lookup from IR root.</summary>
         public static Dictionary<string, ConformanceIrPanelDto> BuildIrPanelIndex(ConformanceIrRootDto ir)
         {
             var dict = new Dictionary<string, ConformanceIrPanelDto>(StringComparer.Ordinal);
@@ -101,6 +104,7 @@ namespace Domains.Bridge.Services
             return dict;
         }
 
+        /// <summary>Build 'panelSlug/childName'→label lookup from IR slots.</summary>
         public static Dictionary<string, string> BuildIrLabelIndex(ConformanceIrRootDto ir)
         {
             var dict = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -265,6 +269,7 @@ namespace Domains.Bridge.Services
 
         // ── Helpers ────────────────────────────────────────────────────────────
 
+        /// <summary>Build slash-joined relative path from node to root.</summary>
         public static string ComputeRelativePath(Transform node, Transform root)
         {
             if (node == root) return node.gameObject.name;
@@ -275,18 +280,21 @@ namespace Domains.Bridge.Services
             return string.Join("/", parts);
         }
 
+        /// <summary>Read string serialized property; null if absent/wrong type.</summary>
         public static string TryReadStringField(SerializedObject so, string propName)
         {
             var p = so.FindProperty(propName);
             return (p == null || p.propertyType != SerializedPropertyType.String) ? null : p.stringValue;
         }
 
+        /// <summary>Read object reference serialized property; null if absent/wrong type.</summary>
         public static UnityEngine.Object TryReadObjectField(SerializedObject so, string propName)
         {
             var p = so.FindProperty(propName);
             return (p == null || p.propertyType != SerializedPropertyType.ObjectReference) ? null : p.objectReferenceValue;
         }
 
+        /// <summary>Read enum serialized property index; -1 if absent/wrong type.</summary>
         public static int TryReadEnumIndex(SerializedObject so, string propName)
         {
             var p = so.FindProperty(propName);
@@ -302,12 +310,15 @@ namespace Domains.Bridge.Services
             catch { return null; }
         }
 
+        /// <summary>True if all channels within epsilon.</summary>
         public static bool ColorsApproxEqual(Color a, Color b) =>
             Mathf.Abs(a.r - b.r) < ConformanceColorEpsilon && Mathf.Abs(a.g - b.g) < ConformanceColorEpsilon && Mathf.Abs(a.b - b.b) < ConformanceColorEpsilon && Mathf.Abs(a.a - b.a) < ConformanceColorEpsilon;
 
+        /// <summary>Format color as rgba(…) string with 3-decimal precision.</summary>
         public static string FormatColor(Color c) =>
             string.Format(System.Globalization.CultureInfo.InvariantCulture, "rgba({0:F3},{1:F3},{2:F3},{3:F3})", c.r, c.g, c.b, c.a);
 
+        /// <summary>Map ThemedPanel.kind enum index → IR kind name.</summary>
         public static string PanelKindEnumIdxToIrName(int idx)
         {
             switch (idx) { case 0: return "modal"; case 1: return "screen"; case 2: return "hud"; case 3: return "toolbar"; default: return "(unknown)"; }
