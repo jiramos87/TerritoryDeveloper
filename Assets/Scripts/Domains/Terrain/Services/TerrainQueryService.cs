@@ -33,6 +33,7 @@ namespace Domains.Terrain.Services
         private readonly IList<GameObject> _shoreBayPrefabs;
         private readonly IList<GameObject> _cliffStackPrefabs;
 
+        /// <summary>Construct terrain query service with dependencies.</summary>
         public TerrainQueryService(
             System.Func<HeightMap> getHeightMap,
             System.Func<int, int, bool> isWaterAt,
