@@ -30,6 +30,7 @@ namespace Domains.Terrain.Services
         private readonly int _width;
         private readonly int _height;
 
+        /// <summary>Construct height map of given grid width × height.</summary>
         public HeightMapService(int width, int height)
         {
             _width = width;
