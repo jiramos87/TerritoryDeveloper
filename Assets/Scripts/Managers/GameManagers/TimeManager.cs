@@ -3,6 +3,7 @@ using UnityEngine;
 using Territory.UI;
 using Territory.Economy;
 using Territory.Core;
+using Territory.Core.Common;
 using Territory.Zones;
 using Territory.Roads;
 using Territory.Simulation;
@@ -18,9 +19,9 @@ namespace Territory.Timing
 /// </summary>
 public class TimeManager : MonoBehaviour
 {
-    private const int StartYear = 2024;
-    private const int StartMonth = 8;
-    private const int StartDay = 27;
+    private const int StartYear = GameConstants.StartYear;
+    private const int StartMonth = GameConstants.StartMonth;
+    private const int StartDay = GameConstants.StartDay;
 
     [Header("Geography Gate")]
     [SerializeField] private GeographyManager geographyManager;

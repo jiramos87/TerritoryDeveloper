@@ -1,6 +1,7 @@
 // long-file-allowed: legacy hub — scope outside current atomization plan; deferred to future sweep
 using UnityEngine;
 using UnityEngine.UI;
+using Territory.Core.Common;
 using Territory.Economy;
 using Territory.Simulation;
 
@@ -11,7 +12,7 @@ namespace Territory.UI
 /// </summary>
 public class GrowthBudgetSlidersController : MonoBehaviour
 {
-    private const int PercentMax = 100;
+    private const int PercentMax = GameConstants.PercentMax;
 
     public CityStats cityStats;
     public GrowthBudgetManager growthBudgetManager;

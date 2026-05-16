@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Core.Common;
 using Territory.Zones;
 
 namespace Territory.Buildings
@@ -9,7 +10,7 @@ namespace Territory.Buildings
 /// </summary>
 public class WaterPlant : MonoBehaviour, IBuilding
 {
-    private const int PercentMax = 100;
+    private const int PercentMax = GameConstants.PercentMax;
 
     private int waterOutput;
     private int maintenanceCost;

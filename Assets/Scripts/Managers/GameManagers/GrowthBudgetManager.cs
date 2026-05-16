@@ -1,4 +1,5 @@
 using UnityEngine;
+using Territory.Core.Common;
 using Territory.Economy;
 
 namespace Territory.Simulation
@@ -11,7 +12,7 @@ namespace Territory.Simulation
 /// </summary>
 public class GrowthBudgetManager : MonoBehaviour, IGrowthBudgetManager
 {
-    private const int PercentMax = 100;
+    private const int PercentMax = GameConstants.PercentMax;
     private const int LegacyMigrationFallbackPercent = 10;
 
     public CityStats cityStats;

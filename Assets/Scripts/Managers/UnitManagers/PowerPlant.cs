@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Core.Common;
 using Territory.Timing;
 using Territory.Zones;
 
@@ -11,7 +12,7 @@ namespace Territory.Buildings
 /// </summary>
 public class PowerPlant : MonoBehaviour, IBuilding
 {
-    private const int PercentMax = 100;
+    private const int PercentMax = GameConstants.PercentMax;
 
     private int powerOutput;
     private int maintenanceCost;
