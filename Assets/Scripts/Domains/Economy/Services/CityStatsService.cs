@@ -91,45 +91,59 @@ public class CityStatsService : IEconomy
     // ---- IEconomy ----
 
     /// <inheritdoc/>
+    /// <summary>True if money covers cost.</summary>
     public bool CanAfford(int cost) => _money >= cost;
 
     /// <inheritdoc/>
+    /// <summary>Add value to money pool.</summary>
     public void AddMoney(int value) { _money += value; }
 
     /// <inheritdoc/>
+    /// <summary>Subtract value from money pool.</summary>
     public void RemoveMoney(int value) { _money -= value; }
 
     /// <inheritdoc/>
+    /// <summary>Current money.</summary>
     public int GetMoney() => _money;
 
     /// <inheritdoc/>
+    /// <summary>Add value to population.</summary>
     public void AddPopulation(int value) { _population += value; }
 
     /// <inheritdoc/>
+    /// <summary>Current population.</summary>
     public int GetPopulation() => _population;
 
     /// <inheritdoc/>
+    /// <summary>Total power output.</summary>
     public int GetTotalPowerOutput() => _powerOutput;
 
     /// <inheritdoc/>
+    /// <summary>Total power consumption.</summary>
     public int GetTotalPowerConsumption() => _powerConsumption;
 
     /// <inheritdoc/>
+    /// <summary>Total water output.</summary>
     public int GetTotalWaterOutput() => _waterOutput;
 
     /// <inheritdoc/>
+    /// <summary>Total water consumption.</summary>
     public int GetTotalWaterConsumption() => _waterConsumption;
 
     /// <inheritdoc/>
+    /// <summary>Current happiness.</summary>
     public float GetHappiness() => _happiness;
 
     /// <inheritdoc/>
+    /// <summary>Current pollution.</summary>
     public float GetPollution() => _pollution;
 
     /// <inheritdoc/>
+    /// <summary>Forest cell count.</summary>
     public int GetForestCellCount() => _forestCellCount;
 
     /// <inheritdoc/>
+    /// <summary>Forest coverage percentage.</summary>
     public float GetForestCoveragePercentage() => _forestCoveragePercentage;
 
     // ---- Power tracking ----
