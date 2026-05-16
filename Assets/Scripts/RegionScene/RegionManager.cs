@@ -126,5 +126,8 @@ namespace Territory.RegionScene
 
         // ArrowKeysPanCamera — tracer anchor for stage1.0 test
         public bool ArrowKeysPanCamera => _camera != null;
+
+        /// <summary>Read-only cell access for streaming pipeline. Invariant #5 — no direct gridArray bypass.</summary>
+        public RegionCellData GetCell(int x, int y) => _regionData?.GetCell(x, y);
     }
 }
