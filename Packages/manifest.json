@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "com.kyrylokuzyk.primetween": "https://github.com/KyryloKuzyk/PrimeTween.git",
     "com.unity.collab-proxy": "2.7.1",
     "com.unity.device-simulator.devices": "1.0.0",
     "com.unity.feature.2d": "2.0.1",
