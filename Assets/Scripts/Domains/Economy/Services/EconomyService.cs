@@ -264,18 +264,22 @@ public class EconomyService
 
     // ── Zone type helpers ────────────────────────────────────────────────────────
 
+    /// <summary>True if zone is residential (building or zoning, any density).</summary>
     public bool IsResidentialZone(Zone.ZoneType z)
         => z == Zone.ZoneType.ResidentialLightBuilding  || z == Zone.ZoneType.ResidentialMediumBuilding  || z == Zone.ZoneType.ResidentialHeavyBuilding
         || z == Zone.ZoneType.ResidentialLightZoning    || z == Zone.ZoneType.ResidentialMediumZoning    || z == Zone.ZoneType.ResidentialHeavyZoning;
 
+    /// <summary>True if zone is commercial (building or zoning, any density).</summary>
     public bool IsCommercialZone(Zone.ZoneType z)
         => z == Zone.ZoneType.CommercialLightBuilding   || z == Zone.ZoneType.CommercialMediumBuilding   || z == Zone.ZoneType.CommercialHeavyBuilding
         || z == Zone.ZoneType.CommercialLightZoning     || z == Zone.ZoneType.CommercialMediumZoning     || z == Zone.ZoneType.CommercialHeavyZoning;
 
+    /// <summary>True if zone is industrial (building or zoning, any density).</summary>
     public bool IsIndustrialZone(Zone.ZoneType z)
         => z == Zone.ZoneType.IndustrialLightBuilding   || z == Zone.ZoneType.IndustrialMediumBuilding   || z == Zone.ZoneType.IndustrialHeavyBuilding
         || z == Zone.ZoneType.IndustrialLightZoning     || z == Zone.ZoneType.IndustrialMediumZoning     || z == Zone.ZoneType.IndustrialHeavyZoning;
 
+    /// <summary>True if zone is any built variant (R/C/I + state-service).</summary>
     public bool IsBuildingZone(Zone.ZoneType z)
         => z == Zone.ZoneType.ResidentialLightBuilding  || z == Zone.ZoneType.ResidentialMediumBuilding  || z == Zone.ZoneType.ResidentialHeavyBuilding
         || z == Zone.ZoneType.CommercialLightBuilding   || z == Zone.ZoneType.CommercialMediumBuilding   || z == Zone.ZoneType.CommercialHeavyBuilding
@@ -283,16 +287,19 @@ public class EconomyService
         || z == Zone.ZoneType.Building
         || z == Zone.ZoneType.StateServiceLightBuilding || z == Zone.ZoneType.StateServiceMediumBuilding || z == Zone.ZoneType.StateServiceHeavyBuilding;
 
+    /// <summary>True if zone is any zoning variant (not yet built).</summary>
     public bool IsZoningType(Zone.ZoneType z)
         => z == Zone.ZoneType.ResidentialLightZoning    || z == Zone.ZoneType.ResidentialMediumZoning    || z == Zone.ZoneType.ResidentialHeavyZoning
         || z == Zone.ZoneType.CommercialLightZoning     || z == Zone.ZoneType.CommercialMediumZoning     || z == Zone.ZoneType.CommercialHeavyZoning
         || z == Zone.ZoneType.IndustrialLightZoning     || z == Zone.ZoneType.IndustrialMediumZoning     || z == Zone.ZoneType.IndustrialHeavyZoning
         || z == Zone.ZoneType.StateServiceLightZoning   || z == Zone.ZoneType.StateServiceMediumZoning   || z == Zone.ZoneType.StateServiceHeavyZoning;
 
+    /// <summary>True if zone is state-service (building or zoning).</summary>
     public bool IsStateServiceZone(Zone.ZoneType z)
         => z == Zone.ZoneType.StateServiceLightBuilding || z == Zone.ZoneType.StateServiceMediumBuilding || z == Zone.ZoneType.StateServiceHeavyBuilding
         || z == Zone.ZoneType.StateServiceLightZoning   || z == Zone.ZoneType.StateServiceMediumZoning   || z == Zone.ZoneType.StateServiceHeavyZoning;
 
+    /// <summary>Main category label — Residential/Commercial/Industrial/Other.</summary>
     public string GetZoneMainCategory(Zone.ZoneType z)
     {
         if (IsResidentialZone(z)) return "Residential";
@@ -301,6 +308,7 @@ public class EconomyService
         return "Other";
     }
 
+    /// <summary>Density label — Light/Medium/Heavy or empty.</summary>
     public string GetZoneDensity(Zone.ZoneType z)
     {
         string name = z.ToString();
