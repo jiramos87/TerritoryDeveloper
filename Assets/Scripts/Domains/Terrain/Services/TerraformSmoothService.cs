@@ -18,6 +18,7 @@ namespace Domains.Terrain.Services
         private readonly System.Func<int, int, CityCell> _getCell;
         private readonly System.Func<int, int, bool> _isWaterAt;
 
+        /// <summary>Construct terraform smooth service with dependencies.</summary>
         public TerraformSmoothService(
             System.Func<HeightMap> getHeightMap,
             System.Func<int, int, bool> isRegisteredOpenWaterAt,
